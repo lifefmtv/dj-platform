@@ -109,10 +109,10 @@ img, video, iframe { display: block; max-width: 100%; }
   position: sticky;
   top: 0;
   z-index: 100;
-  height: 60px;
-  display: flex;
+  height: 84px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   padding: 0 2.5rem;
   background: rgba(8, 7, 6, 0.97);
   border-bottom: 1px solid var(--border);
@@ -128,10 +128,73 @@ img, video, iframe { display: block; max-width: 100%; }
 }
 .nav-logo-link:hover { opacity: 0.65; }
 
+.nav-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2rem;
+}
+
 .nav-links {
   display: flex;
   align-items: center;
   gap: 2.5rem;
+}
+
+/* ── Nav countdown (broadcast indicator) ─────────────────── */
+.nav-countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0 2rem;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  height: 48px;
+  min-width: 220px;
+}
+
+.nav-countdown-label {
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  font-weight: 500;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--accent);
+  opacity: 0.7;
+}
+
+.nav-countdown-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.nav-countdown-dj {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+.nav-countdown-sep {
+  color: var(--border);
+  font-size: 0.8rem;
+}
+
+.nav-countdown-timer {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 
 .nav-link {
@@ -191,7 +254,7 @@ img, video, iframe { display: block; max-width: 100%; }
 
 .mobile-menu {
   position: fixed;
-  top: 60px;
+  top: 84px;
   left: 0;
   right: 0;
   z-index: 99;
@@ -1329,10 +1392,11 @@ img, video, iframe { display: block; max-width: 100%; }
 
 /* ── Responsive ──────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .site-nav { padding: 0 1.25rem; height: 56px; }
+  .site-nav { padding: 0 1.25rem; height: 80px; display: flex; justify-content: space-between; }
+  .nav-countdown { display: none !important; }
   .nav-links { display: none !important; }
   .hamburger { display: flex; }
-  .mobile-menu { top: 56px; }
+  .mobile-menu { top: 80px; }
 
   .stream-chat-grid { grid-template-columns: 1fr; }
   .chat-container {

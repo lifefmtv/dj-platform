@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import NavCountdown from "@/components/NavCountdown";
 
 const NAV_LINKS = [
   { href: "/shows", label: "Shows" },
@@ -20,34 +21,39 @@ export default function NavBar() {
           <Image
             src="/logo.webp"
             alt="Life FM TV"
-            width={160}
-            height={40}
-            style={{ height: "40px", width: "auto", display: "block" }}
+            width={280}
+            height={70}
+            style={{ height: "70px", width: "auto", display: "block" }}
             priority
           />
         </a>
 
-        {/* Desktop links */}
-        <div className="nav-links">
-          {NAV_LINKS.map(({ href, label }) => (
-            <a key={href} href={href} className="nav-link">
-              {label}
-            </a>
-          ))}
-        </div>
+        {/* Next Up broadcast indicator — desktop only */}
+        <NavCountdown />
 
-        {/* Hamburger — mobile only */}
-        <button
-          className={`hamburger${open ? " hamburger--open" : ""}`}
-          onClick={() => setOpen((v) => !v)}
-          aria-label={open ? "Close menu" : "Open menu"}
-          aria-expanded={open}
-          aria-controls="mobile-menu"
-        >
-          <span />
-          <span />
-          <span />
-        </button>
+        {/* Right side: desktop links + hamburger */}
+        <div className="nav-right">
+          <div className="nav-links">
+            {NAV_LINKS.map(({ href, label }) => (
+              <a key={href} href={href} className="nav-link">
+                {label}
+              </a>
+            ))}
+          </div>
+
+          {/* Hamburger — mobile only */}
+          <button
+            className={`hamburger${open ? " hamburger--open" : ""}`}
+            onClick={() => setOpen((v) => !v)}
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open}
+            aria-controls="mobile-menu"
+          >
+            <span />
+            <span />
+            <span />
+          </button>
+        </div>
       </nav>
 
       {/* Mobile dropdown — rendered outside nav so it sits below it */}
