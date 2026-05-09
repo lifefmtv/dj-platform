@@ -12,13 +12,11 @@ export default function SignInPage() {
         minHeight: "80vh",
       }}
     >
-      {/*
-        fallbackRedirectUrl: where to go after sign-in when no redirect_url
-        query param is present (e.g. if someone navigates directly here).
-        The middleware also sets redirect_url on the URL, which Clerk
-        picks up automatically and takes priority over fallbackRedirectUrl.
-      */}
-      <SignIn fallbackRedirectUrl="/admin" />
+      <SignIn
+        routing="hash"
+        signUpUrl="/admin/sign-in"
+        fallbackRedirectUrl="/admin"
+      />
     </main>
   );
 }
