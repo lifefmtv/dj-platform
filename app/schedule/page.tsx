@@ -34,10 +34,13 @@ export default async function SchedulePage() {
               {dayEvents.map((event) => (
                 <div key={event.id} className="schedule-event-row">
                   <div>
-                    <p className="schedule-dj-name">{event.dj_name}</p>
-                    {event.stage && (
-                      <p className="schedule-stage">{event.stage}</p>
-                    )}
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                      <p className="schedule-dj-name">{event.dj_name}</p>
+                      {event.genre && <span className="schedule-genre-tag">{event.genre}</span>}
+                      {event.is_recurring && <span className="schedule-recurring-badge">recurring</span>}
+                    </div>
+                    {event.stage && <p className="schedule-stage">{event.stage}</p>}
+                    {event.description && <p className="schedule-description">{event.description}</p>}
                   </div>
                   <span className="schedule-time">
                     {event.start_time.slice(0, 5)} — {event.end_time.slice(0, 5)}

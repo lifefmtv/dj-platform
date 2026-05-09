@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { SignOutButton } from "@clerk/nextjs";
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
 import TimetableManager from "@/components/admin/TimetableManager";
+import ShowTemplateManager from "@/components/admin/ShowTemplateManager";
 import FlyerUpload from "@/components/admin/FlyerUpload";
 import MixManager from "@/components/admin/MixManager";
 import ChatModeration from "@/components/admin/ChatModeration";
@@ -56,6 +57,17 @@ export default async function AdminPage() {
           }}
         >
           <TimetableManager />
+        </section>
+
+        <section
+          style={{
+            background: "#111",
+            border: "1px solid #222",
+            borderRadius: "8px",
+            padding: "2rem",
+          }}
+        >
+          <ShowTemplateManager />
         </section>
 
         <section

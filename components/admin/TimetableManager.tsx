@@ -1,28 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { format } from "date-fns";
 
 interface ScheduleEntry {
   id: string;
   dj_name: string;
-  stage: string;
+  stage: string | null;
   date: string;
   start_time: string;
   end_time: string;
+  genre: string | null;
+  is_recurring: boolean;
+  template_id: string | null;
 }
 
 export default function TimetableManager() {
+  const supabase = useMemo(() => createClient(), []);
   const [entries, setEntries] = useState<ScheduleEntry[]>([]);
   const [djName, setDjName] = useState("");
   const [stage, setStage] = useState("");
   const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
+  const [genre, setGenre] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const supabase = createClient();
 
   useEffect(() => {
     fetchEntries();
@@ -31,7 +35,7 @@ export default function TimetableManager() {
   async function fetchEntries() {
     const { data } = await supabase
       .from("schedule")
-      .select("*")
+      .select("id, dj_name, stage, date, start_time, end_time, genre, is_recurring, template_id")
       .order("date", { ascending: true })
       .order("start_time", { ascending: true });
     if (data) setEntries(data);
@@ -44,36 +48,39 @@ export default function TimetableManager() {
     }
     setLoading(true);
     const { error } = await supabase.from("schedule").insert({
-      dj_name: djName,
-      stage,
+      dj_name: djName.trim(),
+      stage: stage.trim() || null,
       date,
       start_time: startTime,
       end_time: endTime,
+      genre: genre.trim() || null,
+      is_recurring: false,
     });
+    setLoading(false);
     if (error) {
       setMessage("Error adding entry.");
     } else {
-      setMessage("Entry added successfully.");
+      setMessage("Entry added.");
       setDjName("");
       setStage("");
       setDate("");
       setStartTime("");
       setEndTime("");
+      setGenre("");
       fetchEntries();
     }
-    setLoading(false);
     setTimeout(() => setMessage(""), 3000);
   }
 
   async function deleteEntry(id: string) {
-    if (!confirm("Delete this entry?")) return;
+    if (!confirm("Delete this schedule entry?")) return;
     await supabase.from("schedule").delete().eq("id", id);
     fetchEntries();
   }
 
   return (
     <div>
-      <h2 style={sectionTitle}>DJ Timetable</h2>
+      <h2 style={sectionTitle}>DJ Timetable — One-off Shows</h2>
 
       {/* Add form */}
       <div style={formCard}>
@@ -123,36 +130,46 @@ export default function TimetableManager() {
               style={inputStyle}
             />
           </div>
+          <div>
+            <label style={labelStyle}>Genre</label>
+            <input
+              value={genre}
+              onChange={(e) => setGenre(e.target.value)}
+              placeholder="DNB, Jungle…"
+              style={inputStyle}
+            />
+          </div>
         </div>
         <button onClick={addEntry} disabled={loading} style={buttonStyle}>
-          {loading ? "Adding..." : "Add to Timetable"}
+          {loading ? "Adding…" : "Add to Timetable"}
         </button>
         {message && (
-          <p style={{ color: "#e63030", marginTop: "0.5rem", fontSize: "0.85rem" }}>
-            {message}
-          </p>
+          <p style={{ color: "#e63030", marginTop: "0.5rem", fontSize: "0.82rem" }}>{message}</p>
         )}
       </div>
 
-      {/* Entries list */}
+      {/* Entry list */}
       <div style={{ marginTop: "1.5rem" }}>
         {entries.length === 0 ? (
-          <p style={{ color: "#555", fontSize: "0.9rem" }}>No entries yet.</p>
+          <p style={{ color: "#555", fontSize: "0.88rem" }}>No entries yet.</p>
         ) : (
           entries.map((entry) => (
             <div key={entry.id} style={entryRow}>
-              <div>
-                <p style={{ fontWeight: 600 }}>{entry.dj_name}</p>
-                <p style={{ color: "#aaa", fontSize: "0.8rem" }}>
-                  {format(new Date(entry.date + "T00:00:00"), "d MMM yyyy")} •{" "}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
+                  <p style={{ fontWeight: 600 }}>{entry.dj_name}</p>
+                  {entry.genre && <span style={genreTag}>{entry.genre}</span>}
+                  {entry.is_recurring && (
+                    <span style={recurringBadge}>recurring</span>
+                  )}
+                </div>
+                <p style={{ color: "#888", fontSize: "0.78rem", marginTop: "0.1rem" }}>
+                  {format(new Date(entry.date + "T00:00:00"), "d MMM yyyy")} ·{" "}
                   {entry.start_time.slice(0, 5)} — {entry.end_time.slice(0, 5)}
-                  {entry.stage && ` • ${entry.stage}`}
+                  {entry.stage && ` · ${entry.stage}`}
                 </p>
               </div>
-              <button
-                onClick={() => deleteEntry(entry.id)}
-                style={deleteButton}
-              >
+              <button onClick={() => deleteEntry(entry.id)} style={deleteButton}>
                 Delete
               </button>
             </div>
@@ -162,6 +179,8 @@ export default function TimetableManager() {
     </div>
   );
 }
+
+// ── Styles ────────────────────────────────────────────────
 
 const sectionTitle: React.CSSProperties = {
   fontSize: "1.1rem",
@@ -179,16 +198,16 @@ const formCard: React.CSSProperties = {
 
 const formGrid: React.CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+  gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))",
   gap: "1rem",
   marginBottom: "1rem",
 };
 
 const labelStyle: React.CSSProperties = {
   display: "block",
-  fontSize: "0.8rem",
-  color: "#aaa",
-  marginBottom: "0.4rem",
+  fontSize: "0.78rem",
+  color: "#888",
+  marginBottom: "0.35rem",
 };
 
 const inputStyle: React.CSSProperties = {
@@ -197,8 +216,9 @@ const inputStyle: React.CSSProperties = {
   borderRadius: "4px",
   color: "#fff",
   padding: "0.5rem 0.75rem",
-  fontSize: "0.9rem",
+  fontSize: "0.88rem",
   width: "100%",
+  fontFamily: "inherit",
 };
 
 const buttonStyle: React.CSSProperties = {
@@ -209,26 +229,52 @@ const buttonStyle: React.CSSProperties = {
   padding: "0.6rem 1.5rem",
   cursor: "pointer",
   fontWeight: 600,
-  fontSize: "0.9rem",
+  fontSize: "0.88rem",
 };
 
 const entryRow: React.CSSProperties = {
   background: "#111",
   border: "1px solid #222",
   borderRadius: "8px",
-  padding: "1rem 1.5rem",
+  padding: "1rem 1.25rem",
   marginBottom: "0.5rem",
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
+  gap: "1rem",
+};
+
+const genreTag: React.CSSProperties = {
+  fontSize: "0.62rem",
+  fontWeight: 700,
+  letterSpacing: "0.1em",
+  textTransform: "uppercase",
+  color: "#e63030",
+  background: "rgba(230,48,48,0.1)",
+  border: "1px solid rgba(230,48,48,0.25)",
+  borderRadius: "3px",
+  padding: "0.1rem 0.4rem",
+};
+
+const recurringBadge: React.CSSProperties = {
+  fontSize: "0.6rem",
+  fontWeight: 700,
+  letterSpacing: "0.1em",
+  textTransform: "uppercase",
+  color: "#888",
+  background: "#1a1a1a",
+  border: "1px solid #333",
+  borderRadius: "3px",
+  padding: "0.1rem 0.4rem",
 };
 
 const deleteButton: React.CSSProperties = {
   background: "transparent",
   color: "#e63030",
-  border: "1px solid #e63030",
+  border: "1px solid rgba(230,48,48,0.4)",
   borderRadius: "4px",
   padding: "0.3rem 0.75rem",
   cursor: "pointer",
-  fontSize: "0.8rem",
+  fontSize: "0.78rem",
+  flexShrink: 0,
 };
