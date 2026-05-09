@@ -43,7 +43,7 @@ export default function NewsCards() {
           gap: "1rem",
         }}
       >
-        {items.map((item, i) => (
+{items.map((item, i) => (
           
             key={i}
             href={item.link}
