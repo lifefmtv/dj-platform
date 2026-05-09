@@ -2,13 +2,17 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
-const isPublicRoute = createRouteMatcher(["/admin/sign-in(.*)"]);
+const isSignInRoute = createRouteMatcher(["/admin/sign-in(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
-  if (isAdminRoute(req) && !isPublicRoute(req)) {
+  if (isAdminRoute(req) && !isSignInRoute(req)) {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.redirect(new URL("/admin/sign-in", req.url));
+      // Pass redirect_url so Clerk knows where to send the user after sign-in.
+      // Without this, Clerk falls back to its dashboard default (localhost in dev mode).
+      const signInUrl = new URL("/admin/sign-in", req.url);
+      signInUrl.searchParams.set("redirect_url", req.nextUrl.pathname);
+      return NextResponse.redirect(signInUrl);
     }
   }
 });
