@@ -68,7 +68,7 @@ a {
 }
 
 .ticker-animate {
-  animation: ticker 40s linear infinite;
+  animation: ticker 80s linear infinite;
   white-space: nowrap;
 }
 
@@ -457,4 +457,72 @@ a {
   font-size: 0.68rem;
   letter-spacing: 0.08em;
   text-align: center;
+}
+
+/* ── Responsive layout grids ─────────────────────────────── */
+
+/* Stream + Chat */
+.stream-chat-grid {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  min-height: 500px;
+  background: var(--bg);
+}
+
+/* Flyer + News */
+.flyer-news-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  align-items: start;
+}
+
+/* Chat panel */
+.chat-container {
+  background: #0d0d0d;
+  border-left: 1px solid var(--border);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 400px;
+}
+
+/* ── Mobile ──────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .stream-chat-grid {
+    grid-template-columns: 1fr;
+    min-height: unset;
+  }
+
+  .chat-container {
+    border-left: none;
+    border-top: 1px solid var(--border);
+    height: 420px;
+    min-height: unset;
+  }
+
+  .flyer-news-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .site-nav {
+    padding: 0 1rem;
+    height: 56px;
+  }
+
+  .nav-links {
+    gap: 1.5rem;
+  }
+
+  .about-section {
+    padding: 2rem 1.25rem;
+  }
+
+  .site-footer {
+    margin-top: 2rem;
+    padding: 2rem 1.25rem;
+  }
+
+  .footer-links {
+    gap: 0.5rem 1.25rem;
+  }
 }

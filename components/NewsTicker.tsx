@@ -6,6 +6,7 @@ interface NewsItem {
   title: string;
   link: string;
   source: string;
+  color: string;
   pubDate: string;
 }
 
@@ -59,18 +60,17 @@ export default function NewsTicker() {
                 style={{
                   color: "#bbb",
                   fontSize: "0.82rem",
-                  marginRight: "3.5rem",
+                  marginRight: "4rem",
                   display: "inline-block",
-                  transition: "color 0.2s ease",
                 }}
               >
                 <span
                   style={{
-                    color: "var(--accent)",
+                    color: item.color || "var(--accent)",
                     fontWeight: 700,
                     marginRight: "0.5rem",
-                    fontSize: "0.7rem",
-                    letterSpacing: "0.08em",
+                    fontSize: "0.68rem",
+                    letterSpacing: "0.1em",
                     textTransform: "uppercase",
                   }}
                 >

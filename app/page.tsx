@@ -31,14 +31,7 @@ export default async function HomePage() {
           padding: "1px",
         }}
       >
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 360px",
-            minHeight: "500px",
-            background: "var(--bg)",
-          }}
-        >
+        <div className="stream-chat-grid">
           <LiveStream />
           <ChatRoom />
         </div>
@@ -64,13 +57,7 @@ export default async function HomePage() {
         />
       )}
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 2fr",
-          alignItems: "start",
-        }}
-      >
+      <div className="flyer-news-grid">
         <FlyerDisplay />
         <NewsCards />
       </div>
