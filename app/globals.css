@@ -493,6 +493,102 @@ img, video, iframe { display: block; max-width: 100%; }
 .chat-btn:hover { background: #c82020; }
 .chat-btn:disabled { opacity: 0.45; cursor: default; }
 
+/* ── Chat tabs wrapper ───────────────────────────────────── */
+.chat-tabs-outer {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-left: 1px solid var(--border-warm);
+  overflow: hidden;
+}
+
+.chat-tabs-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.chat-tabs-live-label {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.chat-tabs-bar {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.chat-tab-btn {
+  flex: 1;
+  padding: 0.65rem 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  background: var(--surface);
+  border: none;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+
+.chat-tab-btn + .chat-tab-btn {
+  border-left: 1px solid var(--border);
+}
+
+.chat-tab-btn:hover:not(.chat-tab-btn--active) {
+  color: var(--text-2);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.chat-tab-btn--active {
+  color: #fff;
+  background: #e63030;
+  border-bottom-color: #e63030;
+}
+
+.chat-tabs-body {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  min-height: 0;
+}
+
+.chat-tab-pane {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+}
+
+.chat-tab-pane--active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Strip the redundant header + border from ChatRoom when nested in tabs */
+.chat-tabs-body .chat-container {
+  flex: 1;
+  border-left: none;
+  min-height: 0;
+}
+
+.chat-tabs-body .chat-header {
+  display: none;
+}
+
 /* ── News ticker ─────────────────────────────────────────── */
 .ticker-wrap {
   display: flex;
@@ -1450,6 +1546,11 @@ img, video, iframe { display: block; max-width: 100%; }
     border-left: none;
     border-top: 1px solid var(--border);
     height: 380px;
+  }
+  .chat-tabs-outer {
+    border-left: none;
+    border-top: 1px solid var(--border);
+    height: 440px;
   }
 
   .about-section { padding: 3rem 1.5rem; }

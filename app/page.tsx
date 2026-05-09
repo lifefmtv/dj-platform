@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import LiveStream from "@/components/LiveStream";
-import ChatRoom from "@/components/ChatRoom";
+import ChatTabs from "@/components/ChatTabs";
 import NewsTicker from "@/components/NewsTicker";
 import NewsCards from "@/components/NewsCards";
 import FlyerDisplay from "@/components/FlyerDisplay";
@@ -26,7 +26,7 @@ export default async function HomePage() {
       {/* Hero: stream + chat */}
       <div className="stream-chat-grid">
         <LiveStream />
-        <ChatRoom />
+        <ChatTabs />
       </div>
 
       <NewsTicker />
