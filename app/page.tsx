@@ -26,7 +26,8 @@ export default async function HomePage() {
       <div
         className="stream-chat-glow"
         style={{
-          background: "linear-gradient(135deg, rgba(230,48,48,0.38) 0%, rgba(20,20,20,0) 45%, rgba(230,48,48,0.18) 100%)",
+          background:
+            "linear-gradient(135deg, rgba(230,48,48,0.38) 0%, rgba(20,20,20,0) 45%, rgba(230,48,48,0.18) 100%)",
           padding: "1px",
         }}
       >
@@ -44,6 +45,16 @@ export default async function HomePage() {
       </div>
 
       <NewsTicker />
+
+      {/* About */}
+      <section className="about-section">
+        <p className="about-eyebrow">24/7 Live Radio</p>
+        <p className="about-text">
+          Live streaming radio station broadcasting 24/7 DNB &amp; DUB. From tech house to
+          trance, drum and bass to funky house, reggae to dub, we have it all. Join us for
+          something new every night.
+        </p>
+      </section>
 
       {nextDJ && (
         <Countdown
