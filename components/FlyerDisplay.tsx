@@ -11,14 +11,14 @@ export default async function FlyerDisplay() {
 
   return (
     <div className="flyer-section">
-      <h2 className="news-section-heading">Current Event</h2>
+      <p className="flyer-section-label">Current Event</p>
       {data?.current_flyer_url ? (
         <div className="flyer-image-wrap">
           <Image
             src={data.current_flyer_url}
             alt="Event flyer"
-            width={400}
-            height={600}
+            width={260}
+            height={390}
             style={{ width: "100%", height: "auto", display: "block" }}
           />
         </div>

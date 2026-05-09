@@ -23,19 +23,10 @@ export default async function HomePage() {
 
   return (
     <main>
-      {/* Stream + Chat with gradient glow border */}
-      <div
-        className="stream-chat-glow"
-        style={{
-          background:
-            "linear-gradient(135deg, rgba(230,48,48,0.38) 0%, rgba(20,20,20,0) 45%, rgba(230,48,48,0.18) 100%)",
-          padding: "1px",
-        }}
-      >
-        <div className="stream-chat-grid">
-          <LiveStream />
-          <ChatRoom />
-        </div>
+      {/* Hero: stream + chat */}
+      <div className="stream-chat-grid">
+        <LiveStream />
+        <ChatRoom />
       </div>
 
       <NewsTicker />
@@ -56,7 +47,11 @@ export default async function HomePage() {
         <p className="about-tagline">Tune in.</p>
       </section>
 
-      {/* Recent shows — compact 3-card strip */}
+      {/* Recent shows */}
+      <div className="section-strip">
+        <span className="section-strip-label">Recent Shows</span>
+        <a href="/shows" className="section-strip-link">View all →</a>
+      </div>
       <MixcloudShows compact />
 
       {nextDJ && (
@@ -67,6 +62,7 @@ export default async function HomePage() {
         />
       )}
 
+      {/* Flyer + News */}
       <div className="flyer-news-grid">
         <FlyerDisplay />
         <NewsCards />

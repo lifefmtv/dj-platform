@@ -9,14 +9,11 @@ export default async function MixesPage() {
     .from("mixes")
     .select("*")
     .order("created_at", { ascending: false })
-    .limit(10);
+    .limit(20);
 
   return (
-    <main style={{ padding: "2.5rem 2rem", maxWidth: "1100px", margin: "0 auto" }}>
-      <a href="/" className="back-link">
-        ← Home
-      </a>
-
+    <main className="content-page">
+      <a href="/" className="back-link">← Home</a>
       <h1 className="page-heading">Mixes</h1>
 
       {!mixes || mixes.length === 0 ? (
