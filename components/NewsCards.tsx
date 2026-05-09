@@ -22,7 +22,6 @@ export default function NewsCards() {
       .catch(() => {});
   }, []);
 
-  // Unique sources in first-seen order, preserving their exact feed colour
   const sources = useMemo(() => {
     const seen = new Map<string, string>();
     for (const item of items) {
@@ -31,9 +30,11 @@ export default function NewsCards() {
     return Array.from(seen.entries()).map(([source, color]) => ({ source, color }));
   }, [items]);
 
-  const displayed = activeFilters.size === 0
-    ? items
-    : items.filter((item) => activeFilters.has(item.source));
+  const displayed = (
+    activeFilters.size === 0
+      ? items
+      : items.filter((item) => activeFilters.has(item.source))
+  ).slice(0, 8);
 
   function toggleFilter(source: string) {
     setActiveFilters((prev) => {
@@ -50,7 +51,6 @@ export default function NewsCards() {
     <div className="news-section">
       <h2 className="news-section-heading">Music News</h2>
 
-      {/* Filter squares — one coloured square per source */}
       <div className="filter-bar" role="group" aria-label="Filter by source">
         {sources.map(({ source, color }) => {
           const isActive = activeFilters.has(source);
@@ -75,34 +75,35 @@ export default function NewsCards() {
         })}
       </div>
 
-      {/* Card grid */}
-      <div className="news-cards-grid">
-        {displayed.map((item, i) => (
-          <a
-            key={i}
-            href={item.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="news-card"
-          >
-            <span
-              className="news-source-label"
-              style={{
-                color: item.color,
-                background: `${item.color}1a`,
-                borderColor: `${item.color}44`,
-              }}
+      <div className="news-scroll-container">
+        <div className="news-cards-grid">
+          {displayed.map((item, i) => (
+            <a
+              key={i}
+              href={item.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="news-card"
             >
-              {item.source}
-            </span>
-            <p className="news-card-title">{item.title}</p>
-            <p className="news-card-date">
-              {item.pubDate
-                ? formatDistanceToNow(new Date(item.pubDate), { addSuffix: true })
-                : ""}
-            </p>
-          </a>
-        ))}
+              <span
+                className="news-source-label"
+                style={{
+                  color: item.color,
+                  background: `${item.color}1a`,
+                  borderColor: `${item.color}44`,
+                }}
+              >
+                {item.source}
+              </span>
+              <p className="news-card-title">{item.title}</p>
+              <p className="news-card-date">
+                {item.pubDate
+                  ? formatDistanceToNow(new Date(item.pubDate), { addSuffix: true })
+                  : ""}
+              </p>
+            </a>
+          ))}
+        </div>
       </div>
     </div>
   );

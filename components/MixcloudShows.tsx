@@ -41,20 +41,40 @@ export default function MixcloudShows({ compact = false }: Props) {
     setOpenKey((prev) => (prev === key ? null : key));
   }
 
-  if (loading || shows.length === 0) return null;
+  const sectionClass = compact ? "shows-section-compact" : "shows-section";
+
+  const heading = compact ? (
+    <h2 className="news-section-heading" style={{ marginBottom: "1rem" }}>
+      Recent Shows
+    </h2>
+  ) : (
+    <>
+      <a href="/" className="back-link">← Home</a>
+      <h1 className="page-heading">Recent Shows</h1>
+    </>
+  );
+
+  if (loading) {
+    return (
+      <section className={sectionClass}>
+        {heading}
+        <div className="placeholder-empty">Loading shows…</div>
+      </section>
+    );
+  }
+
+  if (shows.length === 0) {
+    return (
+      <section className={sectionClass}>
+        {heading}
+        <div className="placeholder-empty">No mixes uploaded yet</div>
+      </section>
+    );
+  }
 
   return (
-    <section className={compact ? "shows-section-compact" : "shows-section"}>
-      {compact ? (
-        <h2 className="news-section-heading" style={{ marginBottom: "1rem" }}>
-          Recent Shows
-        </h2>
-      ) : (
-        <>
-          <a href="/" className="back-link">← Home</a>
-          <h1 className="page-heading">Recent Shows</h1>
-        </>
-      )}
+    <section className={sectionClass}>
+      {heading}
 
       <div className={compact ? "shows-grid-compact" : "shows-grid"}>
         {shows.map((show) => {
@@ -70,7 +90,6 @@ export default function MixcloudShows({ compact = false }: Props) {
 
           return (
             <div key={show.key} className={`show-card${isOpen ? " show-card--open" : ""}`}>
-              {/* Thumbnail / play button */}
               <button
                 className="show-thumb-btn"
                 onClick={() => toggleShow(show.key)}
@@ -88,7 +107,6 @@ export default function MixcloudShows({ compact = false }: Props) {
                 </div>
               </button>
 
-              {/* Info */}
               <div className="show-card-body">
                 <p className="show-name">{show.name}</p>
                 <div className="show-meta">
@@ -103,7 +121,6 @@ export default function MixcloudShows({ compact = false }: Props) {
                 </div>
               </div>
 
-              {/* Inline embed — opens when card is active */}
               {isOpen && (
                 <iframe
                   src={embedSrc}
