@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
+import NavBar from "@/components/NavBar";
 
 export const metadata: Metadata = {
   title: "Life FM TV",
@@ -13,22 +13,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <ClerkProvider>
       <html lang="en">
         <body>
-          <nav className="site-nav">
-            <a href="/" className="nav-logo-link" aria-label="Life FM TV — Home">
-              <Image
-                src="/logo.webp"
-                alt="Life FM TV"
-                width={160}
-                height={40}
-                style={{ height: "40px", width: "auto", display: "block" }}
-                priority
-              />
-            </a>
-            <div className="nav-links">
-              <a href="/schedule" className="nav-link">Schedule</a>
-              <a href="/mixes" className="nav-link">Mixes</a>
-            </div>
-          </nav>
+          <NavBar />
 
           {children}
 
@@ -71,10 +56,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                   Twitter
                 </a>
                 <span className="footer-divider">·</span>
-                <a
-                  href="mailto:lifefmhq@gmail.com"
-                  className="footer-link"
-                >
+                <a href="mailto:lifefmhq@gmail.com" className="footer-link">
                   Email
                 </a>
                 <span className="footer-divider">·</span>
@@ -85,6 +67,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                   className="footer-link"
                 >
                   Mixcloud
+                </a>
+                <span className="footer-divider">·</span>
+                <a href="/privacy" className="footer-link">
+                  Privacy Policy
                 </a>
               </div>
               <p className="footer-copy">

@@ -6,6 +6,7 @@ import NewsTicker from "@/components/NewsTicker";
 import NewsCards from "@/components/NewsCards";
 import FlyerDisplay from "@/components/FlyerDisplay";
 import Countdown from "@/components/Countdown";
+import MixcloudShows from "@/components/MixcloudShows";
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
 
 export default async function HomePage() {
@@ -48,6 +49,9 @@ export default async function HomePage() {
           something new every night.
         </p>
       </section>
+
+      {/* Recent shows — compact 3-card strip */}
+      <MixcloudShows compact />
 
       {nextDJ && (
         <Countdown
