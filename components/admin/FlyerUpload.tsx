@@ -4,29 +4,39 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase";
 import Image from "next/image";
 
+type BannerType = "success" | "error";
+
 export default function FlyerUpload({ currentFlyer }: { currentFlyer: string | null }) {
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<BannerType>("success");
   const [preview, setPreview] = useState<string | null>(currentFlyer);
   const [dragging, setDragging] = useState(false);
   const supabase = createClient();
 
+  function flash(msg: string, type: BannerType = "success") {
+    setMessage(msg);
+    setMessageType(type);
+    setTimeout(() => setMessage(""), 3400);
+  }
+
   async function handleUpload(file: File) {
     if (!file.type.startsWith("image/")) {
-      setMessage("Please upload an image file.");
+      flash("Please upload an image file (JPG, PNG, WebP, etc.).", "error");
       return;
     }
     setUploading(true);
     setMessage("");
 
-    const fileName = `flyer-${Date.now()}.${file.name.split(".").pop()}`;
+    const ext = file.name.split(".").pop();
+    const fileName = `flyer-${Date.now()}.${ext}`;
 
     const { error: uploadError } = await supabase.storage
       .from("flyers")
       .upload(fileName, file, { upsert: true });
 
     if (uploadError) {
-      setMessage("Upload failed. Please try again.");
+      flash("Upload failed. Please try again.", "error");
       setUploading(false);
       return;
     }
@@ -40,15 +50,14 @@ export default function FlyerUpload({ currentFlyer }: { currentFlyer: string | n
       .update({ current_flyer_url: urlData.publicUrl })
       .eq("id", 1);
 
+    setUploading(false);
+
     if (updateError) {
-      setMessage("Failed to update flyer.");
+      flash("Image uploaded but failed to save. Please try again.", "error");
     } else {
       setPreview(urlData.publicUrl);
-      setMessage("Flyer updated successfully!");
+      flash("Flyer saved successfully — it will now appear on the homepage.", "success");
     }
-
-    setUploading(false);
-    setTimeout(() => setMessage(""), 3000);
   }
 
   function onDrop(e: React.DragEvent) {
@@ -60,46 +69,35 @@ export default function FlyerUpload({ currentFlyer }: { currentFlyer: string | n
 
   return (
     <div>
-      <h2 style={sectionTitle}>Current Flyer</h2>
+      <h2 style={sectionTitle}>Current Event Flyer</h2>
 
-      {preview && (
-        <div style={{ marginBottom: "1.5rem" }}>
-          <Image
-            src={preview}
-            alt="Current flyer"
-            width={300}
-            height={400}
-            style={{
-              width: "200px",
-              height: "auto",
-              borderRadius: "8px",
-              border: "1px solid #222",
-            }}
-          />
-        </div>
-      )}
-
+      {/* Drop zone */}
       <div
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
+        onClick={() => !uploading && document.getElementById("flyer-input")?.click()}
         style={{
-          border: `2px dashed ${dragging ? "#e63030" : "#333"}`,
+          border: `2px dashed ${dragging ? "#e63030" : "#444"}`,
           borderRadius: "8px",
-          padding: "3rem",
+          padding: "2.5rem 2rem",
           textAlign: "center",
-          cursor: "pointer",
-          transition: "border-color 0.2s",
-          background: dragging ? "#1a0000" : "#111",
+          cursor: uploading ? "default" : "pointer",
+          transition: "border-color 0.2s, background 0.2s",
+          background: dragging ? "rgba(230,48,48,0.06)" : "#0d0d0d",
+          marginBottom: "1.25rem",
         }}
-        onClick={() => document.getElementById("flyer-input")?.click()}
       >
-        <p style={{ color: "#aaa", marginBottom: "0.5rem" }}>
-          {uploading ? "Uploading..." : "Drag and drop a flyer here"}
+        <div style={{ fontSize: "2.2rem", marginBottom: "0.75rem", lineHeight: 1 }}>🖼️</div>
+        <p style={{ color: uploading ? "#888" : "#ddd", fontWeight: 600, fontSize: "0.95rem", marginBottom: "0.35rem" }}>
+          {uploading ? "Uploading…" : "Drop your flyer image here"}
         </p>
-        <p style={{ color: "#555", fontSize: "0.8rem" }}>
-          or click to browse
+        <p style={{ color: "#555", fontSize: "0.8rem", marginBottom: "1.25rem" }}>
+          {uploading ? "Please wait" : "or click to choose a file from your computer"}
         </p>
+        {!uploading && (
+          <span style={chooseButton}>Choose Image</span>
+        )}
         <input
           id="flyer-input"
           type="file"
@@ -112,16 +110,26 @@ export default function FlyerUpload({ currentFlyer }: { currentFlyer: string | n
         />
       </div>
 
+      {/* Success / error banner */}
       {message && (
-        <p
-          style={{
-            marginTop: "1rem",
-            fontSize: "0.85rem",
-            color: message.includes("success") ? "#4caf50" : "#e63030",
-          }}
-        >
-          {message}
-        </p>
+        <div className={`admin-banner admin-banner--${messageType}`}>
+          <span className="admin-banner-icon">{messageType === "success" ? "✓" : "✕"}</span>
+          <span className="admin-banner-text">{message}</span>
+        </div>
+      )}
+
+      {/* Preview */}
+      {preview && (
+        <div style={{ marginTop: "1.5rem" }}>
+          <p style={previewLabel}>Current flyer</p>
+          <Image
+            src={preview}
+            alt="Current event flyer"
+            width={300}
+            height={400}
+            style={{ width: "180px", height: "auto", borderRadius: "6px", border: "1px solid #222", display: "block" }}
+          />
+        </div>
       )}
     </div>
   );
@@ -132,4 +140,24 @@ const sectionTitle: React.CSSProperties = {
   fontWeight: 700,
   marginBottom: "1.5rem",
   color: "#fff",
+};
+
+const chooseButton: React.CSSProperties = {
+  display: "inline-block",
+  background: "#e63030",
+  color: "#fff",
+  borderRadius: "4px",
+  padding: "0.55rem 1.4rem",
+  fontSize: "0.85rem",
+  fontWeight: 600,
+  cursor: "pointer",
+};
+
+const previewLabel: React.CSSProperties = {
+  fontSize: "0.72rem",
+  color: "#555",
+  letterSpacing: "0.1em",
+  textTransform: "uppercase",
+  marginBottom: "0.75rem",
+  fontFamily: "inherit",
 };

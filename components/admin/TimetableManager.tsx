@@ -27,6 +27,7 @@ export default function TimetableManager() {
   const [genre, setGenre] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"success" | "error">("success");
 
   useEffect(() => {
     fetchEntries();
@@ -41,9 +42,15 @@ export default function TimetableManager() {
     if (data) setEntries(data);
   }
 
+  function flash(msg: string, type: "success" | "error" = "success") {
+    setMessage(msg);
+    setMessageType(type);
+    setTimeout(() => setMessage(""), 3400);
+  }
+
   async function addEntry() {
     if (!djName || !date || !startTime || !endTime) {
-      setMessage("Please fill in all required fields.");
+      flash("Please fill in all required fields.", "error");
       return;
     }
     setLoading(true);
@@ -58,9 +65,9 @@ export default function TimetableManager() {
     });
     setLoading(false);
     if (error) {
-      setMessage("Error adding entry.");
+      flash("Error adding entry. Please try again.", "error");
     } else {
-      setMessage("Entry added.");
+      flash(`Schedule entry added — ${djName.trim()} on ${date}.`, "success");
       setDjName("");
       setStage("");
       setDate("");
@@ -69,7 +76,6 @@ export default function TimetableManager() {
       setGenre("");
       fetchEntries();
     }
-    setTimeout(() => setMessage(""), 3000);
   }
 
   async function deleteEntry(id: string) {
@@ -144,7 +150,10 @@ export default function TimetableManager() {
           {loading ? "Adding…" : "Add to Timetable"}
         </button>
         {message && (
-          <p style={{ color: "#e63030", marginTop: "0.5rem", fontSize: "0.82rem" }}>{message}</p>
+          <div className={`admin-banner admin-banner--${messageType}`}>
+            <span className="admin-banner-icon">{messageType === "success" ? "✓" : "✕"}</span>
+            <span className="admin-banner-text">{message}</span>
+          </div>
         )}
       </div>
 

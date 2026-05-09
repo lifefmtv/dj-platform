@@ -64,6 +64,7 @@ export default function ShowTemplateManager() {
 
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"success" | "error">("success");
   const [generatingId, setGeneratingId] = useState<string | null>(null);
   const [weeksAhead, setWeeksAhead] = useState(4);
 
@@ -79,19 +80,21 @@ export default function ShowTemplateManager() {
     if (data) setTemplates(data);
   }
 
-  function flash(msg: string) {
+  function flash(msg: string, type: "success" | "error" = "success") {
     setMessage(msg);
-    setTimeout(() => setMessage(""), 3500);
+    setMessageType(type);
+    setTimeout(() => setMessage(""), 3400);
   }
 
   async function saveTemplate() {
     if (!djName.trim() || !startTime || !endTime) {
-      flash("DJ name, start time and end time are required.");
+      flash("DJ name, start time and end time are required.", "error");
       return;
     }
+    const savedName = djName.trim();
     setSaving(true);
     const { error } = await supabase.from("show_templates").insert({
-      dj_name: djName.trim(),
+      dj_name: savedName,
       stage: stage.trim() || null,
       start_time: startTime,
       end_time: endTime,
@@ -103,9 +106,9 @@ export default function ShowTemplateManager() {
     });
     setSaving(false);
     if (error) {
-      flash("Error saving template.");
+      flash("Error saving template. Please try again.", "error");
     } else {
-      flash("Template saved.");
+      flash(`Template saved — ${savedName} added to recurring shows.`, "success");
       setDjName("");
       setStage("");
       setStartTime("");
@@ -300,7 +303,10 @@ export default function ShowTemplateManager() {
           {saving ? "Saving…" : "Save Template"}
         </button>
         {message && (
-          <p style={{ color: "#e63030", marginTop: "0.5rem", fontSize: "0.82rem" }}>{message}</p>
+          <div className={`admin-banner admin-banner--${messageType}`}>
+            <span className="admin-banner-icon">{messageType === "success" ? "✓" : "✕"}</span>
+            <span className="admin-banner-text">{message}</span>
+          </div>
         )}
       </div>
 

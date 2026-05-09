@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { format } from "date-fns";
 
@@ -12,13 +12,17 @@ interface Mix {
   created_at: string;
 }
 
+type BannerType = "success" | "error";
+
 export default function MixManager() {
+  const supabase = useMemo(() => createClient(), []);
   const [mixes, setMixes] = useState<Mix[]>([]);
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [dragging, setDragging] = useState(false);
   const [message, setMessage] = useState("");
-  const supabase = createClient();
+  const [messageType, setMessageType] = useState<BannerType>("success");
 
   useEffect(() => {
     fetchMixes();
@@ -32,26 +36,37 @@ export default function MixManager() {
     if (data) setMixes(data);
   }
 
+  function flash(msg: string, type: BannerType = "success") {
+    setMessage(msg);
+    setMessageType(type);
+    setTimeout(() => setMessage(""), 3400);
+  }
+
   async function handleUpload(file: File) {
-    if (!title || !artist) {
-      setMessage("Please fill in title and artist first.");
+    if (!title.trim() || !artist.trim()) {
+      flash("Please fill in the title and artist before choosing a file.", "error");
       return;
     }
     if (mixes.length >= 10) {
-      setMessage("Maximum 10 mixes reached. Delete one to add a new one.");
+      flash("Maximum 10 mixes reached. Delete one to add a new one.", "error");
       return;
     }
+
+    const savedTitle = title.trim();
+    const savedArtist = artist.trim();
+
     setUploading(true);
     setMessage("");
 
-    const fileName = `mix-${Date.now()}.${file.name.split(".").pop()}`;
+    const ext = file.name.split(".").pop();
+    const fileName = `mix-${Date.now()}.${ext}`;
 
     const { error: uploadError } = await supabase.storage
       .from("mixes")
       .upload(fileName, file);
 
     if (uploadError) {
-      setMessage("Upload failed. Please try again.");
+      flash("Upload failed. Please try again.", "error");
       setUploading(false);
       return;
     }
@@ -61,30 +76,34 @@ export default function MixManager() {
       .getPublicUrl(fileName);
 
     const { error: insertError } = await supabase.from("mixes").insert({
-      title,
-      artist,
+      title: savedTitle,
+      artist: savedArtist,
       audio_url: urlData.publicUrl,
     });
 
+    setUploading(false);
+
     if (insertError) {
-      setMessage("Failed to save mix.");
+      flash("Upload succeeded but failed to save the record. Please try again.", "error");
     } else {
-      setMessage("Mix uploaded successfully!");
+      flash(`Mix uploaded successfully — it will appear on the Mixes page\n${savedTitle} · ${savedArtist}`, "success");
       setTitle("");
       setArtist("");
       fetchMixes();
     }
+  }
 
-    setUploading(false);
-    setTimeout(() => setMessage(""), 3000);
+  function onDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleUpload(file);
   }
 
   async function deleteMix(mix: Mix) {
     if (!confirm(`Delete "${mix.title}"?`)) return;
     const fileName = mix.audio_url.split("/").pop();
-    if (fileName) {
-      await supabase.storage.from("mixes").remove([fileName]);
-    }
+    if (fileName) await supabase.storage.from("mixes").remove([fileName]);
     await supabase.from("mixes").delete().eq("id", mix.id);
     fetchMixes();
   }
@@ -95,15 +114,15 @@ export default function MixManager() {
     <div>
       <h2 style={sectionTitle}>Mix Manager ({mixes.length}/10)</h2>
 
-      {/* Upload form */}
       <div style={formCard}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
+        {/* Title + Artist */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.25rem" }}>
           <div>
-            <label style={labelStyle}>Title *</label>
+            <label style={labelStyle}>Mix Title *</label>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Mix title"
+              placeholder="e.g. Late Night Sessions Vol. 3"
               style={inputStyle}
               disabled={atLimit}
             />
@@ -113,7 +132,7 @@ export default function MixManager() {
             <input
               value={artist}
               onChange={(e) => setArtist(e.target.value)}
-              placeholder="Artist name"
+              placeholder="e.g. DJ Kellsy"
               style={inputStyle}
               disabled={atLimit}
             />
@@ -122,64 +141,93 @@ export default function MixManager() {
 
         {atLimit ? (
           <p style={{ color: "#e63030", fontSize: "0.9rem" }}>
-            Delete a mix to add a new one.
+            Maximum reached — delete a mix to add a new one.
           </p>
         ) : (
-          <div>
-            <label style={labelStyle}>Audio File *</label>
-            <input
-              type="file"
-              accept="audio/*"
-              disabled={uploading}
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleUpload(file);
+          <>
+            <label style={labelStyle}>Audio File (MP3, WAV, AAC…) *</label>
+            <div
+              onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={onDrop}
+              onClick={() => !uploading && document.getElementById("audio-file-input")?.click()}
+              style={{
+                border: `2px dashed ${dragging ? "#e63030" : "#444"}`,
+                borderRadius: "8px",
+                padding: "2.5rem 2rem",
+                textAlign: "center",
+                cursor: uploading ? "default" : "pointer",
+                background: dragging ? "rgba(230,48,48,0.06)" : "#0d0d0d",
+                transition: "border-color 0.2s, background 0.2s",
               }}
-              style={{ ...inputStyle, padding: "0.4rem" }}
-            />
-          </div>
+            >
+              <div style={{ fontSize: "2.2rem", marginBottom: "0.75rem", lineHeight: 1 }}>🎵</div>
+              <p style={{ color: uploading ? "#888" : "#ddd", fontWeight: 600, fontSize: "0.95rem", marginBottom: "0.35rem" }}>
+                {uploading ? "Uploading…" : "Drop your audio file here"}
+              </p>
+              <p style={{ color: "#555", fontSize: "0.8rem", marginBottom: "1.25rem" }}>
+                {uploading ? "Please wait" : "or click to choose a file from your computer"}
+              </p>
+              {!uploading && (
+                <span style={chooseButton}>Choose Audio File</span>
+              )}
+              <input
+                id="audio-file-input"
+                type="file"
+                accept="audio/*"
+                style={{ display: "none" }}
+                disabled={uploading}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleUpload(file);
+                }}
+              />
+            </div>
+            <p style={{ color: "#444", fontSize: "0.72rem", marginTop: "0.5rem" }}>
+              Accepted: MP3, WAV, AAC, FLAC · Max 10 mixes total
+            </p>
+          </>
         )}
 
         {message && (
-          <p style={{
-            marginTop: "0.75rem",
-            fontSize: "0.85rem",
-            color: message.includes("success") ? "#4caf50" : "#e63030",
-          }}>
-            {uploading ? "Uploading..." : message}
-          </p>
+          <div className={`admin-banner admin-banner--${messageType}`}>
+            <span className="admin-banner-icon">{messageType === "success" ? "✓" : "✕"}</span>
+            <span className="admin-banner-text" style={{ whiteSpace: "pre-line" }}>{message}</span>
+          </div>
         )}
       </div>
 
       {/* Mixes list */}
-      <div style={{ marginTop: "1.5rem" }}>
-        {mixes.length === 0 ? (
-          <p style={{ color: "#555", fontSize: "0.9rem" }}>No mixes yet.</p>
-        ) : (
-          mixes.map((mix) => (
+      {mixes.length > 0 && (
+        <div style={{ marginTop: "1.75rem" }}>
+          {mixes.map((mix) => (
             <div key={mix.id} style={mixRow}>
               <div style={{ flex: 1 }}>
-                <p style={{ fontWeight: 600 }}>{mix.title}</p>
-                <p style={{ color: "#e63030", fontSize: "0.8rem" }}>{mix.artist}</p>
-                <p style={{ color: "#555", fontSize: "0.75rem" }}>
+                <p style={{ fontWeight: 600, marginBottom: "0.1rem" }}>{mix.title}</p>
+                <p style={{ color: "#e63030", fontSize: "0.8rem", marginBottom: "0.1rem" }}>{mix.artist}</p>
+                <p style={{ color: "#555", fontSize: "0.72rem", marginBottom: "0.6rem" }}>
                   {format(new Date(mix.created_at), "d MMM yyyy")}
                 </p>
                 <audio
                   controls
                   src={mix.audio_url}
-                  style={{ width: "100%", marginTop: "0.5rem", accentColor: "#e63030" }}
+                  style={{ width: "100%", accentColor: "#e63030" }}
                 />
               </div>
-              <button onClick={() => deleteMix(mix)} style={deleteButton}>
-                Delete
-              </button>
+              <button onClick={() => deleteMix(mix)} style={deleteButton}>Delete</button>
             </div>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
+
+      {mixes.length === 0 && (
+        <p style={{ color: "#444", fontSize: "0.85rem", marginTop: "1.25rem" }}>No mixes yet.</p>
+      )}
     </div>
   );
 }
+
+// ── Styles ────────────────────────────────────────────────
 
 const sectionTitle: React.CSSProperties = {
   fontSize: "1.1rem",
@@ -197,9 +245,9 @@ const formCard: React.CSSProperties = {
 
 const labelStyle: React.CSSProperties = {
   display: "block",
-  fontSize: "0.8rem",
-  color: "#aaa",
-  marginBottom: "0.4rem",
+  fontSize: "0.78rem",
+  color: "#888",
+  marginBottom: "0.35rem",
 };
 
 const inputStyle: React.CSSProperties = {
@@ -208,16 +256,29 @@ const inputStyle: React.CSSProperties = {
   borderRadius: "4px",
   color: "#fff",
   padding: "0.5rem 0.75rem",
-  fontSize: "0.9rem",
+  fontSize: "0.88rem",
   width: "100%",
+  fontFamily: "inherit",
+};
+
+const chooseButton: React.CSSProperties = {
+  display: "inline-block",
+  background: "#e63030",
+  color: "#fff",
+  border: "none",
+  borderRadius: "4px",
+  padding: "0.55rem 1.4rem",
+  fontSize: "0.85rem",
+  fontWeight: 600,
+  cursor: "pointer",
 };
 
 const mixRow: React.CSSProperties = {
   background: "#111",
   border: "1px solid #222",
   borderRadius: "8px",
-  padding: "1rem 1.5rem",
-  marginBottom: "0.75rem",
+  padding: "1rem 1.25rem",
+  marginBottom: "0.5rem",
   display: "flex",
   alignItems: "flex-start",
   gap: "1rem",
@@ -226,10 +287,10 @@ const mixRow: React.CSSProperties = {
 const deleteButton: React.CSSProperties = {
   background: "transparent",
   color: "#e63030",
-  border: "1px solid #e63030",
+  border: "1px solid rgba(230,48,48,0.4)",
   borderRadius: "4px",
   padding: "0.3rem 0.75rem",
   cursor: "pointer",
-  fontSize: "0.8rem",
-  whiteSpace: "nowrap",
+  fontSize: "0.78rem",
+  flexShrink: 0,
 };

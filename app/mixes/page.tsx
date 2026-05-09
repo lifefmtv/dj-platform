@@ -17,7 +17,7 @@ export default async function MixesPage() {
       <h1 className="page-heading">Mixes</h1>
 
       {!mixes || mixes.length === 0 ? (
-        <div className="empty-state">No mixes uploaded yet</div>
+        <div className="empty-state">No mixes yet — check back soon</div>
       ) : (
         <div className="mixes-grid">
           {mixes.map((mix) => (

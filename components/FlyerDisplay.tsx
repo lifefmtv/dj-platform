@@ -23,7 +23,7 @@ export default async function FlyerDisplay() {
           />
         </div>
       ) : (
-        <div className="placeholder-empty">Flyer coming soon</div>
+        <div className="placeholder-empty">Event flyer coming soon</div>
       )}
     </div>
   );
