@@ -72,7 +72,7 @@ a {
      giving a seamless loop with no gap and instant start */
   display: inline-block;
   white-space: nowrap;
-  animation: ticker 90s linear infinite;
+  animation: ticker 270s linear infinite;
   animation-delay: 0s;
   will-change: transform;
 }
@@ -350,11 +350,27 @@ a {
 
 .about-text {
   max-width: 680px;
-  margin: 0 auto;
+  margin: 0 auto 1rem;
   color: var(--text-secondary);
-  font-size: 1rem;
-  line-height: 1.75;
+  font-size: 1.05rem;
+  line-height: 1.8;
   letter-spacing: 0.01em;
+}
+
+.about-text--secondary {
+  color: #bbb;
+  font-weight: 500;
+}
+
+.about-tagline {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  text-shadow: 0 0 24px rgba(230, 48, 48, 0.45);
+  margin-top: 0.5rem;
 }
 
 /* ── Back link ───────────────────────────────────────────── */
