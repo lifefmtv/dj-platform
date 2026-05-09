@@ -15,11 +15,11 @@ export default async function FlyerDisplay() {
     <div style={{ padding: "2rem" }}>
       <h2
         style={{
-          fontSize: "1rem",
+          fontSize: "0.7rem",
           fontWeight: 700,
-          letterSpacing: "0.1em",
-          color: "#aaa",
-          marginBottom: "1.5rem",
+          letterSpacing: "0.16em",
+          color: "var(--text-muted)",
+          marginBottom: "1.25rem",
           textTransform: "uppercase",
         }}
       >
@@ -30,7 +30,8 @@ export default async function FlyerDisplay() {
           maxWidth: "400px",
           borderRadius: "8px",
           overflow: "hidden",
-          border: "1px solid #222",
+          border: "1px solid rgba(230,48,48,0.2)",
+          boxShadow: "0 0 30px rgba(230,48,48,0.1)",
         }}
       >
         <Image

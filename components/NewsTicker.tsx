@@ -22,40 +22,58 @@ export default function NewsTicker() {
   if (items.length === 0) return null;
 
   return (
-    <div style={{
-      background: "#111",
-      borderTop: "1px solid #1a1a1a",
-      borderBottom: "1px solid #1a1a1a",
-      padding: "0.6rem 0",
-      overflow: "hidden",
-    }}>
+    <div
+      style={{
+        background: "#0d0d0d",
+        borderTop: "1px solid #1e1e1e",
+        borderBottom: "1px solid #1e1e1e",
+        padding: "0.55rem 0",
+        overflow: "hidden",
+      }}
+    >
       <div style={{ display: "flex", alignItems: "center" }}>
-        <div style={{
-          background: "#e63030",
-          color: "#fff",
-          padding: "0.25rem 1rem",
-          fontSize: "0.75rem",
-          fontWeight: 700,
-          letterSpacing: "0.1em",
-          whiteSpace: "nowrap",
-        }}>
+        <div
+          style={{
+            background: "var(--accent)",
+            color: "#fff",
+            padding: "0.25rem 1rem",
+            fontSize: "0.7rem",
+            fontWeight: 800,
+            letterSpacing: "0.14em",
+            whiteSpace: "nowrap",
+            fontFamily: "'Barlow Condensed', sans-serif",
+            boxShadow: "4px 0 12px rgba(230,48,48,0.35)",
+            flexShrink: 0,
+          }}
+        >
           NEWS
         </div>
         <div style={{ overflow: "hidden", flex: 1 }}>
           <div className="ticker-animate" style={{ display: "inline-block" }}>
             {items.map((item, i) => (
-              <a key={i} href={item.link} target="_blank" rel="noopener noreferrer" style={{
-                color: "#ccc",
-                fontSize: "0.85rem",
-                marginRight: "3rem",
-                display: "inline-block",
-              }}>
-                <span style={{
-                  color: "#e63030",
-                  fontWeight: 600,
-                  marginRight: "0.5rem",
-                  fontSize: "0.75rem",
-                }}>
+              <a
+                key={i}
+                href={item.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: "#bbb",
+                  fontSize: "0.82rem",
+                  marginRight: "3.5rem",
+                  display: "inline-block",
+                  transition: "color 0.2s ease",
+                }}
+              >
+                <span
+                  style={{
+                    color: "var(--accent)",
+                    fontWeight: 700,
+                    marginRight: "0.5rem",
+                    fontSize: "0.7rem",
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                  }}
+                >
                   {item.source}
                 </span>
                 {item.title}

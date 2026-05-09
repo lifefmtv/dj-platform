@@ -93,72 +93,86 @@ export default function ChatRoom() {
   if (!displayName) {
     return (
       <div style={containerStyle}>
-        <p style={{ color: "#aaa", marginBottom: "1rem", fontSize: "0.9rem" }}>
-          Enter a name to join the chat
-        </p>
-        <input
-          value={nameInput}
-          onChange={(e) => setNameInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && joinChat()}
-          placeholder="Your display name"
-          maxLength={30}
-          style={inputStyle}
-        />
-        <button onClick={joinChat} style={buttonStyle}>
-          Join Chat
-        </button>
+        <div className="chat-header-bar">
+          <div className="chat-live-dot" />
+          <span className="chat-header-title">Live Chat</span>
+        </div>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "1.5rem" }}>
+          <p style={{ color: "var(--text-secondary)", marginBottom: "1rem", fontSize: "0.85rem" }}>
+            Enter a name to join the chat
+          </p>
+          <input
+            value={nameInput}
+            onChange={(e) => setNameInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && joinChat()}
+            placeholder="Your display name"
+            maxLength={30}
+            style={inputStyle}
+          />
+          <button onClick={joinChat} style={buttonStyle}>
+            Join Chat
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
     <div style={containerStyle}>
-      <div style={{ flex: 1, overflowY: "auto", marginBottom: "1rem" }}>
+      <div className="chat-header-bar">
+        <div className="chat-live-dot" />
+        <span className="chat-header-title">Live Chat</span>
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto", padding: "1rem", marginBottom: 0 }}>
         {messages.length === 0 && (
-          <p style={{ color: "#555", fontSize: "0.85rem", textAlign: "center", marginTop: "2rem" }}>
+          <p style={{ color: "var(--text-muted)", fontSize: "0.82rem", textAlign: "center", marginTop: "2rem" }}>
             Be the first to say something...
           </p>
         )}
         {messages.map((msg) => (
-          <div key={msg.id} style={{ marginBottom: "0.75rem" }}>
-            <span style={{ color: "#e63030", fontWeight: 600, fontSize: "0.85rem" }}>
-              {msg.display_name}
-            </span>
-            <span style={{ color: "#555", fontSize: "0.75rem", marginLeft: "0.5rem" }}>
-              {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
-            </span>
-            <p style={{ color: "#ddd", fontSize: "0.9rem", marginTop: "0.2rem" }}>
+          <div key={msg.id} style={{ marginBottom: "1rem" }}>
+            <div style={{ display: "flex", alignItems: "baseline", gap: "0.5rem", marginBottom: "0.2rem" }}>
+              <span style={{ color: "var(--accent)", fontWeight: 700, fontSize: "0.82rem", letterSpacing: "0.03em" }}>
+                {msg.display_name}
+              </span>
+              <span style={{ color: "var(--text-muted)", fontSize: "0.7rem" }}>
+                {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
+              </span>
+            </div>
+            <p style={{ color: "#ccc", fontSize: "0.875rem", lineHeight: 1.45 }}>
               {msg.message}
             </p>
           </div>
         ))}
         <div ref={bottomRef} />
       </div>
-      {error && (
-        <p style={{ color: "#e63030", fontSize: "0.8rem", marginBottom: "0.5rem" }}>{error}</p>
-      )}
-      <div style={{ display: "flex", gap: "0.5rem" }}>
-        <input
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-          placeholder="Say something..."
-          maxLength={200}
-          style={{ ...inputStyle, flex: 1 }}
-        />
-        <button onClick={sendMessage} style={buttonStyle}>
-          Send
-        </button>
+
+      <div style={{ padding: "0.75rem 1rem", borderTop: "1px solid var(--border)", flexShrink: 0 }}>
+        {error && (
+          <p style={{ color: "var(--accent)", fontSize: "0.75rem", marginBottom: "0.5rem" }}>{error}</p>
+        )}
+        <div style={{ display: "flex", gap: "0.5rem" }}>
+          <input
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+            placeholder="Say something..."
+            maxLength={200}
+            style={{ ...inputStyle, flex: 1, marginBottom: 0 }}
+          />
+          <button onClick={sendMessage} style={buttonStyle}>
+            Send
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
 const containerStyle: React.CSSProperties = {
-  background: "#111",
-  border: "1px solid #222",
-  borderRadius: "8px",
-  padding: "1rem",
+  background: "#0d0d0d",
+  borderLeft: "1px solid #1e1e1e",
   height: "100%",
   display: "flex",
   flexDirection: "column",
@@ -166,23 +180,28 @@ const containerStyle: React.CSSProperties = {
 };
 
 const inputStyle: React.CSSProperties = {
-  background: "#1a1a1a",
-  border: "1px solid #333",
-  borderRadius: "4px",
+  background: "#161616",
+  border: "1px solid #2a2a2a",
+  borderRadius: "5px",
   color: "#fff",
   padding: "0.5rem 0.75rem",
-  fontSize: "0.9rem",
+  fontSize: "0.875rem",
   width: "100%",
   marginBottom: "0.5rem",
+  outline: "none",
+  transition: "border-color 0.2s ease",
 };
 
 const buttonStyle: React.CSSProperties = {
-  background: "#e63030",
+  background: "var(--accent)",
   color: "#fff",
   border: "none",
-  borderRadius: "4px",
+  borderRadius: "5px",
   padding: "0.5rem 1rem",
   cursor: "pointer",
-  fontWeight: 600,
-  fontSize: "0.9rem",
+  fontWeight: 700,
+  fontSize: "0.82rem",
+  letterSpacing: "0.08em",
+  whiteSpace: "nowrap",
+  boxShadow: "0 0 10px rgba(230,48,48,0.3)",
 };

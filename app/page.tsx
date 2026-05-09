@@ -22,13 +22,44 @@ export default async function HomePage() {
 
   return (
     <main>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 350px", minHeight: "500px" }}>
-        <LiveStream />
-        <ChatRoom />
+      {/* Stream + Chat with gradient glow border */}
+      <div
+        className="stream-chat-glow"
+        style={{
+          background: "linear-gradient(135deg, rgba(230,48,48,0.38) 0%, rgba(20,20,20,0) 45%, rgba(230,48,48,0.18) 100%)",
+          padding: "1px",
+        }}
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 360px",
+            minHeight: "500px",
+            background: "var(--bg)",
+          }}
+        >
+          <LiveStream />
+          <ChatRoom />
+        </div>
       </div>
+
       <NewsTicker />
-      {nextDJ && <Countdown djName={nextDJ.dj_name} eventDate={nextDJ.date} startTime={nextDJ.start_time} />}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", alignItems: "start" }}>
+
+      {nextDJ && (
+        <Countdown
+          djName={nextDJ.dj_name}
+          eventDate={nextDJ.date}
+          startTime={nextDJ.start_time}
+        />
+      )}
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 2fr",
+          alignItems: "start",
+        }}
+      >
         <FlyerDisplay />
         <NewsCards />
       </div>

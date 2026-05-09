@@ -42,11 +42,11 @@ export default function Countdown({ djName, eventDate, startTime }: Props) {
   return (
     <div
       style={{
-        background: "#111",
-        border: "1px solid #222",
-        borderRadius: "8px",
-        padding: "1.5rem 2rem",
-        margin: "2rem",
+        background: "linear-gradient(135deg, rgba(230,48,48,0.07) 0%, transparent 60%)",
+        border: "1px solid rgba(230,48,48,0.2)",
+        borderRadius: "10px",
+        padding: "1.25rem 2rem",
+        margin: "1.5rem 2rem",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
@@ -57,26 +57,37 @@ export default function Countdown({ djName, eventDate, startTime }: Props) {
       <div>
         <p
           style={{
-            color: "#aaa",
-            fontSize: "0.75rem",
+            color: "var(--text-muted)",
+            fontSize: "0.7rem",
             fontWeight: 700,
-            letterSpacing: "0.1em",
+            letterSpacing: "0.16em",
             textTransform: "uppercase",
-            marginBottom: "0.25rem",
+            marginBottom: "0.3rem",
           }}
         >
           Next Up
         </p>
-        <p style={{ color: "#fff", fontSize: "1.1rem", fontWeight: 600 }}>
+        <p
+          style={{
+            color: "#fff",
+            fontFamily: "'Barlow Condensed', sans-serif",
+            fontSize: "1.4rem",
+            fontWeight: 700,
+            letterSpacing: "0.04em",
+          }}
+        >
           {djName}
         </p>
       </div>
       <div
         style={{
-          color: "#e63030",
-          fontSize: "1.5rem",
+          color: "var(--accent)",
+          fontFamily: "'Barlow Condensed', sans-serif",
+          fontSize: "2.2rem",
           fontWeight: 700,
           fontVariantNumeric: "tabular-nums",
+          letterSpacing: "0.04em",
+          textShadow: "0 0 20px rgba(230,48,48,0.45)",
         }}
       >
         {timeLeft}

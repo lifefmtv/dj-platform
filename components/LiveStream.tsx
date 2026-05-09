@@ -3,10 +3,17 @@ export default function LiveStream() {
   const isLive = process.env.NEXT_PUBLIC_IS_LIVE === "true";
 
   return (
-    <div style={{ position: "relative", width: "100%", aspectRatio: "16/9", background: "#111" }}>
+    <div
+      style={{
+        position: "relative",
+        width: "100%",
+        aspectRatio: "16/9",
+        background: "#0a0a0a",
+      }}
+    >
       <iframe
         src={streamUrl}
-        style={{ width: "100%", height: "100%", border: "none" }}
+        style={{ width: "100%", height: "100%", border: "none", display: "block" }}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
       />
@@ -16,25 +23,28 @@ export default function LiveStream() {
             position: "absolute",
             top: "1rem",
             left: "1rem",
-            background: "#e63030",
+            background: "var(--accent)",
             color: "#fff",
-            padding: "0.25rem 0.75rem",
+            padding: "0.3rem 0.8rem",
             borderRadius: "4px",
-            fontSize: "0.8rem",
+            fontSize: "0.75rem",
             fontWeight: 700,
+            letterSpacing: "0.12em",
             display: "flex",
             alignItems: "center",
-            gap: "0.4rem",
+            gap: "0.45rem",
+            boxShadow: "0 0 14px rgba(230,48,48,0.6)",
           }}
         >
           <span
             className="pulse-red"
             style={{
-              width: "8px",
-              height: "8px",
+              width: "7px",
+              height: "7px",
               borderRadius: "50%",
               background: "#fff",
               display: "inline-block",
+              flexShrink: 0,
             }}
           />
           LIVE

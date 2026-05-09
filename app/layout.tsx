@@ -12,11 +12,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <ClerkProvider>
       <html lang="en">
         <body>
-          <nav style={{ background: "#0a0a0a", borderBottom: "1px solid #1a1a1a", padding: "1rem 2rem", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 100 }}>
-            <span style={{ fontSize: "1.25rem", fontWeight: 700, letterSpacing: "0.1em", color: "#e63030" }}>LIFE FM TV</span>
-            <div style={{ display: "flex", gap: "2rem" }}>
-              <a href="/schedule" style={{ color: "#aaa" as string, fontSize: "0.9rem" }}>Schedule</a>
-              <a href="/mixes" style={{ color: "#aaa" as string, fontSize: "0.9rem" }}>Mixes</a>
+          <nav className="site-nav">
+            <a href="/" className="nav-logo">LIFE FM TV</a>
+            <div className="nav-links">
+              <a href="/schedule" className="nav-link">Schedule</a>
+              <a href="/mixes" className="nav-link">Mixes</a>
             </div>
           </nav>
           {children}
