@@ -6,6 +6,7 @@ import NewsTicker from "@/components/NewsTicker";
 import NewsCards from "@/components/NewsCards";
 import FlyerDisplay from "@/components/FlyerDisplay";
 import Countdown from "@/components/Countdown";
+import NextUpBanner from "@/components/NextUpBanner";
 import MixcloudShows from "@/components/MixcloudShows";
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
 
@@ -23,6 +24,16 @@ export default async function HomePage() {
 
   return (
     <main>
+      {/* Next Up banner — above the stream */}
+      {nextDJ && (
+        <NextUpBanner
+          djName={nextDJ.dj_name}
+          eventDate={nextDJ.date}
+          startTime={nextDJ.start_time}
+          genre={nextDJ.genre ?? null}
+        />
+      )}
+
       {/* Hero: stream + chat */}
       <div className="stream-chat-grid">
         <LiveStream />

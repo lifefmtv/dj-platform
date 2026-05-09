@@ -17,7 +17,7 @@ export default function NavCountdown() {
   useEffect(() => {
     async function load() {
       const today = new Date().toISOString().split("T")[0];
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("schedule")
         .select("dj_name, date, start_time")
         .gte("date", today)
@@ -25,7 +25,7 @@ export default function NavCountdown() {
         .order("start_time", { ascending: true })
         .limit(1)
         .maybeSingle();
-      if (data) setShow(data);
+      if (!error && data) setShow(data);
     }
     load();
   }, [supabase]);
@@ -50,13 +50,16 @@ export default function NavCountdown() {
     return () => clearInterval(id);
   }, [show]);
 
-  if (!show || !timeLeft) return <div className="nav-countdown" />;
+  // Hide completely when no data or still loading
+  if (!show || !timeLeft) return null;
 
   return (
     <div className="nav-countdown">
       <span className="nav-countdown-label">Next Up</span>
       <div className="nav-countdown-row">
         <span className="nav-countdown-dj">{show.dj_name}</span>
+        <span className="nav-countdown-sep">·</span>
+        <span className="nav-countdown-time">{show.start_time.slice(0, 5)}</span>
         <span className="nav-countdown-sep">·</span>
         <span className="nav-countdown-timer">{timeLeft}</span>
       </div>
