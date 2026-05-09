@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { SignOutButton } from "@clerk/nextjs";
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
@@ -8,11 +8,25 @@ import FlyerUpload from "@/components/admin/FlyerUpload";
 import MixManager from "@/components/admin/MixManager";
 import ChatModeration from "@/components/admin/ChatModeration";
 
+const NAV_ITEMS = [
+  { href: "#timetable", label: "Timetable" },
+  { href: "#templates", label: "Templates" },
+  { href: "#flyer", label: "Flyer" },
+  { href: "#mixes", label: "Mixes" },
+  { href: "#chat", label: "Chat" },
+];
+
 export default async function AdminPage() {
   const { userId } = await auth();
   if (!userId) redirect("/admin/sign-in");
 
-  const supabase = await createServerSupabaseClient();
+  const [user, supabase] = await Promise.all([
+    currentUser(),
+    createServerSupabaseClient(),
+  ]);
+
+  const email = user?.emailAddresses[0]?.emailAddress ?? "";
+
   const { data: settings } = await supabase
     .from("settings")
     .select("current_flyer_url")
@@ -20,89 +34,125 @@ export default async function AdminPage() {
     .single();
 
   return (
-    <main style={{ padding: "2rem", maxWidth: "1000px", margin: "0 auto" }}>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: "2rem",
-        }}
-      >
-        <h1 style={{ fontSize: "1.5rem", fontWeight: 700 }}>Admin Dashboard</h1>
-        <SignOutButton>
-          <button
-            style={{
-              background: "transparent",
-              color: "#aaa",
-              border: "1px solid #333",
-              borderRadius: "4px",
-              padding: "0.5rem 1rem",
-              cursor: "pointer",
-              fontSize: "0.85rem",
-            }}
-          >
-            Sign Out
-          </button>
-        </SignOutButton>
-      </div>
+    <>
+      {/* ── Sticky header ── */}
+      <header style={stickyHeader}>
+        <span style={brandLabel}>
+          LIFEFM.TV <span style={{ color: "#e63030" }}>Admin</span>
+        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: "1.25rem" }}>
+          {email && <span style={emailLabel}>{email}</span>}
+          <SignOutButton>
+            <button style={signOutBtn}>Sign Out</button>
+          </SignOutButton>
+        </div>
+      </header>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "3rem" }}>
-        <section
-          style={{
-            background: "#111",
-            border: "1px solid #222",
-            borderRadius: "8px",
-            padding: "2rem",
-          }}
-        >
-          <TimetableManager />
-        </section>
+      {/* ── Module navigation ── */}
+      <nav style={moduleNav}>
+        {NAV_ITEMS.map(({ href, label }) => (
+          <a key={href} href={href} style={navLink}>
+            {label}
+          </a>
+        ))}
+      </nav>
 
-        <section
-          style={{
-            background: "#111",
-            border: "1px solid #222",
-            borderRadius: "8px",
-            padding: "2rem",
-          }}
-        >
-          <ShowTemplateManager />
-        </section>
+      {/* ── Content ── */}
+      <main style={{ padding: "2rem", maxWidth: "1000px", margin: "0 auto" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "3rem" }}>
 
-        <section
-          style={{
-            background: "#111",
-            border: "1px solid #222",
-            borderRadius: "8px",
-            padding: "2rem",
-          }}
-        >
-          <FlyerUpload currentFlyer={settings?.current_flyer_url || null} />
-        </section>
+          <section id="timetable" style={sectionCard}>
+            <TimetableManager />
+          </section>
 
-        <section
-          style={{
-            background: "#111",
-            border: "1px solid #222",
-            borderRadius: "8px",
-            padding: "2rem",
-          }}
-        >
-          <MixManager />
-        </section>
+          <section id="templates" style={sectionCard}>
+            <ShowTemplateManager />
+          </section>
 
-        <section
-          style={{
-            background: "#111",
-            border: "1px solid #222",
-            borderRadius: "8px",
-            padding: "2rem",
-          }}
-        >
-          <ChatModeration />
-        </section>
-      </div>
-    </main>
+          <section id="flyer" style={sectionCard}>
+            <FlyerUpload currentFlyer={settings?.current_flyer_url || null} />
+          </section>
+
+          <section id="mixes" style={sectionCard}>
+            <MixManager />
+          </section>
+
+          <section id="chat" style={sectionCard}>
+            <ChatModeration />
+          </section>
+
+        </div>
+      </main>
+    </>
   );
 }
+
+// ── Styles ────────────────────────────────────────────────
+
+const stickyHeader: React.CSSProperties = {
+  position: "sticky",
+  top: 0,
+  zIndex: 200,
+  background: "#080706",
+  borderBottom: "1px solid #1e1e1e",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  padding: "0 2rem",
+  height: "52px",
+};
+
+const brandLabel: React.CSSProperties = {
+  fontWeight: 800,
+  fontSize: "0.88rem",
+  letterSpacing: "0.08em",
+  color: "#fff",
+};
+
+const emailLabel: React.CSSProperties = {
+  fontSize: "0.75rem",
+  color: "#555",
+  fontFamily: "monospace",
+};
+
+const signOutBtn: React.CSSProperties = {
+  background: "transparent",
+  color: "#888",
+  border: "1px solid #2a2a2a",
+  borderRadius: "4px",
+  padding: "0.35rem 0.8rem",
+  cursor: "pointer",
+  fontSize: "0.75rem",
+};
+
+const moduleNav: React.CSSProperties = {
+  background: "#0a0a0a",
+  borderBottom: "1px solid #181818",
+  display: "flex",
+  alignItems: "center",
+  padding: "0 2rem",
+  position: "sticky",
+  top: "52px",
+  zIndex: 199,
+};
+
+const navLink: React.CSSProperties = {
+  display: "block",
+  padding: "0.65rem 1.1rem",
+  fontSize: "0.66rem",
+  fontWeight: 500,
+  letterSpacing: "0.16em",
+  textTransform: "uppercase",
+  color: "#555",
+  textDecoration: "none",
+  borderRight: "1px solid #181818",
+  transition: "color 0.15s",
+};
+
+const sectionCard: React.CSSProperties = {
+  background: "#111",
+  border: "1px solid #222",
+  borderRadius: "8px",
+  padding: "2rem",
+  scrollMarginTop: "108px", // sticky header + nav height
+};

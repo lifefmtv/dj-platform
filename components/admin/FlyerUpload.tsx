@@ -56,7 +56,7 @@ export default function FlyerUpload({ currentFlyer }: { currentFlyer: string | n
       flash("Image uploaded but failed to save. Please try again.", "error");
     } else {
       setPreview(urlData.publicUrl);
-      flash("Flyer saved successfully — it will now appear on the homepage.", "success");
+      flash("Flyer saved and live on the homepage.", "success");
     }
   }
 

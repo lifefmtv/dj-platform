@@ -182,9 +182,10 @@ export default function ShowTemplateManager() {
     }
 
     setGeneratingId(null);
-    const msg = [`Created ${created} ${created === 1 ? "entry" : "entries"}`];
-    if (skipped > 0) msg.push(`${skipped} already existed`);
-    alert(msg.join(", ") + ".");
+    const weekLabel = `${weeksAhead} ${weeksAhead === 1 ? "week" : "weeks"}`;
+    const showLabel = `${created} ${created === 1 ? "show" : "shows"}`;
+    const skipNote = skipped > 0 ? ` (${skipped} already existed, skipped)` : "";
+    flash(`${showLabel} added to schedule for the next ${weekLabel}${skipNote}.`, "success");
   }
 
   return (

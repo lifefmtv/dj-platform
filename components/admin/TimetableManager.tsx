@@ -234,11 +234,14 @@ const buttonStyle: React.CSSProperties = {
   background: "#e63030",
   color: "#fff",
   border: "none",
-  borderRadius: "4px",
-  padding: "0.6rem 1.5rem",
+  borderRadius: "6px",
+  padding: "0.9rem 2rem",
   cursor: "pointer",
-  fontWeight: 600,
-  fontSize: "0.88rem",
+  fontWeight: 700,
+  fontSize: "1rem",
+  width: "100%",
+  marginTop: "0.5rem",
+  letterSpacing: "0.02em",
 };
 
 const entryRow: React.CSSProperties = {

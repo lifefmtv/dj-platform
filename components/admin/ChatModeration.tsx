@@ -54,11 +54,16 @@ export default function ChatModeration() {
 
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.5rem" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.5rem", flexWrap: "wrap", gap: "0.75rem" }}>
         <h2 style={sectionTitle}>Chat Moderation</h2>
-        <button onClick={clearAll} style={clearButton}>
-          Clear All Messages
-        </button>
+        <div style={{ display: "flex", gap: "0.5rem" }}>
+          <button onClick={fetchMessages} style={refreshButton}>
+            ↻ Refresh
+          </button>
+          <button onClick={clearAll} style={clearButton}>
+            Clear All Messages
+          </button>
+        </div>
       </div>
 
       {messages.length === 0 ? (
@@ -122,6 +127,17 @@ const clearButton: React.CSSProperties = {
   borderRadius: "4px",
   padding: "0.5rem 1rem",
   cursor: "pointer",
-  fontSize: "0.85rem",
+  fontSize: "0.82rem",
   fontWeight: 600,
+};
+
+const refreshButton: React.CSSProperties = {
+  background: "transparent",
+  color: "#888",
+  border: "1px solid #333",
+  borderRadius: "4px",
+  padding: "0.5rem 1rem",
+  cursor: "pointer",
+  fontSize: "0.82rem",
+  fontWeight: 500,
 };
