@@ -10,42 +10,20 @@ type FeedItem = {
 };
 
 const FEEDS = [
-  {
-    url: "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml",
-    source: "BBC Music",
-    color: "#e63030",
-  },
-  {
-    url: "https://www.nme.com/music/feed/",
-    source: "NME",
-    color: "#eab308",
-  },
-  {
-    url: "https://mixmag.net/feed",
-    source: "Mixmag",
-    color: "#22c55e",
-  },
-  {
-    url: "https://djmag.com/feed/rss",
-    source: "DJ Mag",
-    color: "#3b82f6",
-  },
-  {
-    url: "https://www.theguardian.com/music/rss",
-    source: "Guardian",
-    color: "#a855f7",
-  },
-  {
-    url: "https://pitchfork.com/rss/news/feed/rss/",
-    source: "Pitchfork",
-    color: "#f97316",
-  },
+  { url: "https://djtechtools.com/feed/", source: "DJ Tech Tools", color: "#ff6b35" },
+  { url: "https://news.djcity.com/feed/", source: "DJ City", color: "#00d4ff" },
+  { url: "https://wearecrossfader.co.uk/feed/", source: "Crossfader", color: "#a855f7" },
+  { url: "https://edmjoy.com/feed/", source: "EDM Joy", color: "#22c55e" },
+  { url: "https://djlifemag.com/feed/", source: "DJ Life", color: "#f59e0b" },
+  { url: "https://breakbeat.co.uk/feed/", source: "Breakbeat", color: "#ec4899" },
+  { url: "https://www.dnbdojo.co.uk/feed/", source: "DNB Dojo", color: "#e63030" },
+  { url: "https://5mag.net/category/news/feed/", source: "5 Mag", color: "#14b8a6" },
+  { url: "https://feeds.feedburner.com/DeeperShadesOfHouse", source: "Deeper Shades", color: "#6366f1" },
 ];
 
 export const revalidate = 300;
 
 export async function GET() {
-  // Realistic browser UA avoids RSS feed bot-blocks
   const parser = new Parser({
     timeout: 8000,
     headers: {
@@ -68,7 +46,7 @@ export async function GET() {
     })
   );
 
-  // Round-robin interleave so every source gets equal ticker representation
+  // Round-robin interleave so every working source gets equal representation
   const perFeed = results
     .filter((r): r is PromiseFulfilledResult<FeedItem[]> => r.status === "fulfilled")
     .map((r) => r.value);
@@ -81,7 +59,7 @@ export async function GET() {
     }
   }
 
-  return NextResponse.json(items.slice(0, 30), {
+  return NextResponse.json(items.slice(0, 54), {
     headers: { "Cache-Control": "s-maxage=300, stale-while-revalidate=600" },
   });
 }

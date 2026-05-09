@@ -1,17 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 
 interface NewsItem {
   title: string;
   link: string;
   source: string;
+  color: string;
   pubDate: string;
 }
 
 export default function NewsCards() {
   const [items, setItems] = useState<NewsItem[]>([]);
+  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetch("/api/news")
@@ -20,81 +22,84 @@ export default function NewsCards() {
       .catch(() => {});
   }, []);
 
+  // Unique sources in first-seen order, preserving their exact feed colour
+  const sources = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const item of items) {
+      if (!seen.has(item.source)) seen.set(item.source, item.color);
+    }
+    return Array.from(seen.entries()).map(([source, color]) => ({ source, color }));
+  }, [items]);
+
+  const displayed = activeFilters.size === 0
+    ? items
+    : items.filter((item) => activeFilters.has(item.source));
+
+  function toggleFilter(source: string) {
+    setActiveFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(source)) next.delete(source);
+      else next.add(source);
+      return next;
+    });
+  }
+
   if (items.length === 0) return null;
 
   return (
-    <div style={{ padding: "2rem" }}>
-      <h2
-        style={{
-          fontSize: "0.7rem",
-          fontWeight: 700,
-          letterSpacing: "0.16em",
-          color: "var(--text-muted)",
-          marginBottom: "1.25rem",
-          textTransform: "uppercase",
-        }}
-      >
-        Music News
-      </h2>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-          gap: "0.85rem",
-        }}
-      >
-        {items.map((item, i) => (
+    <div className="news-section">
+      <h2 className="news-section-heading">Music News</h2>
+
+      {/* Filter squares — one coloured square per source */}
+      <div className="filter-bar" role="group" aria-label="Filter by source">
+        {sources.map(({ source, color }) => {
+          const isActive = activeFilters.has(source);
+          const dimmed = activeFilters.size > 0 && !isActive;
+          return (
+            <button
+              key={source}
+              data-tooltip={source}
+              onClick={() => toggleFilter(source)}
+              aria-pressed={isActive}
+              aria-label={`Filter by ${source}`}
+              className="filter-square"
+              style={{
+                background: color,
+                opacity: dimmed ? 0.28 : 1,
+                borderColor: isActive ? "#ffffff" : "transparent",
+                boxShadow: isActive ? `0 0 8px ${color}` : "none",
+                transform: isActive ? "scale(1.25)" : undefined,
+              }}
+            />
+          );
+        })}
+      </div>
+
+      {/* Card grid */}
+      <div className="news-cards-grid">
+        {displayed.map((item, i) => (
           <a
             key={i}
             href={item.link}
             target="_blank"
             rel="noopener noreferrer"
-            style={{
-              background: "var(--card)",
-              border: "1px solid var(--border)",
-              borderRadius: "8px",
-              padding: "1rem",
-              display: "block",
-              transition: "border-color 0.2s ease, background 0.2s ease",
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.borderColor = "var(--border-bright)";
-              (e.currentTarget as HTMLElement).style.background = "var(--card-hover)";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
-              (e.currentTarget as HTMLElement).style.background = "var(--card)";
-            }}
+            className="news-card"
           >
             <span
+              className="news-source-label"
               style={{
-                background: "rgba(230,48,48,0.15)",
-                color: "var(--accent)",
-                fontSize: "0.66rem",
-                fontWeight: 700,
-                letterSpacing: "0.1em",
-                padding: "0.2rem 0.55rem",
-                borderRadius: "3px",
-                marginBottom: "0.7rem",
-                display: "inline-block",
-                textTransform: "uppercase",
-                border: "1px solid rgba(230,48,48,0.25)",
+                color: item.color,
+                background: `${item.color}1a`,
+                borderColor: `${item.color}44`,
               }}
             >
               {item.source}
             </span>
-            <p
-              style={{
-                color: "#ccc",
-                fontSize: "0.875rem",
-                lineHeight: 1.5,
-                marginBottom: "0.5rem",
-              }}
-            >
-              {item.title}
-            </p>
-            <p style={{ color: "var(--text-muted)", fontSize: "0.72rem" }}>
-              {item.pubDate ? formatDistanceToNow(new Date(item.pubDate), { addSuffix: true }) : ""}
+            <p className="news-card-title">{item.title}</p>
+            <p className="news-card-date">
+              {item.pubDate
+                ? formatDistanceToNow(new Date(item.pubDate), { addSuffix: true })
+                : ""}
             </p>
           </a>
         ))}
