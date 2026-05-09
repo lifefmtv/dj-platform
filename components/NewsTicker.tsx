@@ -10,6 +10,37 @@ interface NewsItem {
   pubDate: string;
 }
 
+function TickerItem({ item }: { item: NewsItem }) {
+  return (
+    <a
+      href={item.link}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        color: "#bbb",
+        fontSize: "0.82rem",
+        marginRight: "4rem",
+        display: "inline-block",
+        flexShrink: 0,
+      }}
+    >
+      <span
+        style={{
+          color: item.color || "var(--accent)",
+          fontWeight: 700,
+          marginRight: "0.5rem",
+          fontSize: "0.68rem",
+          letterSpacing: "0.1em",
+          textTransform: "uppercase",
+        }}
+      >
+        {item.source}
+      </span>
+      {item.title}
+    </a>
+  );
+}
+
 export default function NewsTicker() {
   const [items, setItems] = useState<NewsItem[]>([]);
 
@@ -33,6 +64,7 @@ export default function NewsTicker() {
       }}
     >
       <div style={{ display: "flex", alignItems: "center" }}>
+        {/* Static "NEWS" badge */}
         <div
           style={{
             background: "var(--accent)",
@@ -45,39 +77,22 @@ export default function NewsTicker() {
             fontFamily: "'Barlow Condensed', sans-serif",
             boxShadow: "4px 0 12px rgba(230,48,48,0.35)",
             flexShrink: 0,
+            zIndex: 1,
           }}
         >
           NEWS
         </div>
+
+        {/* Scrolling track — items duplicated so -50% translate loops seamlessly */}
         <div style={{ overflow: "hidden", flex: 1 }}>
-          <div className="ticker-animate" style={{ display: "inline-block" }}>
+          <div className="ticker-animate">
+            {/* First copy */}
             {items.map((item, i) => (
-              <a
-                key={i}
-                href={item.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  color: "#bbb",
-                  fontSize: "0.82rem",
-                  marginRight: "4rem",
-                  display: "inline-block",
-                }}
-              >
-                <span
-                  style={{
-                    color: item.color || "var(--accent)",
-                    fontWeight: 700,
-                    marginRight: "0.5rem",
-                    fontSize: "0.68rem",
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  {item.source}
-                </span>
-                {item.title}
-              </a>
+              <TickerItem key={`a-${i}`} item={item} />
+            ))}
+            {/* Second copy — fills the gap so the loop is invisible */}
+            {items.map((item, i) => (
+              <TickerItem key={`b-${i}`} item={item} />
             ))}
           </div>
         </div>

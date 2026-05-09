@@ -63,13 +63,18 @@ a {
 
 /* ── Animations ──────────────────────────────────────────── */
 @keyframes ticker {
-  0%   { transform: translateX(100%); }
-  100% { transform: translateX(-100%); }
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
 }
 
 .ticker-animate {
-  animation: ticker 160s linear infinite;
+  /* -50% moves exactly one copy's-width when items are duplicated,
+     giving a seamless loop with no gap and instant start */
+  display: inline-block;
   white-space: nowrap;
+  animation: ticker 90s linear infinite;
+  animation-delay: 0s;
+  will-change: transform;
 }
 
 @keyframes pulse-red {
