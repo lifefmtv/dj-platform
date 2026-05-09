@@ -86,6 +86,137 @@ a {
   animation: pulse-red 1.5s ease-in-out infinite;
 }
 
+/* Ripple-ring pulse for the audio FAB */
+@keyframes fab-pulse {
+  0%   { box-shadow: 0 4px 20px rgba(230,48,48,0.4), 0 0 0 0   rgba(230,48,48,0.35); }
+  70%  { box-shadow: 0 4px 20px rgba(230,48,48,0.2), 0 0 0 14px rgba(230,48,48,0); }
+  100% { box-shadow: 0 4px 20px rgba(230,48,48,0.4), 0 0 0 0   rgba(230,48,48,0); }
+}
+
+/* ── Audio player FAB ────────────────────────────────────── */
+.audio-fab {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  padding: 0.6rem 1.1rem 0.6rem 0.9rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  animation: fab-pulse 2.2s ease-out infinite;
+  transition: background 0.2s ease, transform 0.15s ease;
+  white-space: nowrap;
+}
+
+.audio-fab:hover {
+  background: #c82020;
+  transform: translateY(-2px);
+}
+
+/* Stop the pulse animation while panel is open */
+.audio-fab--open {
+  animation: none;
+  box-shadow: 0 0 0 2px rgba(230,48,48,0.4), 0 4px 20px rgba(230,48,48,0.3);
+}
+
+.audio-fab-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+/* ── Audio pop-out panel ─────────────────────────────────── */
+.audio-panel {
+  position: fixed;
+  bottom: 5rem;
+  right: 1.5rem;
+  z-index: 200;
+  width: 320px;
+  background: #0e0e0e;
+  border: 1px solid rgba(230, 48, 48, 0.35);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(230,48,48,0.08),
+    0 0 30px rgba(230,48,48,0.18),
+    0 12px 40px rgba(0,0,0,0.7);
+}
+
+.audio-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.7rem 0.875rem;
+  background: rgba(230, 48, 48, 0.07);
+  border-bottom: 1px solid rgba(230, 48, 48, 0.15);
+}
+
+.audio-panel-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.audio-panel-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.15rem 0.35rem;
+  border-radius: 4px;
+  line-height: 1;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.audio-panel-close:hover {
+  color: #fff;
+  background: rgba(255,255,255,0.08);
+}
+
+.audio-panel-player {
+  /* radio.co renders its player widget into this div */
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Mobile: full-width sheet at bottom ──────────────────── */
+@media (max-width: 768px) {
+  .audio-fab {
+    bottom: 1rem;
+    right: 1rem;
+    font-size: 0.74rem;
+    padding: 0.55rem 1rem 0.55rem 0.8rem;
+  }
+
+  .audio-panel {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    border-radius: 14px 14px 0 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    box-shadow:
+      0 0 30px rgba(230,48,48,0.18),
+      0 -4px 40px rgba(0,0,0,0.6);
+  }
+}
+
 @keyframes glow-breathe {
   0%, 100% { box-shadow: 0 0 40px rgba(230,48,48,0.18), 0 0 80px rgba(230,48,48,0.07); }
   50%       { box-shadow: 0 0 60px rgba(230,48,48,0.32), 0 0 120px rgba(230,48,48,0.12); }
