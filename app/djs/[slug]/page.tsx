@@ -119,6 +119,88 @@ export default async function DJProfilePage({ params }: Props) {
           </section>
         )}
 
+        {/* ── SHERE KHAN RECORDS ── */}
+        {dj.slug === "shere-khan" && (
+          <section className="dj-section">
+            <p className="dj-section-label">Shere Khan Records</p>
+            <div className="dj-profile-card">
+              <div className="dj-profile-card-accent" style={{ background: "#f59e0b" }} />
+              <div className="dj-profile-card-body">
+                <p className="dj-profile-card-eyebrow" style={{ color: "#f59e0b" }}>Independent Label</p>
+                <p className="dj-profile-card-title">Shere Khan Records</p>
+                <p className="dj-profile-card-sub">
+                  An independent roots and dub label releasing music from Vivian Jones, Fikir Amlak,
+                  Joshua Hales, Haroon Ayyaz, Nia Songbird, Joe 9000 Dub and more.
+                </p>
+                <div className="dj-card-buttons">
+                  <a
+                    href="https://sherekhansound.bandcamp.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="dj-card-btn dj-card-btn--gold"
+                  >
+                    Listen on Bandcamp
+                  </a>
+                  <a
+                    href="https://open.spotify.com/artist/6GV3yNVFOO02NBRWX8ld04"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="dj-card-btn dj-card-btn--outline"
+                  >
+                    Listen on Spotify
+                  </a>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ── ROOTS ON THE CORNER ── */}
+        {dj.slug === "shere-khan" && (
+          <section className="dj-section">
+            <p className="dj-section-label">Roots on the Corner</p>
+            <div className="dj-profile-card">
+              <div className="dj-profile-card-accent" style={{ background: "#22c55e" }} />
+              <div className="dj-profile-card-body">
+                <p className="dj-profile-card-eyebrow" style={{ color: "#22c55e" }}>Live Events</p>
+                <p className="dj-profile-card-title">Roots on the Corner</p>
+                <p className="dj-profile-card-sub">
+                  Shere Khan is a regular at Roots on the Corner — London&apos;s premier roots reggae
+                  and sound system clash event. Check the next event at rotc.uk
+                </p>
+                <div className="dj-card-buttons">
+                  <a
+                    href="https://www.rotc.uk"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="dj-card-btn dj-card-btn--outline"
+                  >
+                    Visit ROTC →
+                  </a>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ── SOUNDCLOUD EMBED (Shere Khan) ── */}
+        {dj.slug === "shere-khan" && (
+          <section className="dj-section">
+            <p className="dj-section-label">Latest Shows on SoundCloud</p>
+            <div className="dj-soundcloud-embed">
+              <iframe
+                width="100%"
+                height="450"
+                scrolling="no"
+                frameBorder="no"
+                allow="autoplay"
+                src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/users/shere-khan-sound&color=%23f59e0b&auto_play=false&hide_related=false&show_comments=false&show_user=true&show_reposts=false&show_teaser=true&visual=true"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            </div>
+          </section>
+        )}
+
         {/* ── DUBLIFE ARCHIVE (DJ Kullar) ── */}
         {dj.slug === "dj-kullar" && (
           <section className="dj-section">
