@@ -130,14 +130,22 @@ img, video, iframe { display: block; max-width: 100%; }
   align-items: center;
   flex-shrink: 0;
   transition: opacity 0.2s;
+  min-width: 0;
 }
 .nav-logo-link:hover { opacity: 0.65; }
+
+.nav-logo-img {
+  height: 70px;
+  width: auto;
+  display: block;
+}
 
 .nav-right {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 2rem;
+  flex-shrink: 0;
 }
 
 .nav-links {
@@ -1772,11 +1780,19 @@ img, video, iframe { display: block; max-width: 100%; }
 
 /* ── Responsive ──────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .site-nav { padding: 0 1.25rem; height: 80px; display: flex; justify-content: space-between; }
+  .site-nav {
+    padding: 0 1.25rem;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    grid-template-columns: none;
+  }
+  .nav-logo-img { height: 32px; max-height: 32px; width: auto; }
   .nav-countdown { display: none !important; }
   .nav-links { display: none !important; }
-  .hamburger { display: flex; }
-  .mobile-menu { top: 80px; }
+  .hamburger { display: flex; flex-shrink: 0; }
+  .mobile-menu { top: 56px; }
 
   .stream-chat-grid { grid-template-columns: 1fr; }
   .chat-container {

@@ -26,7 +26,7 @@ export default function NavBar() {
             alt="Life FM TV"
             width={280}
             height={70}
-            style={{ height: "70px", width: "auto", display: "block" }}
+            className="nav-logo-img"
             priority
           />
         </a>
