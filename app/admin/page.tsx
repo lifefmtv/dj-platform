@@ -58,7 +58,7 @@ export default async function AdminPage() {
       </nav>
 
       {/* ── Content ── */}
-      <main style={{ padding: "2rem", maxWidth: "1000px", margin: "0 auto" }}>
+      <main className="admin-wrap-main" style={{ maxWidth: "1000px", margin: "0 auto" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "3rem" }}>
 
           <section id="timetable" style={sectionCard}>
@@ -98,8 +98,9 @@ const stickyHeader: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
-  padding: "0 2rem",
+  padding: "0 1.25rem",
   height: "52px",
+  overflowX: "hidden",
 };
 
 const brandLabel: React.CSSProperties = {
@@ -113,6 +114,10 @@ const emailLabel: React.CSSProperties = {
   fontSize: "0.75rem",
   color: "#555",
   fontFamily: "monospace",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+  maxWidth: "180px",
 };
 
 const signOutBtn: React.CSSProperties = {
@@ -130,10 +135,11 @@ const moduleNav: React.CSSProperties = {
   borderBottom: "1px solid #181818",
   display: "flex",
   alignItems: "center",
-  padding: "0 2rem",
+  padding: "0 1rem",
   position: "sticky",
   top: "52px",
   zIndex: 199,
+  overflowX: "auto",
 };
 
 const navLink: React.CSSProperties = {
@@ -153,6 +159,6 @@ const sectionCard: React.CSSProperties = {
   background: "#111",
   border: "1px solid #222",
   borderRadius: "8px",
-  padding: "2rem",
-  scrollMarginTop: "108px", // sticky header + nav height
+  padding: "clamp(1rem, 4vw, 2rem)",
+  scrollMarginTop: "108px",
 };

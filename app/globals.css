@@ -1780,6 +1780,7 @@ img, video, iframe { display: block; max-width: 100%; }
 
 /* ── Responsive ──────────────────────────────────────────── */
 @media (max-width: 768px) {
+  /* ── Nav ── */
   .site-nav {
     padding: 0 1.25rem;
     height: 56px;
@@ -1793,61 +1794,131 @@ img, video, iframe { display: block; max-width: 100%; }
   .nav-links { display: none !important; }
   .hamburger { display: flex; flex-shrink: 0; }
   .mobile-menu { top: 56px; }
+  .mobile-nav-link {
+    font-size: 0.875rem;      /* 14px — was 11.2px */
+    padding: 0.875rem 1.25rem;
+    letter-spacing: 0.1em;
+  }
 
+  /* ── Stream + chat ── */
   .stream-chat-grid { grid-template-columns: 1fr; }
   .chat-container {
     border-left: none;
     border-top: 1px solid var(--border);
-    height: 380px;
+    height: 360px;
   }
   .chat-tabs-outer {
     border-left: none;
     border-top: 1px solid var(--border);
-    height: 440px;
+    height: 420px;
   }
+  /* 16px prevents iOS auto-zoom on input focus */
+  .chat-input { font-size: 1rem; }
+  .chat-join-label { font-size: 0.9rem; }   /* 14.4px */
+  .chat-error { font-size: 0.875rem; }       /* 14px */
+  .chat-text { font-size: 0.9rem; }          /* 14.4px */
 
-  .about-section { padding: 3rem 1.5rem; }
-  .about-tagline { font-size: 3.5rem; }
+  /* ── Next Up banner ── */
+  .next-up-banner { padding: 0.75rem 1rem; gap: 0.75rem; }
+  .next-up-dj { font-size: 1rem; }
+  .next-up-timer { font-size: 1.1rem; }
+  .next-up-right { align-items: flex-start; }
 
+  /* ── About (homepage) ── */
+  .about-section { padding: 2.5rem 1.25rem; }
+  .about-text { font-size: 1rem; }
+  .about-tagline { font-size: clamp(2.5rem, 12vw, 3.5rem); }
+
+  /* ── Section strip ── */
+  .section-strip { padding: 0 1rem; }
+
+  /* ── Shows (compact + full page) ── */
+  .shows-section-compact { padding: 1rem; }
+  .shows-section { padding: 1.5rem 1rem; }
   .shows-grid-compact,
-  .shows-grid { grid-template-columns: 1fr; gap: 1rem; }
-  .shows-section-compact { padding: 1.25rem; }
+  .shows-grid { grid-template-columns: 1fr; gap: 0.875rem; }
 
+  /* ── Flyer + News ── */
   .flyer-news-grid { grid-template-columns: 1fr; }
   .flyer-section {
     border-right: none;
     border-bottom: 1px solid var(--border);
   }
-
-  .founders-grid { grid-template-columns: 1fr; }
-
-  .countdown-strip { padding: 1.25rem 1.5rem; }
-  .countdown-timer { font-size: 2.2rem; }
-  .next-up-banner { padding: 0.75rem 1.25rem; gap: 1rem; }
-  .next-up-dj { font-size: 1.05rem; }
-  .next-up-timer { font-size: 1.1rem; }
-  .next-up-right { align-items: flex-start; }
-
   .news-cards-grid { grid-template-columns: 1fr; }
-  .news-section { padding: 1.25rem; }
+  .news-section { padding: 1rem; }
+  .news-card-title { font-size: 0.875rem; }     /* 14px — was 12.8px */
+  .news-scroll-container { height: 380px; }     /* 580px is excessive on phones */
 
-  .site-footer { padding: 1.75rem 1.5rem; }
+  /* ── Countdown strip ── */
+  .countdown-strip { padding: 1.25rem 1rem; }
+  .countdown-dj-name { font-size: 1.2rem; }
+  .countdown-timer { font-size: 2rem; }
+
+  /* ── Schedule ── */
+  .schedule-event-row { padding: 0.875rem 1rem; }
+  .schedule-dj-name { font-size: 0.95rem; }
+  .schedule-description { font-size: 0.875rem; } /* 14px — was 12px */
+
+  /* ── Mixes ── */
+  .mix-artist { font-size: 0.875rem; }   /* 14px — was 13.6px */
+  .mixes-grid { grid-template-columns: 1fr; }
+
+  /* ── Founders / About page ── */
+  .founders-grid { grid-template-columns: 1fr; }
+  .founder-card { padding: 1.5rem 1.25rem; }
+  .founder-name { font-size: 1.8rem; }
+  .founder-bio { font-size: 0.9rem; }
+  .documentary-heading { font-size: 1.5rem; }
+  .documentary-section { padding-top: 2rem; }
+
+  /* ── Shop ── */
+  .shop-card-desc { font-size: 0.875rem; } /* 14px — was 13.1px */
+  .shop-grid { grid-template-columns: 1fr; }
+
+  /* ── Submit form ── */
+  .submit-grid { grid-template-columns: 1fr; }
+  .submit-field--full { grid-column: 1; }
+  /* 16px prevents iOS auto-zoom on input focus */
+  .submit-input { font-size: 1rem; }
+
+  /* ── Label ── */
+  .label-heading { font-size: clamp(2rem, 10vw, 3rem); }
+  .label-artists-grid { grid-template-columns: repeat(2, 1fr); }
+
+  /* ── Footer ── */
+  .site-footer { padding: 1.5rem 1rem; }
   .footer-inner { flex-direction: column; align-items: flex-start; gap: 1rem; }
+  .footer-copy { white-space: normal; }  /* was nowrap — caused overflow */
+  .footer-links { gap: 0.25rem 1.25rem; }
 
+  /* ── Audio player ── */
   .audio-fab { bottom: 1rem; right: 1rem; }
   .audio-panel {
     left: 0; right: 0; bottom: 0; width: 100%;
     border-left: none; border-right: none; border-bottom: none;
   }
 
-  .content-page { padding: 2.5rem 1.25rem 5rem; }
-  .page-heading { font-size: 2rem; }
+  /* ── Content pages ── */
+  .content-page { padding: 2rem 1rem 4rem; }
+  .page-heading { font-size: clamp(1.6rem, 8vw, 2rem); margin-bottom: 1.5rem; }
+  .back-link { margin-bottom: 1.25rem; }
 }
 
 @media (max-width: 960px) and (min-width: 769px) {
   .shows-grid-compact,
   .shows-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
   .flyer-news-grid { grid-template-columns: 240px 1fr; }
+  .shop-grid { grid-template-columns: repeat(2, 1fr); }
+  .submit-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* ── Admin mobile ────────────────────────────────────────── */
+.admin-wrap-main { padding: 2rem; }
+@media (max-width: 768px) {
+  .admin-wrap-main { padding: 1rem !important; }
+  .admin-section-card { padding: 1rem !important; }
+  .admin-module-nav { padding: 0 0.5rem !important; overflow-x: auto; }
+  .admin-header { padding: 0 1rem !important; }
 }
 
 /* ── Mixes genre filter ──────────────────────────────────── */
