@@ -140,6 +140,13 @@ img, video, iframe { display: block; max-width: 100%; }
   display: block;
 }
 
+.nav-centre {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
 .nav-right {
   display: flex;
   align-items: center;
@@ -152,6 +159,65 @@ img, video, iframe { display: block; max-width: 100%; }
   display: flex;
   align-items: center;
   gap: 2.5rem;
+}
+
+/* ── Broadcast indicator ─────────────────────────────────── */
+@keyframes on-air-glow {
+  0%, 100% { box-shadow: 0 0 4px 1px rgba(230, 48, 48, 0.9); opacity: 1; }
+  50%       { box-shadow: 0 0 10px 3px rgba(230, 48, 48, 0.5); opacity: 0.55; }
+}
+
+.broadcast-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 3px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.broadcast-indicator--on {
+  background: rgba(230, 48, 48, 0.1);
+  border-color: rgba(230, 48, 48, 0.3);
+}
+
+.broadcast-indicator--off {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.broadcast-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.broadcast-dot--on {
+  background: #e63030;
+  animation: on-air-glow 1.6s ease-in-out infinite;
+}
+
+.broadcast-indicator--off .broadcast-dot {
+  background: #3a3835;
+}
+
+.broadcast-label {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.broadcast-indicator--on  .broadcast-label { color: #e63030; }
+.broadcast-indicator--off .broadcast-label { color: #3a3835; }
+
+/* Mobile menu indicator row */
+.mobile-menu-indicator {
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--border);
 }
 
 /* ── Nav countdown (broadcast indicator) ─────────────────── */
@@ -1999,6 +2065,7 @@ img, video, iframe { display: block; max-width: 100%; }
     grid-template-columns: none;
   }
   .nav-logo-img { height: 32px; max-height: 32px; width: auto; }
+  .nav-centre { display: none !important; }
   .nav-countdown { display: none !important; }
   .nav-links { display: none !important; }
   .hamburger { display: flex; flex-shrink: 0; }
