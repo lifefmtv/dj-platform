@@ -55,6 +55,7 @@ export default function ChatTabs() {
             src={RESTREAM_URL}
             title="Socials Chat — Restream"
             allow="autoplay"
+            referrerPolicy="no-referrer-when-downgrade"
             style={{ width: "100%", height: "100%", border: "none", display: "block" }}
           />
         </div>

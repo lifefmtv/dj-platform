@@ -14,6 +14,20 @@ const nextConfig = {
       },
     ],
   },
+
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: "frame-src 'self' https://chat.restream.io https://player.restream.io https://www.youtube.com https://w.soundcloud.com https://embed.radio.co;",
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
