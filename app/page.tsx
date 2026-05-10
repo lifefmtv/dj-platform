@@ -8,7 +8,7 @@ import FlyerDisplay from "@/components/FlyerDisplay";
 import Countdown from "@/components/Countdown";
 import NextUpBanner from "@/components/NextUpBanner";
 import MixcloudShows from "@/components/MixcloudShows";
-import TikTokFeed from "@/components/TikTokFeed";
+import SocialFollow from "@/components/SocialFollow";
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
 import { getUKDateTime } from "@/lib/broadcastStatus";
 
@@ -55,13 +55,12 @@ export default async function HomePage() {
       {/* About */}
       <section className="about-section">
         <div className="about-left">
-          <p className="about-eyebrow">Born from the underground</p>
           <p className="about-text">
-            Born from the underground, broadcasting to the world. LIFEFM.TV has been championing
-            the sounds of DNB, dub, tech house, jungle and everything in between since the pirate
-            radio days. Founded by Paul Roast — one of the original faces behind the legendary
-            Sunday Roast jungle raves — we&apos;ve spent decades giving a platform to the artists,
-            DJs and selectors that don&apos;t fit anywhere else.
+            LIFEFM.TV has been championing the sounds of DNB, dub, tech house, jungle and
+            everything in between since the pirate radio days. Founded by Paul Roast — one of the
+            original faces behind the legendary Sunday Roast jungle raves — we&apos;ve spent
+            decades giving a platform to the artists, DJs and selectors that don&apos;t fit
+            anywhere else.
           </p>
           <p className="about-hero-line">
             Every night is something different. Every set is live. Every listener is family.
@@ -70,7 +69,7 @@ export default async function HomePage() {
         </div>
 
         <div className="about-right">
-          <TikTokFeed />
+          <SocialFollow />
         </div>
       </section>
 
