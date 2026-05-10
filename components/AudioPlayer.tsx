@@ -46,8 +46,8 @@ export default function AudioPlayer() {
               ✕
             </button>
           </div>
-          {/* radio.co script renders its player into this div */}
-          <div ref={playerRef} className="audio-panel-player" />
+          {/* radio.co script targets this element by ID */}
+          <div ref={playerRef} id="radioco-player" className="audio-panel-player" />
         </div>
       )}
 

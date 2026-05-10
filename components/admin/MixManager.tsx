@@ -10,15 +10,28 @@ interface Mix {
   artist: string;
   audio_url: string;
   created_at: string;
+  genre?: string;
 }
 
 type BannerType = "success" | "error";
+
+const GENRES = [
+  "DNB",
+  "House",
+  "Techno",
+  "Jungle",
+  "Dub",
+  "Soul & Funk",
+  "Tech House",
+  "Other",
+];
 
 export default function MixManager() {
   const supabase = useMemo(() => createClient(), []);
   const [mixes, setMixes] = useState<Mix[]>([]);
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("");
+  const [genre, setGenre] = useState("");
   const [uploading, setUploading] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [message, setMessage] = useState("");
@@ -54,6 +67,7 @@ export default function MixManager() {
 
     const savedTitle = title.trim();
     const savedArtist = artist.trim();
+    const savedGenre = genre.trim();
 
     setUploading(true);
     setMessage("");
@@ -79,6 +93,7 @@ export default function MixManager() {
       title: savedTitle,
       artist: savedArtist,
       audio_url: urlData.publicUrl,
+      ...(savedGenre ? { genre: savedGenre } : {}),
     });
 
     setUploading(false);
@@ -89,6 +104,7 @@ export default function MixManager() {
       flash(`Mix uploaded successfully — it will appear on the Mixes page\n${savedTitle} · ${savedArtist}`, "success");
       setTitle("");
       setArtist("");
+      setGenre("");
       fetchMixes();
     }
   }
@@ -115,9 +131,8 @@ export default function MixManager() {
       <h2 style={sectionTitle}>Mix Manager ({mixes.length}/10)</h2>
 
       <div style={formCard}>
-        {/* Step 1: Details */}
         <p style={{ ...labelStyle, marginBottom: "1rem" }}>Step 1 — Enter mix details</p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.25rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem", marginBottom: "1.25rem" }}>
           <div>
             <label style={labelStyle}>Mix Title *</label>
             <input
@@ -138,6 +153,20 @@ export default function MixManager() {
               disabled={atLimit}
             />
           </div>
+          <div>
+            <label style={labelStyle}>Genre</label>
+            <select
+              value={genre}
+              onChange={(e) => setGenre(e.target.value)}
+              style={{ ...inputStyle, appearance: "none" }}
+              disabled={atLimit}
+            >
+              <option value="">Select genre…</option>
+              {GENRES.map((g) => (
+                <option key={g} value={g}>{g}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {atLimit ? (
@@ -146,7 +175,6 @@ export default function MixManager() {
           </p>
         ) : (
           <>
-            {/* Step 2: File */}
             <div style={{ borderTop: "1px solid #222", paddingTop: "1.25rem" }}>
               <p style={{ ...labelStyle, marginBottom: "1rem" }}>
                 Step 2 — Choose your audio file
@@ -211,14 +239,20 @@ export default function MixManager() {
         )}
       </div>
 
-      {/* Mixes list */}
       {mixes.length > 0 && (
         <div style={{ marginTop: "1.75rem" }}>
           {mixes.map((mix) => (
             <div key={mix.id} style={mixRow}>
               <div style={{ flex: 1 }}>
                 <p style={{ fontWeight: 600, marginBottom: "0.1rem" }}>{mix.title}</p>
-                <p style={{ color: "#e63030", fontSize: "0.8rem", marginBottom: "0.1rem" }}>{mix.artist}</p>
+                <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", marginBottom: "0.1rem" }}>
+                  <p style={{ color: "#e63030", fontSize: "0.8rem" }}>{mix.artist}</p>
+                  {mix.genre && (
+                    <span style={{ color: "#888", fontSize: "0.72rem", fontFamily: "var(--font-mono)", letterSpacing: "0.08em" }}>
+                      {mix.genre}
+                    </span>
+                  )}
+                </div>
                 <p style={{ color: "#555", fontSize: "0.72rem", marginBottom: "0.6rem" }}>
                   {format(new Date(mix.created_at), "d MMM yyyy")}
                 </p>
@@ -240,8 +274,6 @@ export default function MixManager() {
     </div>
   );
 }
-
-// ── Styles ────────────────────────────────────────────────
 
 const sectionTitle: React.CSSProperties = {
   fontSize: "1.1rem",

@@ -3,6 +3,12 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { formatDistanceToNow } from "date-fns";
+import {
+  deleteMessage,
+  clearAllMessages,
+  banUser,
+  unbanUser,
+} from "@/app/actions/chatActions";
 
 interface Message {
   id: string;
@@ -11,12 +17,20 @@ interface Message {
   created_at: string;
 }
 
+interface BannedUser {
+  id: string;
+  display_name: string;
+  banned_at: string;
+}
+
 export default function ChatModeration() {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [bannedUsers, setBannedUsers] = useState<BannedUser[]>([]);
   const supabase = createClient();
 
   useEffect(() => {
     fetchMessages();
+    fetchBannedUsers();
     const channel = supabase
       .channel("admin-chat")
       .on(
@@ -40,27 +54,71 @@ export default function ChatModeration() {
     if (data) setMessages(data);
   }
 
-  async function deleteMessage(id: string) {
+  async function fetchBannedUsers() {
+    const { data } = await supabase
+      .from("banned_users")
+      .select("*")
+      .order("banned_at", { ascending: false });
+    if (data) setBannedUsers(data);
+  }
+
+  async function handleDelete(id: string) {
     if (!confirm("Delete this message?")) return;
-    await supabase.from("chat_messages").delete().eq("id", id);
+    await deleteMessage(id);
     fetchMessages();
   }
 
-  async function clearAll() {
-    if (!confirm("Are you sure you want to clear ALL chat messages? This cannot be undone.")) return;
-    await supabase.from("chat_messages").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+  async function handleClearAll() {
+    if (
+      !confirm(
+        "Are you sure you want to clear ALL chat messages? This cannot be undone."
+      )
+    )
+      return;
+    await clearAllMessages();
     fetchMessages();
+  }
+
+  async function handleBan(displayName: string) {
+    if (!confirm(`Ban "${displayName}" from chat? They will not be able to send messages.`))
+      return;
+    try {
+      await banUser(displayName);
+      fetchBannedUsers();
+    } catch (e: any) {
+      if (e.message?.includes("unique")) {
+        alert(`${displayName} is already banned.`);
+      } else {
+        alert("Failed to ban user.");
+      }
+    }
+  }
+
+  async function handleUnban(id: string, displayName: string) {
+    if (!confirm(`Unban "${displayName}"?`)) return;
+    await unbanUser(id);
+    fetchBannedUsers();
   }
 
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.5rem", flexWrap: "wrap", gap: "0.75rem" }}>
+      {/* Messages section */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: "1.5rem",
+          flexWrap: "wrap",
+          gap: "0.75rem",
+        }}
+      >
         <h2 style={sectionTitle}>Chat Moderation</h2>
         <div style={{ display: "flex", gap: "0.5rem" }}>
           <button onClick={fetchMessages} style={refreshButton}>
             ↻ Refresh
           </button>
-          <button onClick={clearAll} style={clearButton}>
+          <button onClick={handleClearAll} style={clearButton}>
             Clear All Messages
           </button>
         </div>
@@ -72,22 +130,89 @@ export default function ChatModeration() {
         messages.map((msg) => (
           <div key={msg.id} style={messageRow}>
             <div style={{ flex: 1 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.25rem" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.75rem",
+                  marginBottom: "0.25rem",
+                }}
+              >
                 <span style={{ color: "#e63030", fontWeight: 600, fontSize: "0.85rem" }}>
                   {msg.display_name}
                 </span>
                 <span style={{ color: "#555", fontSize: "0.75rem" }}>
-                  {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
+                  {formatDistanceToNow(new Date(msg.created_at), {
+                    addSuffix: true,
+                  })}
                 </span>
               </div>
               <p style={{ color: "#ddd", fontSize: "0.9rem" }}>{msg.message}</p>
             </div>
-            <button onClick={() => deleteMessage(msg.id)} style={deleteButton}>
-              Delete
-            </button>
+            <div style={{ display: "flex", gap: "0.5rem", flexShrink: 0 }}>
+              <button
+                onClick={() => handleBan(msg.display_name)}
+                style={banButton}
+              >
+                Ban
+              </button>
+              <button
+                onClick={() => handleDelete(msg.id)}
+                style={deleteButton}
+              >
+                Delete
+              </button>
+            </div>
           </div>
         ))
       )}
+
+      {/* Banned Users section */}
+      <div
+        style={{
+          marginTop: "3rem",
+          borderTop: "1px solid #222",
+          paddingTop: "2rem",
+        }}
+      >
+        <h2 style={{ ...sectionTitle, marginBottom: "1rem" }}>
+          Banned Users ({bannedUsers.length})
+        </h2>
+
+        {bannedUsers.length === 0 ? (
+          <p style={{ color: "#555", fontSize: "0.9rem" }}>No banned users.</p>
+        ) : (
+          bannedUsers.map((u) => (
+            <div key={u.id} style={messageRow}>
+              <div style={{ flex: 1 }}>
+                <span
+                  style={{ color: "#e63030", fontWeight: 600, fontSize: "0.85rem" }}
+                >
+                  {u.display_name}
+                </span>
+                <span
+                  style={{
+                    color: "#555",
+                    fontSize: "0.75rem",
+                    marginLeft: "0.75rem",
+                  }}
+                >
+                  banned{" "}
+                  {formatDistanceToNow(new Date(u.banned_at), {
+                    addSuffix: true,
+                  })}
+                </span>
+              </div>
+              <button
+                onClick={() => handleUnban(u.id, u.display_name)}
+                style={unbanButton}
+              >
+                Unban
+              </button>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }
@@ -113,6 +238,28 @@ const deleteButton: React.CSSProperties = {
   background: "transparent",
   color: "#e63030",
   border: "1px solid #e63030",
+  borderRadius: "4px",
+  padding: "0.3rem 0.75rem",
+  cursor: "pointer",
+  fontSize: "0.8rem",
+  whiteSpace: "nowrap",
+};
+
+const banButton: React.CSSProperties = {
+  background: "transparent",
+  color: "#f59e0b",
+  border: "1px solid #f59e0b",
+  borderRadius: "4px",
+  padding: "0.3rem 0.75rem",
+  cursor: "pointer",
+  fontSize: "0.8rem",
+  whiteSpace: "nowrap",
+};
+
+const unbanButton: React.CSSProperties = {
+  background: "transparent",
+  color: "#22c55e",
+  border: "1px solid #22c55e",
   borderRadius: "4px",
   padding: "0.3rem 0.75rem",
   cursor: "pointer",

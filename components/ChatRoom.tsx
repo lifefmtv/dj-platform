@@ -23,6 +23,7 @@ export default function ChatRoom() {
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
   const [lastSent, setLastSent] = useState(0);
+  const [isBanned, setIsBanned] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -65,9 +66,25 @@ export default function ChatRoom() {
     if (displayName) inputRef.current?.focus();
   }, [displayName]);
 
-  function joinChat() {
+  async function checkBanned(name: string): Promise<boolean> {
+    const { data } = await supabase
+      .from("banned_users")
+      .select("id")
+      .eq("display_name", name)
+      .maybeSingle();
+    return !!data;
+  }
+
+  async function joinChat() {
     const name = nameInput.trim();
     if (!name) return;
+    const banned = await checkBanned(name);
+    if (banned) {
+      setIsBanned(true);
+      setDisplayName(name);
+      localStorage.setItem("chat_display_name", name);
+      return;
+    }
     localStorage.setItem("chat_display_name", name);
     setDisplayName(name);
   }
@@ -126,6 +143,25 @@ export default function ChatRoom() {
           <button className="chat-btn" onClick={joinChat}>
             Join Chat
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (isBanned) {
+    return (
+      <div className="chat-container">
+        <div className="chat-header">
+          <div className="chat-header-dot" />
+          <span className="chat-header-label">Live Chat</span>
+        </div>
+        <div className="chat-join">
+          <p className="chat-join-label" style={{ color: "#e63030" }}>
+            You have been banned from the chat.
+          </p>
+          <p style={{ fontSize: "0.78rem", color: "#555" }}>
+            Contact us if you think this was a mistake.
+          </p>
         </div>
       </div>
     );
