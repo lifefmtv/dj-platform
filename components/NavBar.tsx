@@ -8,6 +8,7 @@ import BroadcastIndicator from "@/components/BroadcastIndicator";
 const NAV_LINKS = [
   { href: "/shows", label: "Shows" },
   { href: "/schedule", label: "Schedule" },
+  { href: "/djs", label: "Selectors" },
   { href: "/mixes", label: "Mixes" },
   { href: "/label", label: "Label" },
   { href: "/shop", label: "Shop" },

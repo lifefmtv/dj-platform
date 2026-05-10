@@ -7,6 +7,7 @@ import ShowTemplateManager from "@/components/admin/ShowTemplateManager";
 import FlyerUpload from "@/components/admin/FlyerUpload";
 import MixManager from "@/components/admin/MixManager";
 import ChatModeration from "@/components/admin/ChatModeration";
+import DJManager from "@/components/admin/DJManager";
 
 const NAV_ITEMS = [
   { href: "#timetable", label: "Timetable" },
@@ -14,6 +15,7 @@ const NAV_ITEMS = [
   { href: "#flyer", label: "Flyer" },
   { href: "#mixes", label: "Mixes" },
   { href: "#chat", label: "Chat" },
+  { href: "#djs", label: "DJs" },
 ];
 
 export default async function AdminPage() {
@@ -79,6 +81,10 @@ export default async function AdminPage() {
 
           <section id="chat" style={sectionCard}>
             <ChatModeration />
+          </section>
+
+          <section id="djs" style={sectionCard}>
+            <DJManager />
           </section>
 
         </div>
