@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import NavCountdown from "@/components/NavCountdown";
-import BroadcastIndicator from "@/components/BroadcastIndicator";
 
 const NAV_LINKS = [
   { href: "/shows", label: "Shows" },
@@ -33,12 +31,6 @@ export default function NavBar() {
           />
         </a>
 
-        {/* Centre slot — broadcast indicator + next-up countdown, desktop only */}
-        <div className="nav-centre">
-          <BroadcastIndicator />
-          <NavCountdown />
-        </div>
-
         {/* Right side: desktop links + hamburger */}
         <div className="nav-right">
           <div className="nav-links">
@@ -67,10 +59,6 @@ export default function NavBar() {
       {/* Mobile dropdown */}
       {open && (
         <div id="mobile-menu" className="mobile-menu" role="menu">
-          {/* ON AIR / OFF AIR at the top of the mobile menu */}
-          <div className="mobile-menu-indicator">
-            <BroadcastIndicator />
-          </div>
           {NAV_LINKS.map(({ href, label }) => (
             <a
               key={href}
