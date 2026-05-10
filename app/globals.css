@@ -1029,10 +1029,10 @@ img, video, iframe { display: block; max-width: 100%; }
   background: #1e1e1e;
 }
 
-/* 2×2 grid for stream platforms */
+/* 3×2 grid for stream platforms */
 .social-stream-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 0.5rem;
 }
 
@@ -1061,7 +1061,14 @@ img, video, iframe { display: block; max-width: 100%; }
   transform: translateY(-1px);
 }
 
-/* Stacked column for social follow links */
+/* Two-column wrapper for social section */
+.social-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+/* Stacked column inside the two-column grid */
 .social-socials-col {
   display: flex;
   flex-direction: column;
@@ -1114,6 +1121,33 @@ img, video, iframe { display: block; max-width: 100%; }
   opacity: 0.65;
   letter-spacing: 0.06em;
   line-height: 1;
+}
+
+/* Full-width support / Ko-fi button */
+.social-support-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.9rem 1.25rem;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  text-decoration: none;
+  background: #1a1a1a;
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+.social-support-btn:hover {
+  background: var(--brand-bg);
+  color: var(--brand-fg);
+  border-color: var(--brand-border, transparent);
+  transform: translateY(-1px);
 }
 
 /* ── Section label strip ─────────────────────────────────── */
@@ -2144,6 +2178,10 @@ img, video, iframe { display: block; max-width: 100%; }
   .about-text { font-size: 1rem; max-width: 100%; }
   .about-hero-line { font-size: 1.35rem; max-width: 100%; }
   .about-tagline { font-size: clamp(2.8rem, 13vw, 3.5rem); }
+
+  /* ── Social Follow (homepage) ── */
+  .social-stream-grid { grid-template-columns: repeat(2, 1fr); }
+  .social-two-col { grid-template-columns: 1fr; }
 
   /* ── Section strip ── */
   .section-strip { padding: 0 1rem; }
