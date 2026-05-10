@@ -292,18 +292,18 @@ img, video, iframe { display: block; max-width: 100%; }
   flex-shrink: 0;
 }
 
-/* ── Next Up stream banner ───────────────────────────────── */
+/* ── Broadcast status / Now Playing / Up Next banner ─────── */
 .next-up-banner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 2rem;
-  padding: 0.875rem 2.5rem;
+  gap: 1.5rem;
+  padding: 0.8rem 2.5rem;
   background: #0c0808;
   border-bottom: 1px solid rgba(230, 48, 48, 0.25);
 }
 
-/* Left section: status + label + DJ + genre */
+/* ── Left: status dot + NOW PLAYING ── */
 .next-up-left {
   display: flex;
   align-items: center;
@@ -312,7 +312,6 @@ img, video, iframe { display: block; max-width: 100%; }
   min-width: 0;
 }
 
-/* Status group: dot + ON AIR / ARCHIVE text */
 .next-up-status-group {
   display: flex;
   align-items: center;
@@ -326,15 +325,8 @@ img, video, iframe { display: block; max-width: 100%; }
   border-radius: 50%;
   flex-shrink: 0;
 }
-
-.next-up-status-dot--on {
-  background: #22c55e;
-  animation: on-air-glow-green 1.8s ease-in-out infinite;
-}
-
-.next-up-status-dot--off {
-  background: #e63030;
-}
+.next-up-status-dot--on  { background: #22c55e; animation: on-air-glow-green 1.8s ease-in-out infinite; }
+.next-up-status-dot--off { background: #e63030; }
 
 .next-up-status-label {
   font-family: var(--font-mono);
@@ -344,31 +336,39 @@ img, video, iframe { display: block; max-width: 100%; }
   text-transform: uppercase;
   white-space: nowrap;
 }
-
 .next-up-status-label--on  { color: #22c55e; }
 .next-up-status-label--off { color: #e63030; }
 
-/* Vertical divider between status and NEXT UP label */
+/* Thin vertical rule between status and NOW PLAYING */
 .next-up-divider {
   width: 1px;
-  height: 14px;
-  background: rgba(255, 255, 255, 0.12);
+  height: 16px;
+  background: rgba(255, 255, 255, 0.1);
   flex-shrink: 0;
 }
 
-.next-up-label {
+/* NOW PLAYING section */
+.next-up-now-playing {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.next-up-now-label {
   font-family: var(--font-mono);
-  font-size: 0.56rem;
+  font-size: 0.55rem;
   font-weight: 700;
-  letter-spacing: 0.3em;
+  letter-spacing: 0.28em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.35);
+  color: #e63030;
   flex-shrink: 0;
 }
 
+/* DJ name — large for NOW PLAYING, smaller for UP NEXT */
 .next-up-dj {
   font-family: var(--font-display);
-  font-size: 1.35rem;
+  font-size: 1.25rem;
   font-weight: 800;
   color: #fff;
   line-height: 1;
@@ -376,7 +376,13 @@ img, video, iframe { display: block; max-width: 100%; }
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.next-up-dj--dim {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.55);
+}
 
+/* Genre pill */
 .next-up-genre {
   font-family: var(--font-mono);
   font-size: 0.58rem;
@@ -391,20 +397,59 @@ img, video, iframe { display: block; max-width: 100%; }
   white-space: nowrap;
   flex-shrink: 0;
 }
+.next-up-genre--dim {
+  color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+}
 
-/* Right section: date + countdown */
+/* ── Right: UP NEXT label + DJ + countdown ── */
+.next-up-right-group {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-shrink: 0;
+}
+
+/* Vertical rule separating the two halves */
+.next-up-section-divider {
+  width: 1px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+/* UP NEXT inline info (label + DJ + genre) */
+.next-up-upnext-info {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.next-up-label {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+  flex-shrink: 0;
+}
+
+/* Countdown column (date + timer) */
 .next-up-right {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 0.25rem;
+  gap: 0.2rem;
   flex-shrink: 0;
 }
 
 .next-up-datetime {
   font-family: var(--font-mono);
-  font-size: 0.68rem;
-  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.4);
   letter-spacing: 0.04em;
   white-space: nowrap;
 }
@@ -412,20 +457,20 @@ img, video, iframe { display: block; max-width: 100%; }
 .next-up-timer-group {
   display: flex;
   align-items: baseline;
-  gap: 0.6rem;
+  gap: 0.5rem;
 }
 
 .next-up-timer-label {
   font-family: var(--font-mono);
-  font-size: 0.52rem;
+  font-size: 0.5rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(255, 255, 255, 0.3);
 }
 
 .next-up-timer {
   font-family: var(--font-mono);
-  font-size: 1.4rem;
+  font-size: 1.3rem;
   font-weight: 700;
   color: #e63030;
   font-variant-numeric: tabular-nums;
@@ -2130,16 +2175,29 @@ img, video, iframe { display: block; max-width: 100%; }
   .chat-error { font-size: 0.875rem; }       /* 14px */
   .chat-text { font-size: 0.9rem; }          /* 14.4px */
 
-  /* ── Next Up banner — stacks vertically on mobile ── */
+  /* ── Broadcast banner — stacks vertically on mobile ── */
   .next-up-banner {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.6rem;
+    gap: 0.55rem;
     padding: 0.75rem 1rem;
   }
-  .next-up-left { flex-wrap: wrap; gap: 0.5rem; }
-  .next-up-dj { font-size: 1rem; }
+  /* Status on its own line */
+  .next-up-left { gap: 0.5rem; }
+  .next-up-now-playing { flex-wrap: wrap; }
+  /* Hide internal dividers — row structure conveys separation */
+  .next-up-divider { display: none; }
+  .next-up-section-divider { display: none; }
+  /* UP NEXT block stacks below */
+  .next-up-right-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+    width: 100%;
+  }
+  .next-up-upnext-info { flex-wrap: wrap; }
   .next-up-right { align-items: flex-start; }
+  .next-up-dj { font-size: 1rem; }
   .next-up-timer { font-size: 1.1rem; }
   .next-up-datetime { white-space: normal; }
 

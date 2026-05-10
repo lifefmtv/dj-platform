@@ -10,14 +10,27 @@ import NextUpBanner from "@/components/NextUpBanner";
 import MixcloudShows from "@/components/MixcloudShows";
 import TikTokFeed from "@/components/TikTokFeed";
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
+import { getUKDateTime } from "@/lib/broadcastStatus";
 
 export default async function HomePage() {
   const supabase = await createServerSupabaseClient();
+  const { date: ukDate, time: ukTime } = getUKDateTime();
 
+  // Show currently on air — date matches today UK, time falls between start and end
+  const { data: currentDJ } = await supabase
+    .from("schedule")
+    .select("*")
+    .eq("date", ukDate)
+    .lte("start_time", ukTime)
+    .gt("end_time", ukTime)
+    .maybeSingle();
+
+  // Next upcoming show — first show starting after the current one (or after now if nothing current)
+  const nextThreshold = currentDJ ? currentDJ.end_time : ukTime;
   const { data: nextDJ } = await supabase
     .from("schedule")
     .select("*")
-    .gte("date", new Date().toISOString().split("T")[0])
+    .or(`date.gt.${ukDate},and(date.eq.${ukDate},start_time.gte.${nextThreshold})`)
     .order("date", { ascending: true })
     .order("start_time", { ascending: true })
     .limit(1)
@@ -25,15 +38,11 @@ export default async function HomePage() {
 
   return (
     <main>
-      {/* Next Up banner — above the stream */}
-      {nextDJ && (
-        <NextUpBanner
-          djName={nextDJ.dj_name}
-          eventDate={nextDJ.date}
-          startTime={nextDJ.start_time}
-          genre={nextDJ.genre ?? null}
-        />
-      )}
+      {/* Status / Now Playing / Up Next banner — always rendered */}
+      <NextUpBanner
+        currentShow={currentDJ ?? null}
+        nextShow={nextDJ ?? null}
+      />
 
       {/* Hero: stream + chat */}
       <div className="stream-chat-grid">

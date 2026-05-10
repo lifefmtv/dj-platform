@@ -3,37 +3,24 @@
 import { useEffect, useState } from "react";
 import { isOnAir } from "@/lib/broadcastStatus";
 
-interface Props {
-  djName: string;
-  eventDate: string;
-  startTime: string;
+interface Show {
+  dj_name: string;
+  date: string;
+  start_time: string;
+  end_time: string;
   genre?: string | null;
 }
 
-export default function NextUpBanner({ djName, eventDate, startTime, genre }: Props) {
-  const [timeLeft, setTimeLeft] = useState("");
+interface Props {
+  currentShow: Show | null;
+  nextShow: Show | null;
+}
+
+export default function NextUpBanner({ currentShow, nextShow }: Props) {
   const [onAir, setOnAir] = useState(() => isOnAir());
+  const [timeLeft, setTimeLeft] = useState("");
 
-  useEffect(() => {
-    function calculate() {
-      const target = new Date(`${eventDate}T${startTime}`);
-      const diff = target.getTime() - Date.now();
-      if (diff <= 0) {
-        setTimeLeft("On now");
-        return;
-      }
-      const days = Math.floor(diff / 86400000);
-      const hours = Math.floor((diff % 86400000) / 3600000);
-      const mins = Math.floor((diff % 3600000) / 60000);
-      const secs = Math.floor((diff % 60000) / 1000);
-      setTimeLeft(days > 0 ? `${days}d ${hours}h ${mins}m` : `${hours}h ${mins}m ${secs}s`);
-    }
-    calculate();
-    const id = setInterval(calculate, 1000);
-    return () => clearInterval(id);
-  }, [eventDate, startTime]);
-
-  // Sync broadcast status to whole-minute boundary
+  // Sync broadcast status on whole-minute boundaries
   useEffect(() => {
     function scheduleNext() {
       const now = new Date();
@@ -48,15 +35,34 @@ export default function NextUpBanner({ djName, eventDate, startTime, genre }: Pr
     return () => clearTimeout(timeout);
   }, []);
 
-  const dateLabel = new Date(`${eventDate}T00:00:00`).toLocaleDateString("en-GB", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
+  // Countdown for UP NEXT
+  useEffect(() => {
+    if (!nextShow) { setTimeLeft(""); return; }
+    function calculate() {
+      const target = new Date(`${nextShow!.date}T${nextShow!.start_time}`);
+      const diff = target.getTime() - Date.now();
+      if (diff <= 0) { setTimeLeft("Starting now"); return; }
+      const days  = Math.floor(diff / 86_400_000);
+      const hours = Math.floor((diff % 86_400_000) / 3_600_000);
+      const mins  = Math.floor((diff % 3_600_000) / 60_000);
+      const secs  = Math.floor((diff % 60_000) / 1_000);
+      setTimeLeft(days > 0 ? `${days}d ${hours}h ${mins}m` : `${hours}h ${mins}m ${secs}s`);
+    }
+    calculate();
+    const id = setInterval(calculate, 1_000);
+    return () => clearInterval(id);
+  }, [nextShow]);
+
+  const nextDateLabel = nextShow
+    ? new Date(`${nextShow.date}T00:00:00`).toLocaleDateString("en-GB", {
+        weekday: "long", day: "numeric", month: "long",
+      })
+    : "";
 
   return (
     <div className="next-up-banner">
-      {/* Left: status + next-up label + DJ + genre */}
+
+      {/* ── Left: status indicator + NOW PLAYING ── */}
       <div className="next-up-left">
         <div className="next-up-status-group">
           <span
@@ -68,21 +74,47 @@ export default function NextUpBanner({ djName, eventDate, startTime, genre }: Pr
           </span>
         </div>
 
-        <span className="next-up-divider" aria-hidden />
-
-        <span className="next-up-label">Next Up</span>
-        <span className="next-up-dj">{djName}</span>
-        {genre && <span className="next-up-genre">{genre}</span>}
+        {currentShow && (
+          <>
+            <span className="next-up-divider" aria-hidden />
+            <div className="next-up-now-playing">
+              <span className="next-up-now-label">Now Playing</span>
+              <span className="next-up-dj">{currentShow.dj_name}</span>
+              {currentShow.genre && (
+                <span className="next-up-genre">{currentShow.genre}</span>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
-      {/* Right: date + countdown */}
-      <div className="next-up-right">
-        <span className="next-up-datetime">{dateLabel} · {startTime.slice(0, 5)}</span>
-        <div className="next-up-timer-group">
-          <span className="next-up-timer-label">Starts in</span>
-          <span className="next-up-timer">{timeLeft}</span>
+      {/* ── Right: UP NEXT + countdown ── */}
+      {nextShow && (
+        <div className="next-up-right-group">
+          <span className="next-up-section-divider" aria-hidden />
+
+          <div className="next-up-upnext-info">
+            <span className="next-up-label">Up Next</span>
+            <span className="next-up-dj next-up-dj--dim">{nextShow.dj_name}</span>
+            {nextShow.genre && (
+              <span className="next-up-genre next-up-genre--dim">{nextShow.genre}</span>
+            )}
+          </div>
+
+          <div className="next-up-right">
+            <span className="next-up-datetime">
+              {nextDateLabel} · {nextShow.start_time.slice(0, 5)}
+            </span>
+            {timeLeft && (
+              <div className="next-up-timer-group">
+                <span className="next-up-timer-label">Starts in</span>
+                <span className="next-up-timer">{timeLeft}</span>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
+
     </div>
   );
 }

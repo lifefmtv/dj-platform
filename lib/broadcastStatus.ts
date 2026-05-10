@@ -1,10 +1,32 @@
+const TZ = "Europe/London";
+
+/**
+ * Returns the current date (YYYY-MM-DD) and time (HH:MM:SS) in Europe/London,
+ * so server-side schedule queries match the correct UK slot.
+ */
+export function getUKDateTime(now: Date = new Date()): { date: string; time: string } {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(now);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "00";
+  return {
+    date: `${get("year")}-${get("month")}-${get("day")}`,
+    time: `${get("hour")}:${get("minute")}:${get("second")}`,
+  };
+}
+
 // Broadcast schedule — edit these constants to change on-air hours
 const WEEKDAY_START = 18; // 6pm UK time
 const WEEKDAY_END   = 24; // midnight UK time
 const WEEKEND_START = 12; // noon UK time
 const WEEKEND_END   = 24; // midnight UK time
-
-const TZ = "Europe/London";
 
 /**
  * Returns true if the current moment falls within LIFEFM.TV broadcast hours
