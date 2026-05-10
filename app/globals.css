@@ -1048,6 +1048,99 @@ img, video, iframe { display: block; max-width: 100%; }
   border: 1px solid #2a2422;
 }
 
+/* ── Flyer thumbnail button ──────────────────────────────── */
+.flyer-thumb-btn {
+  position: relative;
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.flyer-thumb-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.flyer-thumb-btn:hover .flyer-thumb-overlay {
+  opacity: 1;
+}
+
+.flyer-thumb-label {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  padding: 0.4rem 0.9rem;
+  border-radius: 3px;
+}
+
+/* ── Flyer lightbox ──────────────────────────────────────── */
+@keyframes backdropFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes modalSlideIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.flyer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: rgba(0, 0, 0, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  animation: backdropFadeIn 0.22s ease forwards;
+}
+
+.flyer-modal {
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  animation: modalSlideIn 0.25s ease forwards;
+}
+
+.flyer-close {
+  position: absolute;
+  top: -2.5rem;
+  right: 0;
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  font-size: 1rem;
+  line-height: 1;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.flyer-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
 /* ── Placeholder ─────────────────────────────────────────── */
 .placeholder-empty {
   border: 2px dashed rgba(255, 255, 255, 0.1);

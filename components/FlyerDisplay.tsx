@@ -1,5 +1,5 @@
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
-import Image from "next/image";
+import FlyerLightbox from "@/components/FlyerLightbox";
 
 export default async function FlyerDisplay() {
   const supabase = await createServerSupabaseClient();
@@ -14,13 +14,7 @@ export default async function FlyerDisplay() {
       <p className="flyer-section-label">Current Event</p>
       {data?.current_flyer_url ? (
         <div className="flyer-image-wrap">
-          <Image
-            src={data.current_flyer_url}
-            alt="Event flyer"
-            width={260}
-            height={390}
-            style={{ width: "100%", height: "auto", display: "block" }}
-          />
+          <FlyerLightbox src={data.current_flyer_url} />
         </div>
       ) : (
         <div className="placeholder-empty">Event flyer coming soon</div>
