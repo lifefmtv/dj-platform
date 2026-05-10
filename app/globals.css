@@ -355,14 +355,19 @@ img, video, iframe { display: block; max-width: 100%; }
   min-width: 0;
 }
 
+/* NOW PLAYING — red pill badge, visually distinct */
 .next-up-now-label {
   font-family: var(--font-mono);
-  font-size: 0.55rem;
+  font-size: 0.54rem;
   font-weight: 700;
-  letter-spacing: 0.28em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #e63030;
+  color: #fff;
+  background: #e63030;
+  border-radius: 3px;
+  padding: 0.2rem 0.55rem;
   flex-shrink: 0;
+  line-height: 1.4;
 }
 
 /* DJ name — large for NOW PLAYING, smaller for UP NEXT */
@@ -382,26 +387,21 @@ img, video, iframe { display: block; max-width: 100%; }
   color: rgba(255, 255, 255, 0.55);
 }
 
-/* Genre pill */
+/* Genre pill — colour applied via inline style from genreColor() */
 .next-up-genre {
   font-family: var(--font-mono);
   font-size: 0.58rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #e63030;
-  background: rgba(230, 48, 48, 0.12);
-  border: 1px solid rgba(230, 48, 48, 0.3);
   border-radius: 3px;
+  border: 1px solid;
   padding: 0.15rem 0.5rem;
   white-space: nowrap;
   flex-shrink: 0;
 }
-.next-up-genre--dim {
-  color: rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.1);
-}
+/* --dim keeps structure, inline style handles colour at reduced opacity */
+.next-up-genre--dim { opacity: 0.65; }
 
 /* ── Right: UP NEXT label + DJ + countdown ── */
 .next-up-right-group {

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { isOnAir } from "@/lib/broadcastStatus";
+import { genreColor } from "@/lib/genreColors";
 
 interface Show {
   dj_name: string;
@@ -14,6 +15,13 @@ interface Show {
 interface Props {
   currentShow: Show | null;
   nextShow: Show | null;
+}
+
+function genrePillStyle(genre: string | null | undefined, dim = false) {
+  const c = genreColor(genre);
+  return dim
+    ? { color: c, background: `${c}18`, borderColor: `${c}40` }
+    : { color: c, background: `${c}22`, borderColor: `${c}55` };
 }
 
 export default function NextUpBanner({ currentShow, nextShow }: Props) {
@@ -81,7 +89,12 @@ export default function NextUpBanner({ currentShow, nextShow }: Props) {
               <span className="next-up-now-label">Now Playing</span>
               <span className="next-up-dj">{currentShow.dj_name}</span>
               {currentShow.genre && (
-                <span className="next-up-genre">{currentShow.genre}</span>
+                <span
+                  className="next-up-genre"
+                  style={genrePillStyle(currentShow.genre)}
+                >
+                  {currentShow.genre}
+                </span>
               )}
             </div>
           </>
@@ -97,7 +110,12 @@ export default function NextUpBanner({ currentShow, nextShow }: Props) {
             <span className="next-up-label">Up Next</span>
             <span className="next-up-dj next-up-dj--dim">{nextShow.dj_name}</span>
             {nextShow.genre && (
-              <span className="next-up-genre next-up-genre--dim">{nextShow.genre}</span>
+              <span
+                className="next-up-genre next-up-genre--dim"
+                style={genrePillStyle(nextShow.genre, true)}
+              >
+                {nextShow.genre}
+              </span>
             )}
           </div>
 
