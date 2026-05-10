@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 
-export default function FlyerLightbox({ src }: { src: string }) {
+export default function FlyerLightbox({ src, coverMode = false }: { src: string; coverMode?: boolean }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -22,22 +22,41 @@ export default function FlyerLightbox({ src }: { src: string }) {
   return (
     <>
       {/* Thumbnail */}
-      <button
-        className="flyer-thumb-btn"
-        onClick={() => setOpen(true)}
-        aria-label="View full event flyer"
-      >
-        <Image
-          src={src}
-          alt="Event flyer"
-          width={240}
-          height={360}
-          style={{ width: "100%", height: "auto", display: "block" }}
-        />
-        <div className="flyer-thumb-overlay">
-          <span className="flyer-thumb-label">View Flyer</span>
-        </div>
-      </button>
+      {coverMode ? (
+        <button
+          className="flyer-thumb-btn flyer-thumb-btn--cover"
+          onClick={() => setOpen(true)}
+          aria-label="View full event flyer"
+        >
+          <Image
+            src={src}
+            alt="Event flyer"
+            fill
+            style={{ objectFit: "cover", objectPosition: "center top" }}
+            sizes="(max-width: 768px) 100vw, (max-width: 960px) 50vw, 33vw"
+          />
+          <div className="flyer-thumb-overlay">
+            <span className="flyer-thumb-label">View Flyer</span>
+          </div>
+        </button>
+      ) : (
+        <button
+          className="flyer-thumb-btn"
+          onClick={() => setOpen(true)}
+          aria-label="View full event flyer"
+        >
+          <Image
+            src={src}
+            alt="Event flyer"
+            width={240}
+            height={360}
+            style={{ width: "100%", height: "auto", display: "block" }}
+          />
+          <div className="flyer-thumb-overlay">
+            <span className="flyer-thumb-label">View Flyer</span>
+          </div>
+        </button>
+      )}
 
       {/* Lightbox */}
       {open && (

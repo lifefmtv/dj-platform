@@ -931,25 +931,78 @@ img, video, iframe { display: block; max-width: 100%; }
 /* ── About section ───────────────────────────────────────── */
 .about-section {
   display: grid;
-  grid-template-columns: 3fr 2fr;
-  gap: 4rem;
-  align-items: start;
-  padding: 5rem 3rem 5rem;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: stretch;
+  min-height: 520px;
   border-bottom: 1px solid var(--border-warm);
 }
 
+/* ── Col 1: copy ── */
 .about-left {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  justify-content: center;
+  padding: 4rem 2.5rem;
+  border-right: 1px solid var(--border);
 }
 
+/* ── Col 2: flyer ── */
+.about-centre {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  background: #090807;
+  min-height: 400px;
+  overflow: hidden;
+}
+
+/* Make FlyerDisplay fill the column */
+.about-centre .flyer-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  border: none;
+}
+
+.about-centre .flyer-section-label { display: none; }
+
+.about-centre .flyer-image-wrap {
+  flex: 1;
+  position: relative;
+  max-width: none;
+  overflow: hidden;
+  border: none;
+}
+
+/* Cover-mode button fills the image-wrap */
+.about-centre .flyer-thumb-btn--cover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Placeholder when no flyer */
+.about-centre .placeholder-empty {
+  flex: 1;
+  margin: 2rem;
+  min-height: 120px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Col 3: social ── */
 .about-right {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  position: sticky;
-  top: calc(56px + 2rem);
+  padding: 1.75rem;
+  overflow-y: auto;
 }
 
 .about-eyebrow {
@@ -1510,6 +1563,7 @@ img, video, iframe { display: block; max-width: 100%; }
 /* ── News section ────────────────────────────────────────── */
 .news-section {
   padding: 1.5rem 2rem;
+  border-top: 1px solid var(--border-warm);
 }
 
 .news-section-heading {
@@ -2169,13 +2223,23 @@ img, video, iframe { display: block; max-width: 100%; }
   .next-up-timer { font-size: 1.1rem; }
   .next-up-datetime { white-space: normal; }
 
-  /* ── About (homepage) ── */
+  /* ── About (homepage) — mobile: all stack ── */
   .about-section {
     grid-template-columns: 1fr;
-    gap: 2rem;
-    padding: 2.5rem 1.25rem 2.5rem;
+    min-height: unset;
   }
-  .about-right { position: static; }
+  .about-left {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 2.5rem 1.25rem;
+    justify-content: flex-start;
+  }
+  .about-centre {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    min-height: 280px;
+  }
+  .about-right { padding: 1.25rem; overflow-y: visible; }
   .about-text { font-size: 1rem; max-width: 100%; }
   .about-hero-line { font-size: 1.35rem; max-width: 100%; }
   .about-tagline { font-size: clamp(2rem, 10vw, 3rem); white-space: nowrap; }
@@ -2262,9 +2326,24 @@ img, video, iframe { display: block; max-width: 100%; }
 @media (max-width: 960px) and (min-width: 769px) {
   .shows-grid-compact,
   .shows-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
-  .flyer-news-grid { grid-template-columns: 240px 1fr; }
   .shop-grid { grid-template-columns: repeat(2, 1fr); }
   .submit-grid { grid-template-columns: 1fr 1fr; }
+
+  /* About — tablet: copy full width, then flyer + social side by side */
+  .about-section {
+    grid-template-columns: 1fr 1fr;
+    min-height: unset;
+  }
+  .about-left {
+    grid-column: 1 / -1;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 3rem 2rem;
+    justify-content: flex-start;
+  }
+  .about-centre { min-height: 360px; }
+  .about-right { padding: 1.5rem; overflow-y: visible; }
+  .social-two-col { grid-template-columns: 1fr; }
 }
 
 /* ── Admin mobile ────────────────────────────────────────── */

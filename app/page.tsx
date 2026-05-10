@@ -52,7 +52,7 @@ export default async function HomePage() {
 
       <NewsTicker />
 
-      {/* About */}
+      {/* About — 3 columns: copy | flyer | social */}
       <section className="about-section">
         <div className="about-left">
           <p className="about-text">
@@ -66,6 +66,10 @@ export default async function HomePage() {
             Every night is something different. Every set is live. Every listener is family.
           </p>
           <p className="about-tagline">Tune in.</p>
+        </div>
+
+        <div className="about-centre">
+          <FlyerDisplay coverMode />
         </div>
 
         <div className="about-right">
@@ -88,11 +92,7 @@ export default async function HomePage() {
         />
       )}
 
-      {/* Flyer + News */}
-      <div className="flyer-news-grid">
-        <FlyerDisplay />
-        <NewsCards />
-      </div>
+      <NewsCards />
     </main>
   );
 }

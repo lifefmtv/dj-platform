@@ -1,7 +1,7 @@
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
 import FlyerLightbox from "@/components/FlyerLightbox";
 
-export default async function FlyerDisplay() {
+export default async function FlyerDisplay({ coverMode = false }: { coverMode?: boolean }) {
   const supabase = await createServerSupabaseClient();
   const { data } = await supabase
     .from("settings")
@@ -14,7 +14,7 @@ export default async function FlyerDisplay() {
       <p className="flyer-section-label">Current Event</p>
       {data?.current_flyer_url ? (
         <div className="flyer-image-wrap">
-          <FlyerLightbox src={data.current_flyer_url} />
+          <FlyerLightbox src={data.current_flyer_url} coverMode={coverMode} />
         </div>
       ) : (
         <div className="placeholder-empty">Event flyer coming soon</div>
