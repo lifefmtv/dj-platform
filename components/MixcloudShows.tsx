@@ -106,7 +106,7 @@ function ShowCard({
           <div className="show-thumb-placeholder" />
         )}
         <div className="show-play-overlay">
-          <span className="show-play-icon">{isOpen ? "■" : "▶"}</span>
+          <div className="show-play-icon">{isOpen ? "■" : "▶"}</div>
         </div>
       </button>
 
