@@ -3024,9 +3024,11 @@ img, video, iframe { display: block; max-width: 100%; }
 
 .dj-hero-schedule {
   font-family: var(--font-mono);
-  font-size: 0.78rem;
-  color: rgba(255,255,255,0.45);
-  letter-spacing: 0.06em;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: rgba(255,255,255,0.65);
+  letter-spacing: 0.08em;
+  margin-top: 0.35rem;
 }
 
 /* ── Profile body ── */
@@ -3116,6 +3118,113 @@ img, video, iframe { display: block; max-width: 100%; }
   font-size: 0.7rem;
   color: var(--text-3);
 }
+
+/* ── DUBLIFE Archive card ────────────────────────────────── */
+.dj-archive-card {
+  display: flex;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--card);
+  text-decoration: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+.dj-archive-card:hover {
+  border-color: rgba(245, 158, 11, 0.55);
+  background: var(--card-hover);
+}
+
+.dj-archive-card-accent {
+  width: 4px;
+  flex-shrink: 0;
+  background: #f59e0b;
+}
+
+.dj-archive-card-body {
+  padding: 1.25rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.dj-archive-card-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #f59e0b;
+}
+
+.dj-archive-card-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.35;
+}
+
+.dj-archive-card-sub {
+  font-size: 0.8rem;
+  color: var(--text-2);
+  line-height: 1.55;
+}
+
+.dj-archive-card-cta {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  color: #f59e0b;
+  margin-top: 0.3rem;
+}
+
+/* ── Label / Bandcamp card ───────────────────────────────── */
+.dj-label-card {
+  display: block;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  text-decoration: none;
+  padding: 1.25rem 1.4rem;
+  transition: border-color 0.2s, background 0.2s;
+}
+.dj-label-card:hover {
+  border-color: var(--text-3);
+  background: var(--card-hover);
+}
+
+.dj-label-card-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.dj-label-card-name {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.3rem;
+}
+
+.dj-label-card-sub {
+  font-size: 0.8rem;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+
+.dj-label-card-btn {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+.dj-label-card:hover .dj-label-card-btn { color: var(--text-2); }
 
 /* ── Responsive: DJs grid ── */
 @media (max-width: 900px) {

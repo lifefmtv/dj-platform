@@ -23,6 +23,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: `${data.name} — Life FM TV` };
 }
 
+function buildSocialHref(base: string, handle: string): string {
+  return handle.startsWith("http") ? handle : `${base}/${handle.replace("@", "")}`;
+}
+
 export default async function DJProfilePage({ params }: Props) {
   const { slug } = await params;
   const supabase = await createServerSupabaseClient();
@@ -57,14 +61,20 @@ export default async function DJProfilePage({ params }: Props) {
     .order("created_at", { ascending: false })
     .limit(6);
 
+  // Socials — handles both full URLs and bare handles.
+  // If soundcloud field holds a Bandcamp URL it's excluded here (dedicated label section below).
+  const isBandcamp = (url: string) => url.includes("bandcamp.com");
+
   const socials: { label: string; href: string; icon: string }[] = [
-    dj.instagram  && { label: "Instagram",  href: `https://instagram.com/${dj.instagram.replace("@","")}`,  icon: "IG" },
-    dj.facebook   && { label: "Facebook",   href: dj.facebook,   icon: "FB" },
-    dj.tiktok     && { label: "TikTok",     href: `https://tiktok.com/@${dj.tiktok.replace("@","")}`,      icon: "TT" },
-    dj.twitter    && { label: "Twitter/X",  href: `https://twitter.com/${dj.twitter.replace("@","")}`,     icon: "X" },
-    dj.mixcloud   && { label: "Mixcloud",   href: `https://mixcloud.com/${dj.mixcloud.replace("@","")}`,   icon: "MC" },
-    dj.soundcloud && { label: "SoundCloud", href: dj.soundcloud, icon: "SC" },
+    dj.instagram  && { label: "Instagram",  href: buildSocialHref("https://instagram.com",  dj.instagram),  icon: "IG" },
+    dj.facebook   && { label: "Facebook",   href: dj.facebook,                                              icon: "FB" },
+    dj.tiktok     && { label: "TikTok",     href: buildSocialHref("https://tiktok.com/@",   dj.tiktok),     icon: "TT" },
+    dj.twitter    && { label: "Twitter/X",  href: buildSocialHref("https://twitter.com",    dj.twitter),    icon: "X"  },
+    dj.mixcloud   && { label: "Mixcloud",   href: buildSocialHref("https://mixcloud.com",   dj.mixcloud),   icon: "MC" },
+    dj.soundcloud && !isBandcamp(dj.soundcloud) && { label: "SoundCloud", href: dj.soundcloud, icon: "SC" },
   ].filter(Boolean) as { label: string; href: string; icon: string }[];
+
+  const bandcampUrl = dj.soundcloud && isBandcamp(dj.soundcloud) ? dj.soundcloud : null;
 
   return (
     <main>
@@ -106,6 +116,54 @@ export default async function DJProfilePage({ params }: Props) {
           <section className="dj-section">
             <p className="dj-section-label">About</p>
             <p className="dj-bio">{dj.bio}</p>
+          </section>
+        )}
+
+        {/* ── DUBLIFE ARCHIVE (DJ Kullar) ── */}
+        {dj.slug === "dj-kullar" && (
+          <section className="dj-section">
+            <p className="dj-section-label">DUBLIFE Archive</p>
+            <a
+              href="https://archive.org/search?query=dublife+kullar"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="dj-archive-card"
+            >
+              <div className="dj-archive-card-accent" />
+              <div className="dj-archive-card-body">
+                <p className="dj-archive-card-eyebrow">Internet Archive</p>
+                <p className="dj-archive-card-title">
+                  Browse 15+ Years of DUBLIFE Archives on Internet Archive
+                </p>
+                <p className="dj-archive-card-sub">
+                  Hundreds of shows · Deep roots, steppers, digital dub · Special guests from across the global dub scene
+                </p>
+                <span className="dj-archive-card-cta">Browse the archive →</span>
+              </div>
+            </a>
+          </section>
+        )}
+
+        {/* ── ROOTS YOUTHS RECORDS (DJ Kullar / any Bandcamp label) ── */}
+        {bandcampUrl && (
+          <section className="dj-section">
+            <p className="dj-section-label">Roots Youths Records</p>
+            <a
+              href={bandcampUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="dj-label-card"
+            >
+              <div className="dj-label-card-inner">
+                <div>
+                  <p className="dj-label-card-name">Roots Youths Records</p>
+                  <p className="dj-label-card-sub">
+                    Independent label championing authentic roots & dub sounds · Listen on Bandcamp
+                  </p>
+                </div>
+                <span className="dj-label-card-btn">Open Bandcamp →</span>
+              </div>
+            </a>
           </section>
         )}
 
