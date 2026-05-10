@@ -2686,124 +2686,227 @@ img, video, iframe { display: block; max-width: 100%; }
   padding: 2rem 0;
 }
 
-/* ── Shop page ───────────────────────────────────────────── */
-.shop-intro {
-  font-size: 1rem;
-  line-height: 1.9;
-  color: var(--text-2);
-  margin-bottom: 2.5rem;
-}
-
-.shop-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1px;
-  background: var(--border);
-  border: 1px solid var(--border);
-  margin-bottom: 2.5rem;
-}
-
-.shop-card {
-  background: var(--card);
+/* ── Shop — Merch coming soon ─────────────────────────────── */
+.merch-soon-page {
+  position: relative;
+  min-height: calc(100vh - 52px);
   display: flex;
   flex-direction: column;
-  transition: background 0.15s;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 4rem 1.25rem 0;
 }
-.shop-card:hover { background: var(--card-hover); }
 
-.shop-card-image {
+/* Repeating horizontal scan lines for texture */
+.merch-soon-scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 3px,
+    rgba(255, 255, 255, 0.012) 3px,
+    rgba(255, 255, 255, 0.012) 4px
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.merch-soon-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 640px;
+  width: 100%;
+  gap: 0;
+}
+
+.merch-soon-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 1.75rem;
+}
+
+.merch-soon-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  line-height: 0.88;
+  margin-bottom: 1.5rem;
+}
+
+.merch-soon-heading-line1 {
+  font-family: var(--font-display);
+  font-size: clamp(4rem, 14vw, 9rem);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.merch-soon-heading-line2 {
+  font-family: var(--font-display);
+  font-size: clamp(4rem, 14vw, 9rem);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+  text-shadow: 0 0 80px rgba(230, 48, 48, 0.35);
+  line-height: 0.9;
+}
+
+.merch-soon-rule {
+  width: 48px;
+  height: 3px;
+  background: var(--accent);
+  margin: 0 auto 1.75rem;
+  border-radius: 2px;
+}
+
+.merch-soon-sub {
+  font-size: clamp(0.9rem, 2.5vw, 1.05rem);
+  line-height: 1.8;
+  color: var(--text-2);
+  max-width: 480px;
+  margin-bottom: 2.25rem;
+}
+
+/* Form */
+.merch-signup-form {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  margin-bottom: 1rem;
+}
+
+.merch-signup-row {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.merch-signup-row:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(230, 48, 48, 0.15);
+}
+
+.merch-signup-input {
+  flex: 1;
+  background: #0d0b0a;
+  border: none;
+  outline: none;
+  padding: 0.875rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text);
+  letter-spacing: 0.04em;
+}
+.merch-signup-input::placeholder { color: var(--text-3); }
+
+.merch-signup-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 0.875rem 1.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.merch-signup-btn:hover:not(:disabled) { background: #c82020; }
+.merch-signup-btn:disabled { opacity: 0.6; cursor: default; }
+
+.merch-signup-error {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+}
+
+/* Success state */
+.merch-signup-success {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  border-radius: 4px;
+  padding: 0.875rem 1.25rem;
+  margin-bottom: 1rem;
+  max-width: 420px;
   width: 100%;
 }
 
-.shop-card-image-inner {
-  aspect-ratio: 4 / 3;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.shop-card-image-logo {
-  font-family: var(--font-display);
-  font-size: 2.2rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  opacity: 0.6;
-}
-
-.shop-card-body {
-  padding: 1.25rem;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.shop-card-name {
-  font-family: var(--font-display);
+.merch-signup-tick {
   font-size: 1rem;
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 0.35rem;
+  color: #22c55e;
+  flex-shrink: 0;
 }
 
-.shop-card-desc {
-  font-size: 0.82rem;
-  line-height: 1.6;
-  color: var(--text-2);
-  flex: 1;
-  margin-bottom: 1.25rem;
+.merch-signup-success-text {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: #22c55e;
+  letter-spacing: 0.04em;
 }
 
-.shop-card-footer {
+.merch-soon-note {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  color: var(--text-3);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 4rem;
+}
+
+/* Scrolling bottom strip */
+.merch-soon-bottom-strip {
+  position: relative;
+  z-index: 1;
+  width: 100vw;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.shop-card-price {
-  font-family: var(--font-mono);
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.shop-buy-btn {
-  display: inline-block;
-  background: var(--accent);
-  color: #fff;
-  border-radius: 3px;
-  padding: 0.45rem 1rem;
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  text-decoration: none;
-  transition: background 0.15s;
-}
-.shop-buy-btn:hover { background: #c82020; }
-
-.shop-store-link {
-  text-align: center;
-  padding: 1.5rem 0 2rem;
-}
-
-.shop-view-all-btn {
-  display: inline-block;
-  background: transparent;
-  color: var(--text-2);
-  border: 1px solid var(--border);
-  border-radius: 4px;
+  gap: 2rem;
   padding: 0.75rem 2rem;
-  font-family: var(--font-mono);
-  font-size: 0.66rem;
-  font-weight: 500;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  text-decoration: none;
-  transition: color 0.15s, border-color 0.15s;
+  overflow: hidden;
+  margin-top: auto;
+  flex-shrink: 0;
 }
-.shop-view-all-btn:hover { color: var(--text); border-color: var(--text-2); }
+
+.merch-soon-strip-word {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .merch-soon-page { padding: 3rem 1rem 0; }
+  .merch-signup-btn { padding: 0.875rem 1rem; letter-spacing: 0.12em; }
+}
 
 /* ── DJs / Selectors page ────────────────────────────────── */
 
