@@ -49,7 +49,10 @@ export default function ShoutoutBanner() {
               created_at: payload.new.created_at,
             };
             if (isFresh(s)) {
-              setShoutouts((prev) => [...prev.slice(-20), s]);
+              setShoutouts((prev) => {
+                if (prev.some((p) => p.id === s.id)) return prev;
+                return [...prev.slice(-20), s];
+              });
               setFlash(true);
               setTimeout(() => setFlash(false), 600);
             }
