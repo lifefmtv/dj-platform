@@ -1,3 +1,10 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Life For Music — Life FM TV",
+  description: "Life For Music is an independent label championing underground sounds. Meet the artist roster and stream their music.",
+};
+
 export default function LabelPage() {
   const artists = [
     { name: "Paul Roast", role: "Founder · Jungle / DNB" },

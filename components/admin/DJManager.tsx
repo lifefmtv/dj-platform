@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { GENRE_LIST } from "@/lib/genreColors";
 
@@ -53,6 +53,7 @@ function toSlug(name: string) {
 
 export default function DJManager() {
   const supabase = useMemo(() => createClient(), []);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const [djs, setDjs] = useState<DJ[]>([]);
   const [form, setForm] = useState(EMPTY_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -307,13 +308,13 @@ export default function DJManager() {
                 </div>
               )}
               <div>
-                <button onClick={() => document.getElementById("dj-photo-input")?.click()} style={choosePhotoBtn}>
+                <button onClick={() => photoInputRef.current?.click()} style={choosePhotoBtn}>
                   {uploading ? "Uploading…" : photoPreview ? "Change Photo" : "Choose Photo"}
                 </button>
                 <p style={{ color: "#555", fontSize: "0.72rem", marginTop: "0.4rem" }}>
                   JPG or PNG · Square crop recommended
                 </p>
-                <input id="dj-photo-input" type="file" accept="image/*" style={{ display: "none" }} onChange={onPhotoChange} />
+                <input ref={photoInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={onPhotoChange} />
               </div>
             </div>
           </div>

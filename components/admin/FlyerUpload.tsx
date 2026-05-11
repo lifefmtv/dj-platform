@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import Image from "next/image";
 
@@ -12,7 +12,8 @@ export default function FlyerUpload({ currentFlyer }: { currentFlyer: string | n
   const [messageType, setMessageType] = useState<BannerType>("success");
   const [preview, setPreview] = useState<string | null>(currentFlyer);
   const [dragging, setDragging] = useState(false);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   function flash(msg: string, type: BannerType = "success") {
     setMessage(msg);
@@ -76,7 +77,7 @@ export default function FlyerUpload({ currentFlyer }: { currentFlyer: string | n
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
-        onClick={() => !uploading && document.getElementById("flyer-input")?.click()}
+        onClick={() => !uploading && fileInputRef.current?.click()}
         style={{
           border: `2px dashed ${dragging ? "#e63030" : "#444"}`,
           borderRadius: "8px",
@@ -99,7 +100,7 @@ export default function FlyerUpload({ currentFlyer }: { currentFlyer: string | n
           <span style={chooseButton}>Choose Image</span>
         )}
         <input
-          id="flyer-input"
+          ref={fileInputRef}
           type="file"
           accept="image/*"
           style={{ display: "none" }}

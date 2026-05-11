@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "About — Life FM TV",
+  description: "Meet the founders of Life FM TV — Paul Roast and Mel Lioness — and the story behind London's underground livestreaming station.",
 };
 
 export default function AboutPage() {

@@ -1,7 +1,14 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
+import { Fragment } from "react";
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
 import { format, addDays, startOfDay, parseISO } from "date-fns";
+
+export const metadata: Metadata = {
+  title: "Schedule — Life FM TV",
+  description: "See what's on Life FM TV this week. Live DJ sets, genres, times and upcoming shows — all in one place.",
+};
 
 const GENRE_COLORS: Record<string, string> = {
   DNB: "#e63030",
@@ -95,9 +102,9 @@ export default async function SchedulePage() {
 
           {/* Time slot rows */}
           {TIME_SLOTS.map((hour) => (
-            <>
+            <Fragment key={`slot-${hour}`}>
               {/* Time label */}
-              <div key={`time-${hour}`} className="tvguide-time-label">
+              <div className="tvguide-time-label">
                 {String(hour).padStart(2, "0")}:00
               </div>
 
@@ -133,7 +140,7 @@ export default async function SchedulePage() {
                   </div>
                 );
               })}
-            </>
+            </Fragment>
           ))}
         </div>
 
