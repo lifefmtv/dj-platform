@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Submit a Show — Life FM TV",
-  description: "Want to broadcast on Life FM TV? Submit your DJ application and we'll be in touch.",
+  title: "Submit a Show",
+  description: "Are you a DJ? Apply for a show slot on LIFEFM.TV — the underground music radio station broadcasting live 24/7.",
 };
 
 export default function SubmitLayout({ children }: { children: React.ReactNode }) {

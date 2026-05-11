@@ -7,6 +7,8 @@ import { genreColor } from "@/lib/genreColors";
 
 export const dynamic = "force-dynamic";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://lifefm.tv";
+
 interface Props {
   params: Promise<{ slug: string }>;
 }
@@ -14,13 +16,32 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const supabase = await createServerSupabaseClient();
-  const { data } = await supabase
+  const { data: dj } = await supabase
     .from("djs")
-    .select("name,genre")
+    .select("name, genre, bio, show_name, photo_url")
     .eq("slug", slug)
     .single();
-  if (!data) return { title: "DJ Not Found — Life FM TV" };
-  return { title: `${data.name} — Life FM TV` };
+
+  if (!dj) return { title: "DJ Not Found" };
+
+  const title = dj.show_name ? `${dj.name} — ${dj.show_name}` : dj.name;
+  const description = dj.bio
+    ? dj.bio.slice(0, 155).trimEnd() + (dj.bio.length > 155 ? "…" : "")
+    : `${dj.name} is a resident DJ on LIFEFM.TV playing ${dj.genre}.`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title: `${title} | LIFEFM.TV`,
+      description,
+      url: `${siteUrl}/djs/${slug}`,
+      images: dj.photo_url
+        ? [{ url: dj.photo_url, alt: `${dj.name} — LIFEFM.TV DJ` }]
+        : undefined,
+    },
+    alternates: { canonical: `${siteUrl}/djs/${slug}` },
+  };
 }
 
 function buildSocialHref(base: string, handle: string): string {
@@ -76,8 +97,26 @@ export default async function DJProfilePage({ params }: Props) {
 
   const bandcampUrl = dj.soundcloud && isBandcamp(dj.soundcloud) ? dj.soundcloud : null;
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: dj.name,
+    jobTitle: "DJ",
+    description: dj.bio || undefined,
+    url: `${siteUrl}/djs/${dj.slug}`,
+    image: dj.photo_url || undefined,
+    sameAs: [dj.instagram, dj.facebook, dj.soundcloud, dj.mixcloud]
+      .filter(Boolean)
+      .filter((h) => (h as string).startsWith("http")),
+  };
+
   return (
     <main>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       {/* ── Hero ── */}
       <div className="dj-hero">
         {dj.photo_url && (

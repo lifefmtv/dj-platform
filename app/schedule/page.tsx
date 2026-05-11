@@ -6,8 +6,8 @@ import { createServerSupabaseClient } from "@/lib/supabaseServer";
 import { format, addDays, startOfDay, parseISO } from "date-fns";
 
 export const metadata: Metadata = {
-  title: "Schedule — Life FM TV",
-  description: "See what's on Life FM TV this week. Live DJ sets, genres, times and upcoming shows — all in one place.",
+  title: "DJ Schedule",
+  description: "Upcoming live DJ shows on LIFEFM.TV — drum and bass, dub, tech house, jungle and soul. Check who is on air next.",
 };
 
 const GENRE_COLORS: Record<string, string> = {

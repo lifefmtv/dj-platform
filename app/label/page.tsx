@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Life For Music — Life FM TV",
-  description: "Life For Music is an independent label championing underground sounds. Meet the artist roster and stream their music.",
+  title: "Life For Music Label",
+  description: "Life For Music is an independent label championing underground sounds — jungle, DNB, dub and beyond. Meet the artist roster and stream their music.",
 };
 
 export default function LabelPage() {

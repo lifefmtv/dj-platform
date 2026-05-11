@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "About — Life FM TV",
-  description: "Meet the founders of Life FM TV — Paul Roast and Mel Lioness — and the story behind London's underground livestreaming station.",
+  title: "About",
+  description: "Born from the underground. LIFEFM.TV has been championing DNB, dub, jungle and underground music since the pirate radio days. Meet the founders.",
 };
 
 export default function AboutPage() {

@@ -6,8 +6,8 @@ import { genreColor } from "@/lib/genreColors";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "The Selectors — Life FM TV",
-  description: "The DJs, selectors and artists who power the Life FM TV stream — from jungle and DNB to house, techno, dub and soul.",
+  title: "The Selectors",
+  description: "Meet the LIFEFM.TV resident DJs — underground selectors spanning drum and bass, dub, jungle, tech house and soul.",
 };
 
 interface DJ {

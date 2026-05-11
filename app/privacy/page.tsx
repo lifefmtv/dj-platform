@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — Life FM TV",
-  description: "Life FM TV's privacy policy and terms of use. Information about how we collect, use and protect your personal data.",
+  title: "Privacy Policy",
+  description: "LIFEFM.TV privacy policy and terms of use. How we collect, use and protect your personal data.",
 };
 
 export default function PrivacyPage() {

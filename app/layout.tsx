@@ -2,9 +2,56 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import NavBar from "@/components/NavBar";
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://lifefm.tv";
+
 export const metadata: Metadata = {
-  title: "Life FM TV",
-  description: "Live DJ streaming platform",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "LIFEFM.TV — Live Underground Music Radio",
+    template: "%s | LIFEFM.TV",
+  },
+  description:
+    "LIFEFM.TV — live streaming radio broadcasting DNB, dub, tech house, jungle and underground music 24/7 from London. Watch live, check the schedule and explore our DJ roster.",
+  keywords: [
+    "drum and bass radio",
+    "live DNB stream",
+    "underground music UK",
+    "dub radio",
+    "jungle music live",
+    "tech house radio",
+    "LIFEFM",
+    "live music stream UK",
+    "drum and bass radio station UK",
+    "live jungle music stream",
+  ],
+  openGraph: {
+    type: "website",
+    locale: "en_GB",
+    url: siteUrl,
+    siteName: "LIFEFM.TV",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "LIFEFM.TV — Live Underground Music Radio",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@lifefmhq",
+    creator: "@lifefmhq",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
+  },
+  alternates: {
+    canonical: siteUrl,
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

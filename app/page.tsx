@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import LiveStream from "@/components/LiveStream";
 import ChatTabs from "@/components/ChatTabs";
 import NewsTicker from "@/components/NewsTicker";
@@ -13,6 +14,30 @@ import MixcloudShows from "@/components/MixcloudShows";
 import SocialFollow from "@/components/SocialFollow";
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
 import { getUKDateTime } from "@/lib/broadcastStatus";
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://lifefm.tv";
+
+export const metadata: Metadata = {
+  alternates: { canonical: siteUrl },
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "RadioStation",
+  name: "LIFEFM.TV",
+  url: siteUrl,
+  description:
+    "Live underground music radio broadcasting DNB, dub, jungle and tech house 24/7 from London.",
+  genre: ["Drum and Bass", "Dub", "Jungle", "Tech House", "House", "Soul & Funk"],
+  broadcastDisplayName: "LIFEFM.TV",
+  broadcastTimezone: "Europe/London",
+  parentOrganization: {
+    "@type": "Organization",
+    name: "Life For Music",
+    url: `${siteUrl}/label`,
+    foundingDate: "2010",
+  },
+};
 
 export default async function HomePage() {
   const supabase = await createServerSupabaseClient();
@@ -40,6 +65,11 @@ export default async function HomePage() {
 
   return (
     <main>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       {/* Status / Now Playing / Up Next banner — always rendered */}
       <NextUpBanner
         currentShow={currentDJ ?? null}

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import MerchSignupForm from "@/components/MerchSignupForm";
 
 export const metadata: Metadata = {
-  title: "Shop — Life FM TV",
-  description: "New LIFEFM.TV merch is on the way. Sign up to be first to know.",
+  title: "Shop",
+  description: "LIFEFM.TV official merch is coming soon. Sign up to be first to know when we drop.",
 };
 
 export default function ShopPage() {
