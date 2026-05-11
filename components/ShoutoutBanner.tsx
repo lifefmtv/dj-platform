@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 
 interface Shoutout {
@@ -74,8 +74,8 @@ export default function ShoutoutBanner() {
     : null;
 
   return (
-    <div className="shoutout-banner" style={{ pointerEvents: "auto" }}>
-      {/* Slide-up form panel */}
+    <div className={`shoutout-section${flash ? " shoutout-section--flash" : ""}`}>
+      {/* Form slides up from the strip */}
       {formOpen && (
         <form className="shoutout-form" onSubmit={handleSend}>
           <input
@@ -104,32 +104,31 @@ export default function ShoutoutBanner() {
         </form>
       )}
 
-      {/* Ticker strip */}
-      <div className={`shoutout-strip${flash ? " shoutout-strip--flash" : ""}`}>
-        <span className="shoutout-strip-label">SHOUTOUTS</span>
-        {tickerItems ? (
-          <div className="shoutout-ticker-track">
-            <div className="shoutout-ticker-inner">
-              {tickerItems.map((s, i) => (
-                <span key={`${s.id}-${i}`} className="shoutout-item">
-                  <span className="shoutout-name">{s.display_name}</span>
-                  <span className="shoutout-msg">{s.message}</span>
-                  <span className="shoutout-dot" aria-hidden>·</span>
-                </span>
-              ))}
-            </div>
+      <span className="shoutout-strip-label">SHOUTOUTS</span>
+
+      {tickerItems ? (
+        <div className="shoutout-ticker-track">
+          <div className="shoutout-ticker-inner">
+            {tickerItems.map((s, i) => (
+              <span key={`${s.id}-${i}`} className="shoutout-item">
+                <span className="shoutout-name">{s.display_name}</span>
+                <span className="shoutout-msg">{s.message}</span>
+                <span className="shoutout-dot" aria-hidden>·</span>
+              </span>
+            ))}
           </div>
-        ) : (
-          <span className="shoutout-empty">Be the first to send a shoutout!</span>
-        )}
-        <button
-          className="shoutout-trigger"
-          onClick={() => setFormOpen((o) => !o)}
-          aria-label="Send a shoutout"
-        >
-          📢 SHOUT OUT
-        </button>
-      </div>
+        </div>
+      ) : (
+        <span className="shoutout-empty">Be the first to send a shoutout!</span>
+      )}
+
+      <button
+        className="shoutout-trigger"
+        onClick={() => setFormOpen((o) => !o)}
+        aria-label="Send a shoutout"
+      >
+        📢 SHOUT OUT
+      </button>
     </div>
   );
 }

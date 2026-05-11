@@ -84,8 +84,7 @@ export default function VibeMeter() {
         </div>
       )}
 
-      <div className="vibe-strip">
-        {/* Left: label + tap button */}
+      <div className="vibe-section">
         <div className="vibe-strip-left">
           <span className="vibe-strip-label">VIBE CHECK</span>
           <button
@@ -97,7 +96,6 @@ export default function VibeMeter() {
           </button>
         </div>
 
-        {/* Centre: horizontal energy bar */}
         <div className="vibe-strip-centre">
           <div className="vibe-strip-track">
             <div
@@ -111,7 +109,6 @@ export default function VibeMeter() {
           </div>
         </div>
 
-        {/* Right: percentage + tap count */}
         <div className="vibe-strip-right">
           <span className="vibe-strip-pct">{pct}%</span>
           <span className="vibe-strip-count">{tapCount} vibing</span>
