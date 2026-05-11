@@ -3545,3 +3545,481 @@ img, video, iframe { display: block; max-width: 100%; }
   .dj-admin-grid3 { grid-template-columns: 1fr 1fr !important; }
   .dj-admin-grid2 { grid-template-columns: 1fr !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Stream overlay — interactive elements over the live video
+   ═══════════════════════════════════════════════════════════ */
+
+/* Remove overflow:hidden from video wrap so emojis aren't clipped at edges,
+   but keep the iframe contained with its own clip. */
+.stream-video-wrap {
+  overflow: visible;
+}
+.stream-video-wrap iframe {
+  overflow: hidden;
+}
+
+/* Master overlay — fills the video bounds */
+.stream-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+  overflow: hidden; /* clip emoji rain within video bounds */
+}
+
+/* ── Emoji Rain ─────────────────────────────────────────── */
+
+@keyframes emoji-rise {
+  0%   { transform: translateY(0)     translateX(0)               scale(1);   opacity: 1; }
+  70%  { opacity: 0.9; }
+  100% { transform: translateY(-85%)  translateX(var(--drift, 0px)) scale(0.7); opacity: 0; }
+}
+
+.stream-overlay-emoji {
+  position: absolute;
+  bottom: 56px; /* sits just above the shoutout strip */
+  left: 0;
+  pointer-events: none;
+}
+
+.emoji-rain {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.emoji-float {
+  position: absolute;
+  bottom: 48px; /* above the button row */
+  font-size: 1.6rem;
+  animation: emoji-rise var(--dur, 4s) ease-out forwards;
+  pointer-events: none;
+  user-select: none;
+  line-height: 1;
+}
+
+.emoji-btn-row {
+  display: flex;
+  gap: 4px;
+  padding: 6px 8px;
+  pointer-events: auto;
+}
+
+.emoji-btn {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.05rem;
+  line-height: 1;
+  transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+  backdrop-filter: blur(4px);
+}
+.emoji-btn:hover {
+  background: rgba(0, 0, 0, 0.75);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+  transform: scale(1.12);
+}
+.emoji-btn:active { transform: scale(0.96); }
+
+/* ── Shoutout Banner ────────────────────────────────────── */
+
+@keyframes shoutout-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+@keyframes shoutout-flash {
+  0%, 100% { border-top-color: rgba(255,255,255,0.1); }
+  50%       { border-top-color: rgba(230, 48, 48, 0.7); }
+}
+
+.stream-overlay-shoutout {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 72px; /* leave room for vibe meter */
+  pointer-events: none;
+}
+
+.shoutout-banner {
+  display: flex;
+  flex-direction: column;
+  pointer-events: auto;
+}
+
+/* Send shoutout form (slides up from banner) */
+.shoutout-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.85);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(6px);
+}
+
+.shoutout-input {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 5px;
+  color: #fff;
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  outline: none;
+  font-family: var(--font-mono);
+}
+.shoutout-input::placeholder { color: rgba(255,255,255,0.4); }
+.shoutout-input:focus { border-color: rgba(230, 48, 48, 0.6); }
+
+.shoutout-form-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.shoutout-send-btn {
+  background: #e63030;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 5px 14px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.06em;
+}
+.shoutout-send-btn:disabled { opacity: 0.55; cursor: default; }
+
+.shoutout-cancel-btn {
+  background: transparent;
+  color: rgba(255,255,255,0.5);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 5px;
+  padding: 5px 10px;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+/* Ticker strip */
+.shoutout-strip {
+  display: flex;
+  align-items: center;
+  height: 28px;
+  background: rgba(0, 0, 0, 0.7);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(4px);
+  overflow: hidden;
+}
+.shoutout-strip--flash {
+  animation: shoutout-flash 0.6s ease;
+}
+
+.shoutout-strip-label {
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: #e63030;
+  padding: 0 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.shoutout-ticker-track {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.shoutout-ticker-inner {
+  display: inline-flex;
+  gap: 0;
+  animation: shoutout-scroll 40s linear infinite;
+  white-space: nowrap;
+}
+
+.shoutout-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px 0 0;
+  font-size: 0.72rem;
+}
+
+.shoutout-name {
+  color: #e63030;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.68rem;
+}
+
+.shoutout-msg { color: rgba(255, 255, 255, 0.9); }
+
+.shoutout-dot { color: rgba(255,255,255,0.3); margin-left: 4px; }
+
+.shoutout-empty {
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.35);
+  font-family: var(--font-mono);
+  padding: 0 8px;
+}
+
+.shoutout-trigger {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-left: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.6);
+  font-size: 0.85rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.15s, background 0.15s;
+}
+.shoutout-trigger:hover {
+  color: #fff;
+  background: rgba(230, 48, 48, 0.25);
+}
+
+/* ── Vibe Meter ─────────────────────────────────────────── */
+
+@keyframes vibe-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.7; }
+}
+
+@keyframes vibe-boom-pop {
+  0%   { transform: scale(0) rotate(-20deg); opacity: 0; }
+  60%  { transform: scale(1.2) rotate(5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg);   opacity: 0; }
+}
+
+.stream-overlay-vibe {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 44px;
+  display: flex;
+  align-items: stretch;
+  pointer-events: none;
+}
+
+.vibe-meter {
+  width: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0 4px;
+  background: rgba(0, 0, 0, 0.6);
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(4px);
+  pointer-events: auto;
+  gap: 4px;
+}
+
+.vibe-label {
+  font-family: var(--font-mono);
+  font-size: 0.44rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: rgba(255,255,255,0.5);
+  text-transform: uppercase;
+}
+
+.vibe-tap-area {
+  flex: 1;
+  width: 100%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+}
+
+.vibe-track {
+  width: 10px;
+  height: 100%;
+  background: rgba(255,255,255,0.08);
+  border-radius: 5px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.vibe-fill {
+  width: 100%;
+  border-radius: 5px;
+  transition: height 0.6s ease, background 0.4s ease, box-shadow 0.4s ease;
+  animation: vibe-pulse var(--pulse-speed, 1.6s) ease-in-out infinite;
+}
+
+.vibe-pct {
+  font-family: var(--font-mono);
+  font-size: 0.42rem;
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 0.04em;
+}
+
+/* Full-screen boom — position:fixed breaks out of overflow:hidden */
+.vibe-boom {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.vibe-boom-emoji {
+  position: absolute;
+  animation: vibe-boom-pop 1.8s ease-out forwards;
+}
+
+/* ── Live Poll ──────────────────────────────────────────── */
+
+.stream-overlay-poll {
+  position: absolute;
+  bottom: 60px;
+  right: 52px; /* clear of vibe meter */
+  width: 200px;
+  pointer-events: none;
+}
+
+.live-poll {
+  background: rgba(0, 0, 0, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 10px 12px;
+  backdrop-filter: blur(8px);
+  transform: translateY(12px);
+  opacity: 0;
+  transition: transform 0.35s ease, opacity 0.35s ease;
+  pointer-events: none;
+}
+.live-poll--visible {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.live-poll-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.48rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #e63030;
+  margin-bottom: 5px;
+}
+
+.live-poll-q {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.3;
+  margin-bottom: 8px;
+}
+
+.live-poll-options {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.live-poll-opt {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  padding: 6px 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
+  width: 100%;
+}
+.live-poll-opt:hover:not(:disabled) {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.25);
+}
+.live-poll-opt:disabled { cursor: default; }
+.live-poll-opt--mine { border-color: rgba(230, 48, 48, 0.5); }
+
+.live-poll-opt-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.live-poll-opt-text {
+  font-size: 0.7rem;
+  color: #fff;
+}
+
+.live-poll-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: rgba(230, 48, 48, 0.25);
+  border-radius: 5px;
+  transition: width 0.5s ease;
+  z-index: 0;
+}
+
+.live-poll-pct {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.75);
+  position: relative;
+  z-index: 1;
+}
+
+.live-poll-total {
+  font-family: var(--font-mono);
+  font-size: 0.52rem;
+  color: rgba(255,255,255,0.35);
+  margin-top: 6px;
+  text-align: right;
+}
+
+/* ── Mobile overrides ───────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Vibe meter hidden on mobile */
+  .stream-overlay-vibe { display: none; }
+  .stream-overlay-shoutout { right: 0; }
+  .stream-overlay-poll {
+    position: static;
+    width: 100%;
+    padding: 8px;
+    pointer-events: auto;
+  }
+  .live-poll {
+    border-radius: 0;
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    background: rgba(0,0,0,0.9);
+    opacity: 1;
+    transform: none;
+    width: 100%;
+    padding: 10px;
+  }
+  .stream-overlay-emoji .emoji-btn { width: 28px; height: 28px; font-size: 0.9rem; }
+}

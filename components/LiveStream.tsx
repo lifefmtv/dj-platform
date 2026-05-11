@@ -1,3 +1,5 @@
+import StreamOverlay from "@/components/StreamOverlay";
+
 export default function LiveStream() {
   const isLive = process.env.NEXT_PUBLIC_IS_LIVE === "true";
 
@@ -16,6 +18,7 @@ export default function LiveStream() {
           LIVE
         </div>
       )}
+      <StreamOverlay />
     </div>
   );
 }

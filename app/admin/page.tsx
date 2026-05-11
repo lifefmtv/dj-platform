@@ -8,6 +8,7 @@ import FlyerUpload from "@/components/admin/FlyerUpload";
 import MixManager from "@/components/admin/MixManager";
 import ChatModeration from "@/components/admin/ChatModeration";
 import DJManager from "@/components/admin/DJManager";
+import InteractionsManager from "@/components/admin/InteractionsManager";
 
 const NAV_ITEMS = [
   { href: "#timetable", label: "Timetable" },
@@ -16,6 +17,7 @@ const NAV_ITEMS = [
   { href: "#mixes", label: "Mixes" },
   { href: "#chat", label: "Chat" },
   { href: "#djs", label: "DJs" },
+  { href: "#interactions", label: "Interactions" },
 ];
 
 export default async function AdminPage() {
@@ -85,6 +87,10 @@ export default async function AdminPage() {
 
           <section id="djs" style={sectionCard}>
             <DJManager />
+          </section>
+
+          <section id="interactions" style={sectionCard}>
+            <InteractionsManager />
           </section>
 
         </div>
