@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import NavBar from "@/components/NavBar";
-import AudioPlayer from "@/components/AudioPlayer";
-
 export const metadata: Metadata = {
   title: "Life FM TV",
   description: "Live DJ streaming platform",
@@ -17,8 +15,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <NavBar />
 
           {children}
-
-          <AudioPlayer />
 
           <footer className="site-footer">
             <div className="footer-inner">

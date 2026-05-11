@@ -77,10 +77,11 @@ export default function MixManager() {
 
     const { error: uploadError } = await supabase.storage
       .from("mixes")
-      .upload(fileName, file);
+      .upload(fileName, file, { contentType: file.type || "audio/mpeg" });
 
     if (uploadError) {
-      flash("Upload failed. Please try again.", "error");
+      console.error("Supabase storage upload error:", uploadError);
+      flash(`Upload failed: ${uploadError.message}`, "error");
       setUploading(false);
       return;
     }
@@ -99,7 +100,8 @@ export default function MixManager() {
     setUploading(false);
 
     if (insertError) {
-      flash("Upload succeeded but failed to save the record. Please try again.", "error");
+      console.error("Supabase insert error:", insertError);
+      flash(`File uploaded but record failed to save: ${insertError.message}`, "error");
     } else {
       flash(`Mix uploaded successfully — it will appear on the Mixes page\n${savedTitle} · ${savedArtist}`, "success");
       setTitle("");
@@ -218,7 +220,7 @@ export default function MixManager() {
                 <input
                   id="audio-file-input"
                   type="file"
-                  accept="audio/*"
+                  accept="audio/*,audio/mpeg,audio/mp3,.mp3,.wav,.aac,.flac,.m4a"
                   style={{ display: "none" }}
                   disabled={uploading}
                   onChange={(e) => {
