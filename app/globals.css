@@ -2727,6 +2727,340 @@ img, video, iframe { display: block; max-width: 100%; }
   padding: 2rem 0;
 }
 
+/* ── Label — Life For Music (lfm-*) ──────────────────────── */
+.lfm-page {
+  background: #0a0908;
+  color: #fff;
+  min-height: 100vh;
+}
+
+/* Hero */
+.lfm-hero {
+  position: relative;
+  padding: 5rem 2rem 4rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+.lfm-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 60% at 50% 0%, rgba(230,48,48,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.lfm-back {
+  display: inline-block;
+  margin-bottom: 2rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: #888;
+  text-decoration: none;
+  letter-spacing: 0.05em;
+}
+.lfm-back:hover { color: #e63030; }
+.lfm-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #e63030;
+  margin-bottom: 1rem;
+}
+.lfm-hero-title {
+  font-size: clamp(4rem, 12vw, 11rem);
+  font-weight: 900;
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  margin: 0 0 1.5rem;
+}
+.lfm-hero-tagline {
+  font-size: 1.05rem;
+  color: #aaa;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  max-width: 520px;
+}
+.lfm-hero-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 2rem;
+}
+.lfm-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.55rem 1.2rem;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  color: #fff;
+  transition: opacity 0.15s, transform 0.15s;
+  white-space: nowrap;
+}
+.lfm-btn:hover { opacity: 0.82; transform: translateY(-1px); }
+.lfm-btn--instagram {
+  background: linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+}
+.lfm-cat-count {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: #555;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* About */
+.lfm-about {
+  background: #0f0e0d;
+  padding: 5rem 2rem;
+}
+.lfm-about-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: start;
+}
+.lfm-section-eyebrow {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #e63030;
+  margin-bottom: 1.25rem;
+}
+.lfm-body-text {
+  font-size: 0.95rem;
+  color: #bbb;
+  line-height: 1.75;
+  margin-bottom: 1rem;
+}
+
+/* Latest Release */
+.lfm-release-section {
+  padding: 5rem 2rem;
+  background: #0a0908;
+}
+.lfm-release-inner {
+  max-width: 760px;
+  margin: 0 auto;
+}
+.lfm-release-card {
+  display: flex;
+  margin-top: 1.5rem;
+  border: 1px solid #222;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.lfm-release-accent {
+  width: 5px;
+  background: #e63030;
+  flex-shrink: 0;
+}
+.lfm-release-body {
+  padding: 2rem;
+  flex: 1;
+}
+.lfm-release-cat {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: #666;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+.lfm-release-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin: 0 0 0.75rem;
+}
+.lfm-release-desc {
+  font-size: 0.9rem;
+  color: #999;
+  line-height: 1.65;
+  margin-bottom: 1.5rem;
+}
+.lfm-release-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.lfm-release-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-decoration: none;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.lfm-release-btn:hover { opacity: 0.82; transform: translateY(-1px); }
+.lfm-release-btn--beatport { background: #01FF95; color: #111; }
+.lfm-release-btn--juno    { background: #e63030; color: #fff; }
+.lfm-release-btn--sc      { background: #FF5500; color: #fff; }
+
+/* Team */
+.lfm-team-section {
+  background: #0f0e0d;
+  padding: 5rem 2rem;
+}
+.lfm-team-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.lfm-team-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+.lfm-team-card {
+  background: #141312;
+  border: 1px solid #222;
+  border-radius: 8px;
+  padding: 1.75rem 1.25rem;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+.lfm-team-card--link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  cursor: pointer;
+}
+.lfm-team-card--link:hover { border-color: #e63030; }
+.lfm-team-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px solid #e63030;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #e63030;
+  background: #1a1210;
+}
+.lfm-team-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+.lfm-team-role {
+  font-size: 0.72rem;
+  color: #888;
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+}
+.lfm-team-view {
+  display: block;
+  margin-top: 0.75rem;
+  font-size: 0.65rem;
+  font-family: var(--font-mono);
+  color: #e63030;
+  letter-spacing: 0.08em;
+}
+
+/* Platforms */
+.lfm-platforms-section {
+  padding: 5rem 2rem;
+  background: #0a0908;
+}
+.lfm-platforms-inner {
+  max-width: 900px;
+  margin: 0 auto;
+}
+.lfm-platforms-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+.lfm-platform-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  border-radius: 6px;
+  background: #141312;
+  border: 1px solid #222;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  color: #ccc;
+  text-decoration: none;
+  transition: border-color 0.2s, color 0.2s;
+}
+.lfm-platform-btn:hover {
+  border-color: var(--platform-color, #e63030);
+  color: var(--platform-color, #fff);
+}
+
+/* Demos */
+.lfm-demos-section {
+  background: #0f0e0d;
+  padding: 5rem 2rem;
+  text-align: center;
+}
+.lfm-demos-inner {
+  max-width: 620px;
+  margin: 0 auto;
+}
+.lfm-demos-heading {
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin: 0 0 1rem;
+}
+.lfm-demos-text {
+  font-size: 0.95rem;
+  color: #aaa;
+  line-height: 1.7;
+  margin-bottom: 2rem;
+}
+.lfm-demos-email-link {
+  color: #e63030;
+  text-decoration: none;
+}
+.lfm-demos-email-link:hover { text-decoration: underline; }
+.lfm-demos-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.8rem 2rem;
+  background: #e63030;
+  color: #fff;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.lfm-demos-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+
+/* Mobile */
+@media (max-width: 768px) {
+  .lfm-hero { padding: 3rem 1.25rem 2.5rem; }
+  .lfm-hero-title { font-size: clamp(3.5rem, 18vw, 7rem); }
+  .lfm-about-inner { grid-template-columns: 1fr; gap: 2rem; }
+  .lfm-team-grid { grid-template-columns: repeat(2, 1fr); }
+  .lfm-platforms-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
 /* ── Shop — Merch coming soon ─────────────────────────────── */
 .merch-soon-page {
   position: relative;
