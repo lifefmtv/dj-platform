@@ -3,15 +3,22 @@
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase";
 
+const EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
+const DEFAULT_MSG = "Send a shoutout and it will appear here for everyone to see 📢";
+
 interface Shoutout {
   id: string;
   display_name: string;
   message: string;
+  created_at: string;
+}
+
+function isFresh(s: Shoutout): boolean {
+  return Date.now() - new Date(s.created_at).getTime() < EXPIRY_MS;
 }
 
 export default function ShoutoutBanner() {
   const [shoutouts, setShoutouts] = useState<Shoutout[]>([]);
-  const [formOpen, setFormOpen] = useState(false);
   const [name, setName] = useState("");
   const [msg, setMsg] = useState("");
   const [sending, setSending] = useState(false);
@@ -23,6 +30,11 @@ export default function ShoutoutBanner() {
 
     loadRecent();
 
+    // Prune expired shoutouts from state every 60s
+    const cleanup = setInterval(() => {
+      setShoutouts((prev) => prev.filter(isFresh));
+    }, 60_000);
+
     const channel = supabase
       .channel("shoutouts-live")
       .on(
@@ -30,28 +42,35 @@ export default function ShoutoutBanner() {
         { event: "INSERT", schema: "public", table: "shoutouts" },
         (payload) => {
           if (payload.new.is_approved) {
-            setShoutouts((prev) => [
-              ...prev.slice(-20),
-              { id: payload.new.id, display_name: payload.new.display_name, message: payload.new.message },
-            ]);
-            setFlash(true);
-            setTimeout(() => setFlash(false), 600);
+            const s: Shoutout = {
+              id: payload.new.id,
+              display_name: payload.new.display_name,
+              message: payload.new.message,
+              created_at: payload.new.created_at,
+            };
+            if (isFresh(s)) {
+              setShoutouts((prev) => [...prev.slice(-20), s]);
+              setFlash(true);
+              setTimeout(() => setFlash(false), 600);
+            }
           }
         }
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { clearInterval(cleanup); supabase.removeChannel(channel); };
   }, []);
 
   async function loadRecent() {
+    const since = new Date(Date.now() - EXPIRY_MS).toISOString();
     const { data } = await supabase
       .from("shoutouts")
-      .select("id, display_name, message")
+      .select("id, display_name, message, created_at")
       .eq("is_approved", true)
-      .order("created_at", { ascending: false })
-      .limit(15);
-    if (data) setShoutouts(data.reverse());
+      .gte("created_at", since)
+      .order("created_at", { ascending: true })
+      .limit(20);
+    if (data) setShoutouts(data.filter(isFresh));
   }
 
   async function handleSend(e: React.FormEvent) {
@@ -59,32 +78,29 @@ export default function ShoutoutBanner() {
     if (!name.trim() || !msg.trim() || sending) return;
     setSending(true);
     await supabase.from("shoutouts").insert({
-      display_name: name.trim().slice(0, 30),
+      display_name: name.trim().slice(0, 20),
       message: msg.trim().slice(0, 50),
       is_approved: true,
     });
     try { localStorage.setItem("chat_display_name", name.trim()); } catch {}
     setMsg("");
     setSending(false);
-    setFormOpen(false);
   }
 
-  const tickerItems = shoutouts.length > 0
-    ? [...shoutouts, ...shoutouts]
-    : null;
+  const fresh = shoutouts.filter(isFresh);
 
   return (
     <div className={`shoutout-section${flash ? " shoutout-section--flash" : ""}`}>
-      {/* Form slides up from the strip */}
-      {formOpen && (
-        <form className="shoutout-form" onSubmit={handleSend}>
+      {/* Always-visible inline form */}
+      <div className="shoutout-form-row">
+        <span className="shoutout-strip-label">SHOUTOUTS</span>
+        <form className="shoutout-inline-form" onSubmit={handleSend}>
           <input
-            className="shoutout-input"
+            className="shoutout-input shoutout-input--name"
             placeholder="Your name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            maxLength={30}
-            autoFocus
+            maxLength={20}
           />
           <input
             className="shoutout-input shoutout-input--msg"
@@ -93,23 +109,17 @@ export default function ShoutoutBanner() {
             onChange={(e) => setMsg(e.target.value)}
             maxLength={50}
           />
-          <div className="shoutout-form-actions">
-            <button type="submit" className="shoutout-send-btn" disabled={sending}>
-              {sending ? "Sending…" : "Send 🙌"}
-            </button>
-            <button type="button" className="shoutout-cancel-btn" onClick={() => setFormOpen(false)}>
-              Cancel
-            </button>
-          </div>
+          <button type="submit" className="shoutout-send-btn" disabled={sending}>
+            {sending ? "Sending…" : "📢 SHOUT"}
+          </button>
         </form>
-      )}
+      </div>
 
-      <span className="shoutout-strip-label">SHOUTOUTS</span>
-
-      {tickerItems ? (
-        <div className="shoutout-ticker-track">
+      {/* Ticker — recent shoutouts or default prompt */}
+      <div className="shoutout-ticker-track">
+        {fresh.length > 0 ? (
           <div className="shoutout-ticker-inner">
-            {tickerItems.map((s, i) => (
+            {[...fresh, ...fresh].map((s, i) => (
               <span key={`${s.id}-${i}`} className="shoutout-item">
                 <span className="shoutout-name">{s.display_name}</span>
                 <span className="shoutout-msg">{s.message}</span>
@@ -117,18 +127,10 @@ export default function ShoutoutBanner() {
               </span>
             ))}
           </div>
-        </div>
-      ) : (
-        <span className="shoutout-empty">Be the first to send a shoutout!</span>
-      )}
-
-      <button
-        className="shoutout-trigger"
-        onClick={() => setFormOpen((o) => !o)}
-        aria-label="Send a shoutout"
-      >
-        📢 SHOUT OUT
-      </button>
+        ) : (
+          <span className="shoutout-default">{DEFAULT_MSG}</span>
+        )}
+      </div>
     </div>
   );
 }
