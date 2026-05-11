@@ -3571,9 +3571,9 @@ img, video, iframe { display: block; max-width: 100%; }
 /* ── Emoji Rain ─────────────────────────────────────────── */
 
 @keyframes emoji-rise {
-  0%   { transform: translateY(0)     translateX(0)               scale(1);   opacity: 1; }
-  70%  { opacity: 0.9; }
-  100% { transform: translateY(-85%)  translateX(var(--drift, 0px)) scale(0.7); opacity: 0; }
+  0%   { transform: translateY(0)       translateX(0)                scale(1);   opacity: 1; }
+  60%  { opacity: 0.9; }
+  100% { transform: translateY(-320px)  translateX(var(--drift, 0px)) scale(1.3); opacity: 0; }
 }
 
 .stream-overlay-emoji {
@@ -3644,7 +3644,7 @@ img, video, iframe { display: block; max-width: 100%; }
   position: absolute;
   bottom: 0;
   left: 0;
-  right: 72px; /* leave room for vibe meter */
+  right: 0;
   pointer-events: none;
 }
 
@@ -3773,31 +3773,29 @@ img, video, iframe { display: block; max-width: 100%; }
 }
 
 .shoutout-trigger {
-  width: 28px;
-  height: 28px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: transparent;
+  gap: 4px;
+  padding: 0 12px;
+  height: 100%;
+  background: #e63030;
   border: none;
-  border-left: 1px solid rgba(255,255,255,0.1);
-  color: rgba(255,255,255,0.6);
-  font-size: 0.85rem;
+  border-left: 1px solid rgba(230, 48, 48, 0.5);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  letter-spacing: 0.08em;
+  white-space: nowrap;
   cursor: pointer;
   flex-shrink: 0;
-  transition: color 0.15s, background 0.15s;
+  transition: background 0.15s;
 }
 .shoutout-trigger:hover {
-  color: #fff;
-  background: rgba(230, 48, 48, 0.25);
+  background: #c82020;
 }
 
-/* ── Vibe Meter ─────────────────────────────────────────── */
-
-@keyframes vibe-pulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.7; }
-}
+/* ── Vibe Meter (horizontal strip) ─────────────────────── */
 
 @keyframes vibe-boom-pop {
   0%   { transform: scale(0) rotate(-20deg); opacity: 0; }
@@ -3805,74 +3803,9 @@ img, video, iframe { display: block; max-width: 100%; }
   100% { transform: scale(1) rotate(0deg);   opacity: 0; }
 }
 
-.stream-overlay-vibe {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  right: 0;
-  width: 44px;
-  display: flex;
-  align-items: stretch;
-  pointer-events: none;
-}
-
-.vibe-meter {
-  width: 44px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 8px 0 4px;
-  background: rgba(0, 0, 0, 0.6);
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(4px);
-  pointer-events: auto;
-  gap: 4px;
-}
-
-.vibe-label {
-  font-family: var(--font-mono);
-  font-size: 0.44rem;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  color: rgba(255,255,255,0.5);
-  text-transform: uppercase;
-}
-
-.vibe-tap-area {
-  flex: 1;
-  width: 100%;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 8px;
-}
-
-.vibe-track {
-  width: 10px;
-  height: 100%;
-  background: rgba(255,255,255,0.08);
-  border-radius: 5px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-}
-
-.vibe-fill {
-  width: 100%;
-  border-radius: 5px;
-  transition: height 0.6s ease, background 0.4s ease, box-shadow 0.4s ease;
-  animation: vibe-pulse var(--pulse-speed, 1.6s) ease-in-out infinite;
-}
-
-.vibe-pct {
-  font-family: var(--font-mono);
-  font-size: 0.42rem;
-  color: rgba(255,255,255,0.5);
-  letter-spacing: 0.04em;
+@keyframes vibe-tap-ripple {
+  0%   { box-shadow: 0 0 0 0 rgba(230, 48, 48, 0.6); }
+  100% { box-shadow: 0 0 0 20px rgba(230, 48, 48, 0); }
 }
 
 /* Full-screen boom — position:fixed breaks out of overflow:hidden */
@@ -3889,12 +3822,105 @@ img, video, iframe { display: block; max-width: 100%; }
   animation: vibe-boom-pop 1.8s ease-out forwards;
 }
 
+/* Horizontal strip — sits between stream grid and news ticker */
+.vibe-strip {
+  display: flex;
+  align-items: center;
+  height: 52px;
+  background: #0a0908;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0 1rem;
+  gap: 1rem;
+}
+
+.vibe-strip-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.vibe-strip-label {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: rgba(255, 255, 255, 0.45);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.vibe-tap-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(230, 48, 48, 0.15);
+  border: 2px solid #e63030;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  flex-shrink: 0;
+}
+.vibe-tap-btn:hover {
+  background: rgba(230, 48, 48, 0.3);
+  transform: scale(1.08);
+}
+.vibe-tap-btn:active { transform: scale(0.94); }
+.vibe-tap-btn--ripple {
+  animation: vibe-tap-ripple 0.6s ease-out;
+}
+
+.vibe-strip-centre {
+  flex: 1;
+  min-width: 0;
+}
+
+.vibe-strip-track {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.vibe-strip-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.6s ease, background 0.4s ease, box-shadow 0.4s ease;
+}
+
+.vibe-strip-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+  gap: 1px;
+}
+
+.vibe-strip-pct {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+}
+
+.vibe-strip-count {
+  font-family: var(--font-mono);
+  font-size: 0.52rem;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.04em;
+}
+
 /* ── Live Poll ──────────────────────────────────────────── */
 
 .stream-overlay-poll {
   position: absolute;
   bottom: 60px;
-  right: 52px; /* clear of vibe meter */
+  right: 8px;
   width: 200px;
   pointer-events: none;
 }
@@ -4002,9 +4028,6 @@ img, video, iframe { display: block; max-width: 100%; }
 
 /* ── Mobile overrides ───────────────────────────────────── */
 @media (max-width: 768px) {
-  /* Vibe meter hidden on mobile */
-  .stream-overlay-vibe { display: none; }
-  .stream-overlay-shoutout { right: 0; }
   .stream-overlay-poll {
     position: static;
     width: 100%;

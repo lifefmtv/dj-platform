@@ -3,7 +3,6 @@
 import EmojiRain from "@/components/EmojiRain";
 import LivePoll from "@/components/LivePoll";
 import ShoutoutBanner from "@/components/ShoutoutBanner";
-import VibeMeter from "@/components/VibeMeter";
 
 export default function StreamOverlay() {
   return (
@@ -15,14 +14,9 @@ export default function StreamOverlay() {
         <EmojiRain />
       </div>
 
-      {/* ── Bottom strip above emoji row: shoutout ticker + form ── */}
+      {/* ── Bottom strip: shoutout ticker + form ── */}
       <div className="stream-overlay-shoutout">
         <ShoutoutBanner />
-      </div>
-
-      {/* ── Right edge: vibe meter ── */}
-      <div className="stream-overlay-vibe">
-        <VibeMeter />
       </div>
 
       {/* ── Bottom right: live poll ── */}

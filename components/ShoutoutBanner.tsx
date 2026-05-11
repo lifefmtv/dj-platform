@@ -69,14 +69,13 @@ export default function ShoutoutBanner() {
     setFormOpen(false);
   }
 
-  // Duplicate content for seamless infinite scroll
   const tickerItems = shoutouts.length > 0
     ? [...shoutouts, ...shoutouts]
     : null;
 
   return (
     <div className="shoutout-banner" style={{ pointerEvents: "auto" }}>
-      {/* Send Shoutout form (slides up from bottom of overlay) */}
+      {/* Slide-up form panel */}
       {formOpen && (
         <form className="shoutout-form" onSubmit={handleSend}>
           <input
@@ -127,9 +126,8 @@ export default function ShoutoutBanner() {
           className="shoutout-trigger"
           onClick={() => setFormOpen((o) => !o)}
           aria-label="Send a shoutout"
-          title="Send Shoutout"
         >
-          ✉
+          📢 SHOUT OUT
         </button>
       </div>
     </div>

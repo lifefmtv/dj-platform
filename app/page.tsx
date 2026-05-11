@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import LiveStream from "@/components/LiveStream";
 import ChatTabs from "@/components/ChatTabs";
 import NewsTicker from "@/components/NewsTicker";
+import VibeMeter from "@/components/VibeMeter";
 import NewsCards from "@/components/NewsCards";
 import FlyerDisplay from "@/components/FlyerDisplay";
 import Countdown from "@/components/Countdown";
@@ -49,6 +50,8 @@ export default async function HomePage() {
         <LiveStream />
         <ChatTabs />
       </div>
+
+      <VibeMeter />
 
       <NewsTicker />
 
