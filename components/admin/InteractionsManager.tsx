@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import {
   createPoll,
@@ -41,7 +41,7 @@ export default function InteractionsManager() {
   // Shoutout state
   const [shoutouts, setShoutouts] = useState<Shoutout[]>([]);
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     fetchActivePoll();

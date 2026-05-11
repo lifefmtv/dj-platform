@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase";
 
 interface Shoutout {
@@ -16,7 +16,7 @@ export default function ShoutoutBanner() {
   const [msg, setMsg] = useState("");
   const [sending, setSending] = useState(false);
   const [flash, setFlash] = useState(false);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     try { const n = localStorage.getItem("chat_display_name"); if (n) setName(n); } catch {}

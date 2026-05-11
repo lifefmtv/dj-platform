@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { formatDistanceToNow } from "date-fns";
 import {
@@ -26,7 +26,7 @@ interface BannedUser {
 export default function ChatModeration() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [bannedUsers, setBannedUsers] = useState<BannedUser[]>([]);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     fetchMessages();

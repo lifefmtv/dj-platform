@@ -12,7 +12,7 @@ export default function VibeMeter() {
   const [boom, setBoom] = useState(false);
   const [ripple, setRipple] = useState(false);
   const boomRef = useRef(false);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const boomEmojis = useMemo(() =>
     Array.from({ length: 28 }, (_, i) => ({

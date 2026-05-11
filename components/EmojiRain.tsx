@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase";
 
 const EMOJIS = ["🔥", "❤️", "🎵", "💥", "🙌", "👑"];
@@ -18,7 +18,7 @@ export default function EmojiRain() {
   const cooldowns = useRef<Record<string, number>>({});
   // Track IDs we inserted ourselves so Realtime doesn't double-spawn for this user
   const selfInserted = useRef<Set<string>>(new Set());
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     const channel = supabase

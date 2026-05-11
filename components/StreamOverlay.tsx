@@ -2,7 +2,6 @@
 
 import EmojiRain from "@/components/EmojiRain";
 import LivePoll from "@/components/LivePoll";
-import ShoutoutBanner from "@/components/ShoutoutBanner";
 
 export default function StreamOverlay() {
   return (
@@ -12,11 +11,6 @@ export default function StreamOverlay() {
       {/* ── Bottom left: emoji rain (buttons + floating emojis) ── */}
       <div className="stream-overlay-emoji">
         <EmojiRain />
-      </div>
-
-      {/* ── Bottom strip: shoutout ticker + form ── */}
-      <div className="stream-overlay-shoutout">
-        <ShoutoutBanner />
       </div>
 
       {/* ── Bottom right: live poll ── */}
