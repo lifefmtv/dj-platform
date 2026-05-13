@@ -3,8 +3,11 @@ import Parser from "rss-parser";
 
 export const revalidate = 300;
 
-// UPDATE THIS WITH LIFEFM.TV YOUTUBE CHANNEL ID
-const LIFEFM_YOUTUBE_CHANNEL_ID = "UCcUHbW1H8IGylqyxhcTCaUQ";
+// Primary channel — @lifefmtv (currently has no public uploads; will auto-populate when videos are added)
+const LIFEFM_CHANNEL_ID = "UCcUHbW1H8IGylqyxhcTCaUQ";
+
+// Legacy channel — user=lifefmhq (has existing archived content)
+const LIFEFM_LEGACY_USER = "lifefmhq";
 
 export interface Show {
   id: string;
@@ -17,6 +20,15 @@ export interface Show {
   listener_count?: number;
 }
 
+// rss-parser with custom fields to capture YouTube Atom namespace elements
+type YTItem = { ytVideoId?: string } & Record<string, unknown>;
+const ytParser = new Parser<Record<string, never>, YTItem>({
+  timeout: 8000,
+  customFields: {
+    item: [["yt:videoId", "ytVideoId"]],
+  },
+});
+
 async function fetchMixcloudShows(): Promise<Show[]> {
   const res = await fetch(
     "https://api.mixcloud.com/LifeFm/cloudcasts/?limit=12",
@@ -24,7 +36,7 @@ async function fetchMixcloudShows(): Promise<Show[]> {
   );
   if (!res.ok) return [];
   const data = await res.json();
-  return (data.data ?? [])
+  const shows = (data.data ?? [])
     .filter((item: any) => item.user?.key === "/LifeFm/")
     .map(
       (item: any): Show => ({
@@ -44,19 +56,26 @@ async function fetchMixcloudShows(): Promise<Show[]> {
         listener_count: item.listener_count,
       }),
     );
+  console.log(`[shows] Mixcloud: ${shows.length} results`);
+  return shows;
 }
 
-async function fetchYouTubeShows(): Promise<Show[]> {
-  const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${LIFEFM_YOUTUBE_CHANNEL_ID}`;
-  const parser = new Parser({ timeout: 8000 });
-  const feed = await parser.parseURL(feedUrl);
+async function parseFeed(feedUrl: string): Promise<Show[]> {
+  const feed = await ytParser.parseURL(feedUrl);
   return (feed.items ?? []).slice(0, 12).map((item): Show => {
-    const videoId =
-      new URL(item.link ?? "https://x.invalid").searchParams.get("v") ?? "";
+    // ytVideoId comes from the custom field; fall back to URL then id string
+    const videoId: string =
+      item.ytVideoId ||
+      new URL(item.link ?? "https://x.invalid").searchParams.get("v") ||
+      (item.id?.toString().split(":").pop() ?? "");
+
     return {
       id: videoId || item.guid || item.link || "",
       title: item.title ?? "",
-      url: item.link ?? `https://www.youtube.com/watch?v=${videoId}`,
+      url: videoId
+        ? `https://www.youtube.com/watch?v=${videoId}`
+        : (item.link ?? ""),
+      // Prefer the YouTube CDN thumbnail (always works once you have the videoId)
       thumbnail: videoId
         ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
         : null,
@@ -66,12 +85,51 @@ async function fetchYouTubeShows(): Promise<Show[]> {
   });
 }
 
+async function fetchYouTubeShows(): Promise<Show[]> {
+  const results = await Promise.allSettled([
+    // Primary: channel_id feed (official @lifefmtv — populates as videos are uploaded)
+    parseFeed(`https://www.youtube.com/feeds/videos.xml?channel_id=${LIFEFM_CHANNEL_ID}`),
+    // Legacy: user feed (lifefmhq — has existing archived content)
+    parseFeed(`https://www.youtube.com/feeds/videos.xml?user=${LIFEFM_LEGACY_USER}`),
+  ]);
+
+  // Merge, deduplicate by video id
+  const seen = new Set<string>();
+  const merged: Show[] = [];
+  for (const r of results) {
+    if (r.status !== "fulfilled") continue;
+    for (const show of r.value) {
+      if (show.id && !seen.has(show.id)) {
+        seen.add(show.id);
+        merged.push(show);
+      }
+    }
+  }
+
+  console.log(
+    `[shows] YouTube channel_id: ${results[0].status === "fulfilled" ? results[0].value.length : "error"} results`,
+  );
+  console.log(
+    `[shows] YouTube user/legacy: ${results[1].status === "fulfilled" ? results[1].value.length : "error"} results`,
+  );
+  console.log(`[shows] YouTube merged (deduplicated): ${merged.length} results`);
+
+  return merged;
+}
+
 export async function GET() {
   try {
     const [mixResult, ytResult] = await Promise.allSettled([
       fetchMixcloudShows(),
       fetchYouTubeShows(),
     ]);
+
+    if (mixResult.status === "rejected") {
+      console.error("[shows] Mixcloud fetch failed:", mixResult.reason);
+    }
+    if (ytResult.status === "rejected") {
+      console.error("[shows] YouTube fetch failed:", ytResult.reason);
+    }
 
     const shows: Show[] = [
       ...(mixResult.status === "fulfilled" ? mixResult.value : []),
@@ -83,10 +141,13 @@ export async function GET() {
         new Date(b.created_time).getTime() - new Date(a.created_time).getTime(),
     );
 
+    console.log(`[shows] Total combined: ${shows.length} (returning up to 20)`);
+
     return NextResponse.json(shows.slice(0, 20), {
       headers: { "Cache-Control": "s-maxage=300, stale-while-revalidate=600" },
     });
-  } catch {
+  } catch (err) {
+    console.error("[shows] Unhandled error:", err);
     return NextResponse.json([], { status: 200 });
   }
 }
