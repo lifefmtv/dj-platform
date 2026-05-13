@@ -21,7 +21,7 @@
   --font-display: 'Syne', system-ui, sans-serif;
   --font-mono:    'DM Mono', 'Courier New', monospace;
   /* Fixed nav height — used for padding-top and sticky offsets */
-  --nav-h:        84px;
+  --nav-h:        64px;
 }
 
 /* ── Reset ───────────────────────────────────────────────── */
@@ -138,8 +138,11 @@ img, video, iframe { display: block; max-width: 100%; }
 .nav-logo-link:hover { opacity: 0.65; }
 
 .nav-logo-img {
-  height: 70px;
+  max-width: 120px;
+  max-height: 50px;
   width: auto;
+  height: auto;
+  object-fit: contain;
   display: block;
 }
 
@@ -297,18 +300,28 @@ img, video, iframe { display: block; max-width: 100%; }
 
 /* ── Broadcast status / Now Playing / Up Next banner ─────── */
 .next-up-banner {
-  position: sticky;
+  position: fixed;
   top: var(--nav-h);
-  z-index: 900;
+  left: 0;
+  right: 0;
+  height: 48px;
+  z-index: 999;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
-  padding: 0.8rem 2.5rem;
+  padding: 0 2.5rem;
   background: rgba(12, 8, 8, 0.97);
   border-bottom: 1px solid rgba(230, 48, 48, 0.25);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  overflow: hidden;
+}
+
+/* Spacer reserves the banner's fixed height in page flow */
+.next-up-banner-spacer {
+  height: 48px;
+  flex-shrink: 0;
 }
 
 /* ── Left: status dot + NOW PLAYING ── */
@@ -2123,7 +2136,7 @@ img, video, iframe { display: block; max-width: 100%; }
     justify-content: space-between;
     grid-template-columns: none;
   }
-  .nav-logo-img { height: 32px; max-height: 32px; width: auto; }
+  .nav-logo-img { max-width: 90px; max-height: 36px; width: auto; height: auto; object-fit: contain; }
   .nav-centre { display: none !important; }
   .nav-countdown { display: none !important; }
   .nav-links { display: none !important; }
@@ -2160,7 +2173,10 @@ img, video, iframe { display: block; max-width: 100%; }
     align-items: flex-start;
     gap: 0.55rem;
     padding: 0.75rem 1rem;
+    height: auto;
+    overflow: visible;
   }
+  .next-up-banner-spacer { height: 72px; }
   /* Status on its own line */
   .next-up-left { gap: 0.5rem; }
   .next-up-now-playing { flex-wrap: wrap; }

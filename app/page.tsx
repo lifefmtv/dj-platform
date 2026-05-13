@@ -70,11 +70,12 @@ export default async function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* Status / Now Playing / Up Next banner — always rendered */}
+      {/* Status / Now Playing / Up Next banner — fixed-position, spacer reserves its height */}
       <NextUpBanner
         currentShow={currentDJ ?? null}
         nextShow={nextDJ ?? null}
       />
+      <div className="next-up-banner-spacer" />
 
       {/* Hero: stream + chat */}
       <div className="stream-chat-grid">
