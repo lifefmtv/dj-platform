@@ -4340,3 +4340,621 @@ img, video, iframe { display: block; max-width: 100%; }
   }
   .stream-overlay-emoji .emoji-btn { width: 28px; height: 28px; font-size: 0.9rem; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Artist HQ  (ahq-*)
+════════════════════════════════════════════════════════════════════ */
+
+.ahq-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 1.5rem 4rem;
+}
+
+/* Notice banner */
+.ahq-notice {
+  background: var(--card);
+  border: 1px solid var(--border-warm);
+  border-radius: 6px;
+  padding: 0.7rem 1.1rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-2);
+  letter-spacing: 0.03em;
+  margin: 1.5rem 0 0;
+}
+.ahq-notice-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+.ahq-notice-link:hover { text-decoration: underline; }
+
+/* Hero */
+.ahq-hero {
+  padding: 2.5rem 0 1.5rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0;
+}
+.ahq-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+.ahq-heading {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 5vw, 3.5rem);
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.05;
+  margin-bottom: 0.5rem;
+}
+.ahq-sub {
+  font-size: 0.875rem;
+  color: var(--text-2);
+}
+
+/* Tab navigation */
+.ahq-tabs-nav {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.ahq-tabs-nav::-webkit-scrollbar { display: none; }
+
+.ahq-tab-btn {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 0.85rem 1.1rem;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: color 0.18s ease, border-color 0.18s ease;
+  letter-spacing: 0.03em;
+  margin-bottom: -1px;
+}
+.ahq-tab-btn:hover { color: var(--text); }
+.ahq-tab-btn--active {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
+/* Panel container */
+.ahq-panel {
+  padding-top: 2rem;
+}
+
+/* Tab content */
+.ahq-tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Welcome text */
+.ahq-welcome {
+  font-size: 0.92rem;
+  color: var(--text-2);
+  line-height: 1.7;
+  max-width: 680px;
+  margin-bottom: 2rem;
+}
+
+/* Section */
+.ahq-section {
+  margin-bottom: 2.25rem;
+}
+.ahq-section-title {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.8rem;
+}
+
+/* Dark card */
+.ahq-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem 1.75rem;
+}
+.ahq-card--muted {
+  border-color: var(--border);
+  opacity: 0.7;
+}
+
+/* Numbered rules */
+.ahq-rule-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.ahq-rule-item {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+}
+.ahq-rule-num {
+  flex-shrink: 0;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.1rem;
+}
+.ahq-rule-text {
+  font-size: 0.875rem;
+  color: var(--text);
+  line-height: 1.55;
+}
+
+/* Spec key/value list */
+.ahq-spec-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.ahq-spec-list li {
+  display: flex;
+  gap: 1.25rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--border);
+  align-items: baseline;
+}
+.ahq-spec-list li:last-child { border-bottom: none; }
+.ahq-spec-key {
+  flex-shrink: 0;
+  width: 130px;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 500;
+  color: var(--text-2);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.ahq-spec-val {
+  font-size: 0.845rem;
+  color: var(--text);
+  line-height: 1.5;
+}
+.ahq-link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.ahq-link:hover { opacity: 0.8; }
+
+/* ── Brand assets ───────────────────────────────────────────────── */
+
+.ahq-swatches {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.ahq-swatch {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 90px;
+}
+.ahq-swatch-color {
+  width: 90px;
+  height: 60px;
+  border-radius: 6px;
+}
+.ahq-swatch-name {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.ahq-swatch-hex {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-2);
+  letter-spacing: 0.06em;
+}
+
+.ahq-logo-display {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 2rem;
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+.ahq-dl-btns {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+.ahq-dl-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.1rem;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 5px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.ahq-dl-btn:hover { opacity: 0.82; transform: translateY(-1px); }
+.ahq-dl-btn--outline {
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+}
+.ahq-footnote {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-3);
+  letter-spacing: 0.04em;
+}
+.ahq-muted-text {
+  font-size: 0.875rem;
+  color: var(--text-2);
+  margin-bottom: 0.4rem;
+}
+
+/* ── Create tab ─────────────────────────────────────────────────── */
+
+.ahq-create-layout {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 2.5rem;
+  align-items: start;
+}
+
+.ahq-create-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.ahq-step {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.ahq-step-label {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.ahq-step-num {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Upload zone */
+.ahq-upload-zone {
+  background: var(--card);
+  border: 1.5px dashed var(--border);
+  border-radius: 8px;
+  padding: 1.75rem 1.25rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease;
+  user-select: none;
+}
+.ahq-upload-zone:hover {
+  border-color: var(--accent);
+  background: var(--card-hover);
+}
+.ahq-upload-zone--drag {
+  border-color: var(--accent);
+  background: rgba(230, 48, 48, 0.06);
+}
+.ahq-upload-zone--done {
+  border-style: solid;
+  border-color: rgba(230, 48, 48, 0.4);
+}
+.ahq-upload-hint {
+  font-size: 0.8rem;
+  color: var(--text-2);
+  line-height: 1.6;
+}
+.ahq-upload-hint small {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  color: var(--text-3);
+  letter-spacing: 0.06em;
+}
+.ahq-upload-done {
+  font-size: 0.8rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Form inputs */
+.ahq-field-label {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  margin-top: 0.35rem;
+}
+.ahq-input {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 0.6rem 0.85rem;
+  font-family: var(--font-display);
+  font-size: 0.83rem;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.18s ease;
+  appearance: none;
+}
+.ahq-input:focus {
+  border-color: var(--accent);
+}
+.ahq-input option {
+  background: #1a1a1a;
+  color: var(--text);
+}
+
+/* Style picker */
+.ahq-style-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+.ahq-style-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.7rem 0.5rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+  text-align: center;
+}
+.ahq-style-btn:hover {
+  border-color: rgba(230, 48, 48, 0.4);
+  color: var(--text);
+}
+.ahq-style-btn--active {
+  border-color: var(--accent);
+  color: var(--text);
+  background: rgba(230, 48, 48, 0.08);
+}
+.ahq-style-desc {
+  font-family: var(--font-mono);
+  font-size: 0.52rem;
+  font-weight: 400;
+  color: var(--text-3);
+  letter-spacing: 0.04em;
+}
+
+/* Size picker */
+.ahq-size-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.ahq-size-btn {
+  width: 100%;
+  text-align: left;
+  padding: 0.6rem 0.85rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: border-color 0.18s ease, color 0.18s ease;
+  letter-spacing: 0.04em;
+}
+.ahq-size-btn:hover { border-color: rgba(230,48,48,0.35); color: var(--text); }
+.ahq-size-btn--active {
+  border-color: var(--accent);
+  color: var(--text);
+  background: rgba(230, 48, 48, 0.07);
+}
+
+/* Download button */
+.ahq-download-btn {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.ahq-download-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+.ahq-download-btn:active { transform: translateY(0); }
+
+/* Preview */
+.ahq-create-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  position: sticky;
+  top: 6rem;
+}
+.ahq-preview-label {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.ahq-canvas-wrap {
+  position: relative;
+  width: 100%;
+  background: #0a0a0a;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.ahq-canvas-wrap canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.ahq-preview-note {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  color: var(--text-3);
+  letter-spacing: 0.05em;
+}
+
+/* ── Community tab ──────────────────────────────────────────────── */
+
+.ahq-team-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.ahq-team-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.ahq-team-list li:last-child { border-bottom: none; }
+.ahq-team-name {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.ahq-team-role {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-2);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ahq-links-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+.ahq-link-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem 1.1rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  text-decoration: none;
+  transition: border-color 0.18s ease, background 0.18s ease;
+  position: relative;
+}
+.ahq-link-card:hover {
+  border-color: rgba(230, 48, 48, 0.35);
+  background: var(--card-hover);
+}
+.ahq-link-label {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.ahq-link-desc {
+  font-size: 0.75rem;
+  color: var(--text-2);
+}
+.ahq-link-arrow {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  color: var(--accent);
+  font-size: 0.85rem;
+  transition: transform 0.18s ease;
+}
+.ahq-link-card:hover .ahq-link-arrow { transform: translateX(3px); }
+
+/* ── Artist HQ responsive ───────────────────────────────────────── */
+@media (max-width: 760px) {
+  .ahq-create-layout {
+    grid-template-columns: 1fr;
+  }
+  .ahq-create-preview {
+    position: static;
+  }
+  .ahq-links-grid {
+    grid-template-columns: 1fr;
+  }
+  .ahq-spec-key {
+    width: 100px;
+  }
+  .ahq-style-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (max-width: 480px) {
+  .ahq-page { padding: 0 1rem 3rem; }
+  .ahq-tab-btn { padding: 0.75rem 0.75rem; font-size: 0.72rem; }
+  .ahq-style-grid { grid-template-columns: 1fr; }
+  .ahq-swatches { gap: 0.75rem; }
+  .ahq-swatch-color { width: 70px; height: 48px; }
+  .ahq-swatch { min-width: 70px; }
+}
