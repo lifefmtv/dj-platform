@@ -23,15 +23,6 @@ Add these to Vercel (Settings → Environment Variables) and to a local `.env.lo
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key |
 | `CLERK_SECRET_KEY` | Clerk secret key |
 
-### Optional — enables YouTube shows in the archive
-
-| Variable | Description | How to get it |
-|---|---|---|
-| `YOUTUBE_API_KEY` | YouTube Data API v3 key | [console.cloud.google.com](https://console.cloud.google.com) → Enable APIs → YouTube Data API v3 → Credentials → Create API Key |
-| `YOUTUBE_CHANNEL_ID` | LIFEFM.TV YouTube channel ID | YouTube channel → About → Share channel → Copy channel ID |
-
-> Without `YOUTUBE_API_KEY` and `YOUTUBE_CHANNEL_ID` the shows archive falls back to Mixcloud only — no errors.
-
 ### Optional
 
 | Variable | Description |

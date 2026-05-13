@@ -12,6 +12,14 @@ const nextConfig = {
         protocol: "https",
         hostname: "**.mixcloud.com",
       },
+      {
+        protocol: "https",
+        hostname: "img.youtube.com",
+      },
+      {
+        protocol: "https",
+        hostname: "i.ytimg.com",
+      },
     ],
   },
 

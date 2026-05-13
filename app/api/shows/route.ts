@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
+import Parser from "rss-parser";
 
 export const revalidate = 300;
+
+// UPDATE THIS WITH LIFEFM.TV YOUTUBE CHANNEL ID
+const LIFEFM_YOUTUBE_CHANNEL_ID = "UCcUHbW1H8IGylqyxhcTCaUQ";
 
 export interface Show {
   id: string;
@@ -9,7 +13,7 @@ export interface Show {
   thumbnail: string | null;
   created_time: string;
   source: "mixcloud" | "youtube";
-  key?: string;          // mixcloud embed key
+  embed_url?: string;    // Mixcloud iframe src only
   listener_count?: number;
 }
 
@@ -36,42 +40,30 @@ async function fetchMixcloudShows(): Promise<Show[]> {
           null,
         created_time: item.created_time,
         source: "mixcloud",
-        key: item.key,
+        embed_url: `https://www.mixcloud.com/widget/iframe/?hide_cover=1&feed=${encodeURIComponent(item.key)}`,
         listener_count: item.listener_count,
       }),
     );
 }
 
 async function fetchYouTubeShows(): Promise<Show[]> {
-  const apiKey = process.env.YOUTUBE_API_KEY;
-  const channelId = process.env.YOUTUBE_CHANNEL_ID;
-  if (!apiKey || !channelId) return [];
-
-  const url = new URL("https://www.googleapis.com/youtube/v3/search");
-  url.searchParams.set("part", "snippet");
-  url.searchParams.set("channelId", channelId);
-  url.searchParams.set("type", "video");
-  url.searchParams.set("order", "date");
-  url.searchParams.set("maxResults", "12");
-  url.searchParams.set("key", apiKey);
-
-  const res = await fetch(url.toString(), { next: { revalidate: 300 } });
-  if (!res.ok) return [];
-  const data = await res.json();
-  return (data.items ?? []).map(
-    (item: any): Show => ({
-      id: item.id.videoId,
-      title: item.snippet.title,
-      url: `https://www.youtube.com/watch?v=${item.id.videoId}`,
-      thumbnail:
-        item.snippet.thumbnails?.high?.url ??
-        item.snippet.thumbnails?.medium?.url ??
-        item.snippet.thumbnails?.default?.url ??
-        null,
-      created_time: item.snippet.publishedAt,
+  const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${LIFEFM_YOUTUBE_CHANNEL_ID}`;
+  const parser = new Parser({ timeout: 8000 });
+  const feed = await parser.parseURL(feedUrl);
+  return (feed.items ?? []).slice(0, 12).map((item): Show => {
+    const videoId =
+      new URL(item.link ?? "https://x.invalid").searchParams.get("v") ?? "";
+    return {
+      id: videoId || item.guid || item.link || "",
+      title: item.title ?? "",
+      url: item.link ?? `https://www.youtube.com/watch?v=${videoId}`,
+      thumbnail: videoId
+        ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
+        : null,
+      created_time: item.isoDate ?? item.pubDate ?? new Date().toISOString(),
       source: "youtube",
-    }),
-  );
+    };
+  });
 }
 
 export async function GET() {

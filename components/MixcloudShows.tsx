@@ -128,9 +128,9 @@ function ShowCard({
         </div>
       </div>
 
-      {isOpen && show.key && (
+      {isOpen && show.embed_url && (
         <iframe
-          src={`https://www.mixcloud.com/widget/iframe/?hide_cover=1&feed=${encodeURIComponent(show.key)}`}
+          src={show.embed_url}
           className="show-embed"
           allow="autoplay"
           frameBorder={0}
