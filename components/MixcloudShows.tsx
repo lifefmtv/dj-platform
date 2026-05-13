@@ -2,43 +2,29 @@
 
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
-
-interface MixcloudShow {
-  key: string;
-  name: string;
-  url: string;
-  created_time: string;
-  pictures: {
-    large?: string;
-    medium?: string;
-    thumbnail?: string;
-    "640wx640h"?: string;
-    "300wx300h"?: string;
-  };
-  listener_count?: number;
-}
+import type { Show } from "@/app/api/shows/route";
 
 interface Props {
   compact?: boolean;
 }
 
 export default function MixcloudShows({ compact = false }: Props) {
-  const [shows, setShows] = useState<MixcloudShow[]>([]);
-  const [openKey, setOpenKey] = useState<string | null>(null);
+  const [shows, setShows] = useState<Show[]>([]);
+  const [openId, setOpenId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/mixcloud")
+    fetch("/api/shows")
       .then((res) => res.json())
-      .then((data: MixcloudShow[]) => {
+      .then((data: Show[]) => {
         setShows(compact ? data.slice(0, 3) : data);
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, [compact]);
 
-  function toggleShow(key: string) {
-    setOpenKey((prev) => (prev === key ? null : key));
+  function toggleShow(id: string) {
+    setOpenId((prev) => (prev === id ? null : id));
   }
 
   if (loading || shows.length === 0) {
@@ -55,7 +41,9 @@ export default function MixcloudShows({ compact = false }: Props) {
     return (
       <div className="shows-section-compact">
         <div className="shows-grid-compact">
-          {shows.map((show) => <ShowCard key={show.key} show={show} openKey={openKey} toggleShow={toggleShow} />)}
+          {shows.map((show) => (
+            <ShowCard key={show.id} show={show} openId={openId} toggleShow={toggleShow} />
+          ))}
         </div>
       </div>
     );
@@ -66,7 +54,9 @@ export default function MixcloudShows({ compact = false }: Props) {
       <a href="/" className="back-link">← Home</a>
       <h1 className="page-heading">Recent Shows</h1>
       <div className="shows-grid">
-        {shows.map((show) => <ShowCard key={show.key} show={show} openKey={openKey} toggleShow={toggleShow} />)}
+        {shows.map((show) => (
+          <ShowCard key={show.id} show={show} openId={openId} toggleShow={toggleShow} />
+        ))}
       </div>
     </section>
   );
@@ -74,44 +64,58 @@ export default function MixcloudShows({ compact = false }: Props) {
 
 function ShowCard({
   show,
-  openKey,
+  openId,
   toggleShow,
 }: {
-  show: MixcloudShow;
-  openKey: string | null;
-  toggleShow: (key: string) => void;
+  show: Show;
+  openId: string | null;
+  toggleShow: (id: string) => void;
 }) {
-  const isOpen = openKey === show.key;
-  const thumb =
-    show.pictures?.["640wx640h"] ||
-    show.pictures?.large ||
-    show.pictures?.["300wx300h"] ||
-    show.pictures?.medium ||
-    show.pictures?.thumbnail;
+  const isOpen = openId === show.id;
+  const isYouTube = show.source === "youtube";
 
-  const embedSrc = `https://www.mixcloud.com/widget/iframe/?hide_cover=1&feed=${encodeURIComponent(show.key)}`;
+  const thumbInner = (
+    <>
+      {show.thumbnail ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={show.thumbnail} alt={show.title} className="show-thumb" />
+      ) : (
+        <div className="show-thumb-placeholder" />
+      )}
+      <div className="show-play-overlay">
+        <div className="show-play-icon">{isOpen ? "■" : "▶"}</div>
+      </div>
+      <span className={`show-source-badge show-source-badge--${show.source}`}>
+        {isYouTube ? "YouTube" : "Mixcloud"}
+      </span>
+    </>
+  );
 
   return (
     <div className={`show-card${isOpen ? " show-card--open" : ""}`}>
-      <button
-        className="show-thumb-btn"
-        onClick={() => toggleShow(show.key)}
-        aria-expanded={isOpen}
-        aria-label={isOpen ? `Close ${show.name}` : `Play ${show.name}`}
-      >
-        {thumb ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={thumb} alt={show.name} className="show-thumb" />
-        ) : (
-          <div className="show-thumb-placeholder" />
-        )}
-        <div className="show-play-overlay">
-          <div className="show-play-icon">{isOpen ? "■" : "▶"}</div>
-        </div>
-      </button>
+      {isYouTube ? (
+        <a
+          href={show.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="show-thumb-btn"
+          aria-label={`Watch ${show.title} on YouTube`}
+        >
+          {thumbInner}
+        </a>
+      ) : (
+        <button
+          className="show-thumb-btn"
+          onClick={() => toggleShow(show.id)}
+          aria-expanded={isOpen}
+          aria-label={isOpen ? `Close ${show.title}` : `Play ${show.title}`}
+        >
+          {thumbInner}
+        </button>
+      )}
 
       <div className="show-card-body">
-        <p className="show-name">{show.name}</p>
+        <p className="show-name">{show.title}</p>
         <div className="show-meta">
           <span className="show-date">
             {format(new Date(show.created_time), "d MMM yyyy")}
@@ -124,13 +128,13 @@ function ShowCard({
         </div>
       </div>
 
-      {isOpen && (
+      {isOpen && show.key && (
         <iframe
-          src={embedSrc}
+          src={`https://www.mixcloud.com/widget/iframe/?hide_cover=1&feed=${encodeURIComponent(show.key)}`}
           className="show-embed"
           allow="autoplay"
           frameBorder={0}
-          title={show.name}
+          title={show.title}
         />
       )}
     </div>

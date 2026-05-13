@@ -1376,6 +1376,25 @@ img, video, iframe { display: block; max-width: 100%; }
   display: block;
 }
 
+/* Source badge — bottom-right corner of thumbnail */
+.show-source-badge {
+  position: absolute;
+  bottom: 7px;
+  right: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 3px;
+  pointer-events: none;
+  z-index: 2;
+  line-height: 1.5;
+}
+.show-source-badge--mixcloud { background: #FF5500; color: #fff; }
+.show-source-badge--youtube  { background: #FF0000; color: #fff; }
+
 /* ── Countdown strip ─────────────────────────────────────── */
 .countdown-strip {
   display: flex;
