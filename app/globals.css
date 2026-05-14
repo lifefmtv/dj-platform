@@ -122,10 +122,8 @@ img, video, iframe { display: block; max-width: 100%; }
   align-items: center;
   justify-content: space-between;
   padding: 0 2.5rem;
-  background: rgba(10, 10, 10, 0.95);
+  background: #0a0a0a;
   border-bottom: 1px solid var(--border);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 }
 
 .nav-logo-link {
@@ -311,10 +309,8 @@ img, video, iframe { display: block; max-width: 100%; }
   justify-content: space-between;
   gap: 1.5rem;
   padding: 0 2.5rem;
-  background: rgba(12, 8, 8, 0.97);
-  border-bottom: 1px solid rgba(230, 48, 48, 0.25);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: #0c0808;
+  border-bottom: 1px solid var(--border);
   overflow: hidden;
 }
 
@@ -556,7 +552,7 @@ img, video, iframe { display: block; max-width: 100%; }
 
 .mobile-menu {
   position: fixed;
-  top: 84px;
+  top: var(--nav-h);
   left: 0;
   right: 0;
   z-index: 99;
@@ -1420,6 +1416,58 @@ img, video, iframe { display: block; max-width: 100%; }
 }
 .show-source-badge--mixcloud { background: #FF5500; color: #fff; }
 .show-source-badge--youtube  { background: #FF0000; color: #fff; }
+
+/* ── Inline show player ──────────────────────────────────── */
+.show-player-wrap {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--card);
+}
+
+.show-player-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  gap: 1rem;
+}
+
+.show-player-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.show-player-close {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0.3rem 0.65rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.15s, border-color 0.15s;
+}
+.show-player-close:hover { color: var(--text); border-color: var(--text-3); }
+
+.show-player-iframe {
+  width: 100%;
+  display: block;
+  border: none;
+}
+.show-player-iframe--youtube  { height: 400px; }
+.show-player-iframe--mixcloud { height: 120px; }
 
 /* ── Countdown strip ─────────────────────────────────────── */
 .countdown-strip {

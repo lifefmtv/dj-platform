@@ -10,7 +10,7 @@ interface Props {
 
 export default function MixcloudShows({ compact = false }: Props) {
   const [shows, setShows] = useState<Show[]>([]);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Show | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,8 +23,8 @@ export default function MixcloudShows({ compact = false }: Props) {
       .catch(() => setLoading(false));
   }, [compact]);
 
-  function toggleShow(id: string) {
-    setOpenId((prev) => (prev === id ? null : id));
+  function selectShow(show: Show) {
+    setSelected((prev) => (prev?.id === show.id ? null : show));
   }
 
   if (loading || shows.length === 0) {
@@ -42,9 +42,17 @@ export default function MixcloudShows({ compact = false }: Props) {
       <div className="shows-section-compact">
         <div className="shows-grid-compact">
           {shows.map((show) => (
-            <ShowCard key={show.id} show={show} openId={openId} toggleShow={toggleShow} />
+            <ShowCard
+              key={show.id}
+              show={show}
+              isSelected={selected?.id === show.id}
+              onSelect={selectShow}
+            />
           ))}
         </div>
+        {selected && (
+          <ShowPlayer show={selected} onClose={() => setSelected(null)} />
+        )}
       </div>
     );
   }
@@ -55,64 +63,51 @@ export default function MixcloudShows({ compact = false }: Props) {
       <h1 className="page-heading">Recent Shows</h1>
       <div className="shows-grid">
         {shows.map((show) => (
-          <ShowCard key={show.id} show={show} openId={openId} toggleShow={toggleShow} />
+          <ShowCard
+            key={show.id}
+            show={show}
+            isSelected={selected?.id === show.id}
+            onSelect={selectShow}
+          />
         ))}
       </div>
+      {selected && (
+        <ShowPlayer show={selected} onClose={() => setSelected(null)} />
+      )}
     </section>
   );
 }
 
 function ShowCard({
   show,
-  openId,
-  toggleShow,
+  isSelected,
+  onSelect,
 }: {
   show: Show;
-  openId: string | null;
-  toggleShow: (id: string) => void;
+  isSelected: boolean;
+  onSelect: (show: Show) => void;
 }) {
-  const isOpen = openId === show.id;
-  const isYouTube = show.source === "youtube";
-
-  const thumbInner = (
-    <>
-      {show.thumbnail ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={show.thumbnail} alt={show.title} className="show-thumb" />
-      ) : (
-        <div className="show-thumb-placeholder" />
-      )}
-      <div className="show-play-overlay">
-        <div className="show-play-icon">{isOpen ? "■" : "▶"}</div>
-      </div>
-      <span className={`show-source-badge show-source-badge--${show.source}`}>
-        {isYouTube ? "YouTube" : "Mixcloud"}
-      </span>
-    </>
-  );
-
   return (
-    <div className={`show-card${isOpen ? " show-card--open" : ""}`}>
-      {isYouTube ? (
-        <a
-          href={show.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="show-thumb-btn"
-          aria-label={`Watch ${show.title} on YouTube`}
-        >
-          {thumbInner}
-        </a>
-      ) : (
-        <button
-          className="show-thumb-btn"
-          onClick={() => toggleShow(show.id)}
-          aria-expanded={isOpen}
-          aria-label={isOpen ? `Close ${show.title}` : `Play ${show.title}`}
-        >
-          {thumbInner}
-        </button>
-      )}
+    <div className={`show-card${isSelected ? " show-card--open" : ""}`}>
+      <button
+        className="show-thumb-btn"
+        onClick={() => onSelect(show)}
+        aria-expanded={isSelected}
+        aria-label={isSelected ? `Close ${show.title}` : `Play ${show.title}`}
+      >
+        {show.thumbnail ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={show.thumbnail} alt={show.title} className="show-thumb" />
+        ) : (
+          <div className="show-thumb-placeholder" />
+        )}
+        <div className="show-play-overlay">
+          <div className="show-play-icon">{isSelected ? "■" : "▶"}</div>
+        </div>
+        <span className={`show-source-badge show-source-badge--${show.source}`}>
+          {show.source === "youtube" ? "YouTube" : "Mixcloud"}
+        </span>
+      </button>
 
       <div className="show-card-body">
         <p className="show-name">{show.title}</p>
@@ -127,16 +122,38 @@ function ShowCard({
           )}
         </div>
       </div>
+    </div>
+  );
+}
 
-      {isOpen && show.embed_url && (
-        <iframe
-          src={show.embed_url}
-          className="show-embed"
-          allow="autoplay"
-          frameBorder={0}
-          title={show.title}
-        />
-      )}
+function ShowPlayer({ show, onClose }: { show: Show; onClose: () => void }) {
+  const isYouTube = show.source === "youtube";
+
+  const src = isYouTube
+    ? `https://www.youtube.com/embed/${show.id}?autoplay=1`
+    : show.embed_url ??
+      `https://www.mixcloud.com/widget/iframe/?hide_cover=1&mini=1&autoplay=1&feed=${encodeURIComponent(show.id)}`;
+
+  return (
+    <div className="show-player-wrap" style={{ width: "100%", marginTop: "1.5rem" }}>
+      <div className="show-player-header">
+        <span className="show-player-title">{show.title}</span>
+        <button
+          className="show-player-close"
+          onClick={onClose}
+          aria-label="Close player"
+        >
+          ✕ Close
+        </button>
+      </div>
+      <iframe
+        src={src}
+        className={`show-player-iframe${isYouTube ? " show-player-iframe--youtube" : " show-player-iframe--mixcloud"}`}
+        allow="autoplay; fullscreen"
+        frameBorder={0}
+        title={show.title}
+        allowFullScreen
+      />
     </div>
   );
 }
