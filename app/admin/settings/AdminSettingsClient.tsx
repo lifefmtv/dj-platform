@@ -60,7 +60,7 @@ export default function AdminSettingsClient() {
   async function checkDropboxStatus() {
     setDbxChecking(true);
     try {
-      const res = await fetch("/api/admin/dropbox-status");
+      const res = await fetch("/api/admin/dropbox-status", { credentials: "include" });
       const json = await res.json();
       setDbxStatus(json);
     } catch {
@@ -109,7 +109,7 @@ export default function AdminSettingsClient() {
     setSyncing(true);
     setSyncMsg("");
     try {
-      const res = await fetch("/api/sync/dropbox", { method: "POST" });
+      const res = await fetch("/api/sync/dropbox", { method: "POST", credentials: "include" });
       const json = await res.json();
       if (json.ok) {
         const c = json.counts ?? {};
