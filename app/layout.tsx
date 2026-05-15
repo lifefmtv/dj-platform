@@ -6,7 +6,7 @@ import ScrollProgressBar from "@/components/ScrollProgressBar";
 import BackToTop from "@/components/BackToTop";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import { AudioReactiveProvider } from "@/context/AudioReactiveContext";
-import AudioVisualiser from "@/components/AudioVisualiser";
+import BassFxLayer from "@/components/BassFxLayer";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://lifefm.tv";
 
@@ -71,7 +71,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
 
           {children}
 
-          <AudioVisualiser />
+          <BassFxLayer />
           <BackToTop />
           </AudioReactiveProvider>
 

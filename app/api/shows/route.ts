@@ -3,11 +3,11 @@ import Parser from "rss-parser";
 
 export const revalidate = 300;
 
-// Primary channel — @lifefmtv (currently has no public uploads; will auto-populate when videos are added)
+// Confirmed channel ID for @lifefmtv (verified from channel page HTML)
 const LIFEFM_CHANNEL_ID = "UCcUHbW1H8IGylqyxhcTCaUQ";
 
-// Legacy channel — user=lifefmhq (has existing archived content)
-const LIFEFM_LEGACY_USER = "lifefmhq";
+// Known YouTube usernames to try — rss-parser accepts user= feeds
+const LIFEFM_YT_USERS = ["lifefmhq", "lifefm"];
 
 export interface Show {
   id: string;
@@ -16,7 +16,7 @@ export interface Show {
   thumbnail: string | null;
   created_time: string;
   source: "mixcloud" | "youtube";
-  embed_url?: string;    // Mixcloud iframe src only
+  embed_url?: string;
   listener_count?: number;
 }
 
@@ -61,43 +61,54 @@ async function fetchMixcloudShows(): Promise<Show[]> {
 }
 
 async function parseFeed(feedUrl: string): Promise<Show[]> {
-  const feed = await ytParser.parseURL(feedUrl);
-  return (feed.items ?? []).slice(0, 12).map((item): Show => {
-    // ytVideoId comes from the custom field; fall back to URL then id string
-    const videoId: string =
-      item.ytVideoId ||
-      new URL(item.link ?? "https://x.invalid").searchParams.get("v") ||
-      (item.id?.toString().split(":").pop() ?? "");
+  try {
+    const feed = await ytParser.parseURL(feedUrl);
+    return (feed.items ?? []).slice(0, 12).map((item): Show => {
+      const videoId: string =
+        item.ytVideoId ||
+        new URL(item.link ?? "https://x.invalid").searchParams.get("v") ||
+        (item.id?.toString().split(":").pop() ?? "");
 
-    return {
-      id: videoId || item.guid || item.link || "",
-      title: item.title ?? "",
-      url: videoId
-        ? `https://www.youtube.com/watch?v=${videoId}`
-        : (item.link ?? ""),
-      // Prefer the YouTube CDN thumbnail (always works once you have the videoId)
-      thumbnail: videoId
-        ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
-        : null,
-      created_time: item.isoDate ?? item.pubDate ?? new Date().toISOString(),
-      source: "youtube",
-    };
-  });
+      return {
+        id: videoId || item.guid || item.link || "",
+        title: item.title ?? "",
+        url: videoId
+          ? `https://www.youtube.com/watch?v=${videoId}`
+          : (item.link ?? ""),
+        thumbnail: videoId
+          ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
+          : null,
+        created_time: item.isoDate ?? item.pubDate ?? new Date().toISOString(),
+        source: "youtube",
+      };
+    });
+  } catch {
+    return [];
+  }
 }
 
 async function fetchYouTubeShows(): Promise<Show[]> {
-  const results = await Promise.allSettled([
-    // Primary: channel_id feed (official @lifefmtv — populates as videos are uploaded)
-    parseFeed(`https://www.youtube.com/feeds/videos.xml?channel_id=${LIFEFM_CHANNEL_ID}`),
-    // Legacy: user feed (lifefmhq — has existing archived content)
-    parseFeed(`https://www.youtube.com/feeds/videos.xml?user=${LIFEFM_LEGACY_USER}`),
-  ]);
+  const feeds = [
+    { label: "channel/@lifefmtv", url: `https://www.youtube.com/feeds/videos.xml?channel_id=${LIFEFM_CHANNEL_ID}` },
+    ...LIFEFM_YT_USERS.map((u) => ({
+      label: `user=${u}`,
+      url: `https://www.youtube.com/feeds/videos.xml?user=${u}`,
+    })),
+  ];
 
-  // Merge, deduplicate by video id
+  const results = await Promise.allSettled(feeds.map((f) => parseFeed(f.url)));
+
   const seen = new Set<string>();
   const merged: Show[] = [];
-  for (const r of results) {
-    if (r.status !== "fulfilled") continue;
+
+  for (let i = 0; i < results.length; i++) {
+    const r = results[i];
+    const label = feeds[i].label;
+    if (r.status !== "fulfilled") {
+      console.log(`[shows] YouTube ${label}: error`);
+      continue;
+    }
+    console.log(`[shows] YouTube ${label}: ${r.value.length} results`);
     for (const show of r.value) {
       if (show.id && !seen.has(show.id)) {
         seen.add(show.id);
@@ -106,14 +117,7 @@ async function fetchYouTubeShows(): Promise<Show[]> {
     }
   }
 
-  console.log(
-    `[shows] YouTube channel_id: ${results[0].status === "fulfilled" ? results[0].value.length : "error"} results`,
-  );
-  console.log(
-    `[shows] YouTube user/legacy: ${results[1].status === "fulfilled" ? results[1].value.length : "error"} results`,
-  );
   console.log(`[shows] YouTube merged (deduplicated): ${merged.length} results`);
-
   return merged;
 }
 

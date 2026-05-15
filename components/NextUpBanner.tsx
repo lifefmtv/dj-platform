@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { isOnAir } from "@/lib/broadcastStatus";
 import { genreColor } from "@/lib/genreColors";
+import { useAudioReactive } from "@/context/AudioReactiveContext";
 
 interface Show {
   dj_name: string;
@@ -27,6 +28,12 @@ function genrePillStyle(genre: string | null | undefined, dim = false) {
 export default function NextUpBanner({ currentShow, nextShow }: Props) {
   const [onAir, setOnAir] = useState(() => isOnAir());
   const [timeLeft, setTimeLeft] = useState("");
+  const { isActive, energy } = useAudioReactive();
+
+  // Pulse speed reacts to energy: fast on high energy, slow when quiet
+  const pulseDuration = isActive
+    ? `${(1.8 - energy * 1.2).toFixed(2)}s`
+    : "1.8s";
 
   // Sync broadcast status on whole-minute boundaries
   useEffect(() => {
@@ -75,6 +82,7 @@ export default function NextUpBanner({ currentShow, nextShow }: Props) {
         <div className="next-up-status-group">
           <span
             className={`next-up-status-dot${onAir ? " next-up-status-dot--on" : " next-up-status-dot--off"}`}
+            style={onAir ? { animationDuration: pulseDuration } : undefined}
             aria-hidden
           />
           <span className={`next-up-status-label${onAir ? " next-up-status-label--on" : " next-up-status-label--off"}`}>

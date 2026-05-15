@@ -5366,6 +5366,56 @@ img, video, iframe { display: block; max-width: 100%; }
    Stream Visualiser canvas
 ════════════════════════════════════════════════════════════════════ */
 
+.stream-visualiser-wrap {
+  width: 100%;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.stream-visualiser-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.4rem 1rem;
+}
+
+.vis-toggle-btn {
+  background: #1a1a1a;
+  color: rgba(255, 255, 255, 0.6);
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.vis-toggle-btn:disabled { opacity: 0.5; cursor: default; }
+.vis-toggle-btn--on {
+  background: rgba(230, 48, 48, 0.12);
+  color: #e63030;
+  border-color: rgba(230, 48, 48, 0.4);
+}
+.vis-toggle-btn:not(:disabled):hover {
+  border-color: #555;
+  color: #fff;
+}
+
+.vis-active-indicator {
+  color: #22c55e;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+}
+
+.vis-denied-msg {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  opacity: 0.8;
+}
+
 .stream-visualiser-canvas {
   display: block;
   width: 100%;
