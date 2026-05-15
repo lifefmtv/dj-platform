@@ -24,7 +24,8 @@ export default function AdminSidebar({ email, role }: Props) {
   return (
     <aside className="admin-sidebar">
       <div className="admin-sidebar-logo">
-        LIFEFM.TV<span className="admin-sidebar-logo-accent">Admin</span>
+        <div className="admin-sidebar-logo-wordmark">LIFEFM.TV</div>
+        <div className="admin-sidebar-logo-accent">ADMIN</div>
       </div>
 
       <nav className="admin-sidebar-nav">

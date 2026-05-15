@@ -1072,6 +1072,8 @@ img, video, iframe { display: block; max-width: 100%; }
   border: 1px solid #1e1e1e;
   border-radius: 12px;
   padding: 1.5rem;
+  overflow: hidden;
+  max-width: 100%;
 }
 
 .social-follow-part {
@@ -1137,6 +1139,7 @@ img, video, iframe { display: block; max-width: 100%; }
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.5rem;
+  max-width: 100%;
 }
 
 /* Stacked column inside the two-column grid */
@@ -1144,6 +1147,7 @@ img, video, iframe { display: block; max-width: 100%; }
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  min-width: 0;
 }
 
 .social-follow-btn {
@@ -1157,6 +1161,8 @@ img, video, iframe { display: block; max-width: 100%; }
   background: #1a1a1a;
   color: #fff;
   transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  min-width: 0;
+  overflow: hidden;
 }
 .social-follow-btn:hover {
   background: var(--brand-bg);
@@ -1169,6 +1175,8 @@ img, video, iframe { display: block; max-width: 100%; }
   display: flex;
   flex-direction: column;
   gap: 0.1rem;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .social-btn-icon {
@@ -1184,14 +1192,20 @@ img, video, iframe { display: block; max-width: 100%; }
   letter-spacing: 0.1em;
   text-transform: uppercase;
   line-height: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .social-btn-handle {
   font-family: var(--font-mono);
-  font-size: 0.58rem;
+  font-size: 11px;
   opacity: 0.65;
   letter-spacing: 0.06em;
   line-height: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Full-width support / Ko-fi button */
@@ -6619,20 +6633,27 @@ img, video, iframe { display: block; max-width: 100%; }
 }
 
 .admin-sidebar-logo {
-  padding: 1.25rem 1.375rem;
-  font-size: 0.82rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #f0edea;
+  padding: 1.1rem 1.375rem;
   border-bottom: 1px solid #1e1c1b;
   line-height: 1;
   flex-shrink: 0;
 }
 
+.admin-sidebar-logo-wordmark {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #f0edea;
+  margin-bottom: 0.2rem;
+}
+
 .admin-sidebar-logo-accent {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
   color: #e63030;
-  margin-left: 0.3rem;
 }
 
 .admin-sidebar-nav {
@@ -6973,4 +6994,9 @@ img, video, iframe { display: block; max-width: 100%; }
   .admin-sidebar { display: none; }
   .admin-main { width: 100%; }
   .admin-upload-types { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 400px) {
+  .social-two-col { grid-template-columns: 1fr; }
+  .social-stream-grid { grid-template-columns: repeat(2, 1fr); }
 }
