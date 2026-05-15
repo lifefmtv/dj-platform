@@ -5,20 +5,47 @@ import TimetableManager from "@/components/admin/TimetableManager";
 import ShowTemplateManager from "@/components/admin/ShowTemplateManager";
 
 const TABS = [
-  { id: "timetable",  label: "Timetable" },
-  { id: "recurring",  label: "Recurring Templates" },
+  { id: "timetable", label: "Timetable" },
+  { id: "recurring", label: "Recurring Templates" },
+  { id: "import",    label: "Import Excel" },
 ] as const;
 
 type Tab = typeof TABS[number]["id"];
 
+interface ImportResult {
+  ok: boolean;
+  file?: string;
+  imported?: number;
+  byMonth?: Record<string, number>;
+  errors?: string[];
+  error?: string;
+}
+
+const MONTH_ORDER = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
 export default function AdminScheduleClient() {
   const [tab, setTab] = useState<Tab>("timetable");
+  const [importing,    setImporting]    = useState(false);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
+
+  async function runImport() {
+    setImporting(true);
+    setImportResult(null);
+    try {
+      const res = await fetch("/api/admin/import-schedule", { method: "POST" });
+      const json: ImportResult = await res.json();
+      setImportResult(json);
+    } catch (e) {
+      setImportResult({ ok: false, error: (e as Error).message });
+    }
+    setImporting(false);
+  }
 
   return (
     <div className="admin-page">
       <div className="admin-page-header">
         <div className="admin-page-title">Schedule</div>
-        <div className="admin-page-sub">Manage the live broadcast timetable and recurring show templates.</div>
+        <div className="admin-page-sub">Manage the live broadcast timetable, recurring show templates, and import from Mel&apos;s Excel file.</div>
       </div>
 
       <div className="admin-tabs">
@@ -33,8 +60,94 @@ export default function AdminScheduleClient() {
         ))}
       </div>
 
-      {tab === "timetable"  && <TimetableManager />}
+      {tab === "timetable" && <TimetableManager />}
       {tab === "recurring"  && <ShowTemplateManager />}
+
+      {tab === "import" && (
+        <div className="admin-import-panel">
+          <div className="admin-card">
+            <div className="admin-card-title">Import from Excel</div>
+            <div className="admin-card-sub">
+              Reads the schedule spreadsheet from the Dropbox{" "}
+              <code style={{ fontFamily: "monospace", fontSize: "0.75rem" }}>/LIFEFM/Schedule</code>{" "}
+              folder and upserts all 12 months into the schedule table.
+              Re-importing is safe — existing rows are updated, not duplicated.
+            </div>
+
+            <div className="admin-import-workflow">
+              <div className="admin-import-step">
+                <span className="admin-import-step-num">1</span>
+                <span>Mel updates the Excel file and drops it into Dropbox <code>/LIFEFM/Schedule</code></span>
+              </div>
+              <div className="admin-import-step">
+                <span className="admin-import-step-num">2</span>
+                <span>Click <strong>Import from Excel</strong> below — or wait for the 9am daily sync to pick it up automatically</span>
+              </div>
+              <div className="admin-import-step">
+                <span className="admin-import-step-num">3</span>
+                <span>The schedule page updates immediately — Mel never needs to touch the website</span>
+              </div>
+            </div>
+
+            <button
+              className="admin-btn admin-btn--large"
+              onClick={runImport}
+              disabled={importing}
+              style={{ marginTop: "1rem" }}
+            >
+              {importing ? "Importing…" : "Import from Excel"}
+            </button>
+
+            {importing && (
+              <div className="admin-import-progress">
+                <div className="admin-import-spinner" />
+                <span>Reading Dropbox, parsing Excel, upserting to Supabase…</span>
+              </div>
+            )}
+
+            {importResult && (
+              <div className={`admin-import-result${importResult.ok ? " admin-import-result--ok" : " admin-import-result--err"}`}>
+                {importResult.ok ? (
+                  <>
+                    <p className="admin-import-result-headline">
+                      ✓ Imported {importResult.imported?.toLocaleString()} shows across{" "}
+                      {Object.keys(importResult.byMonth ?? {}).length} months
+                      {importResult.file && <span style={{ opacity: 0.6, fontSize: "0.8em" }}> — {importResult.file}</span>}
+                    </p>
+                    {importResult.byMonth && (
+                      <div className="admin-import-months">
+                        {MONTH_ORDER.filter((m) => importResult.byMonth![m] != null).map((m) => (
+                          <div key={m} className="admin-import-month-pill">
+                            <span className="admin-import-month-name">{m}</span>
+                            <span className="admin-import-month-count">{importResult.byMonth![m]}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {importResult.errors && importResult.errors.length > 0 && (
+                      <div className="admin-import-errors">
+                        <p style={{ color: "#f59e0b", fontSize: "0.78rem", marginBottom: "0.25rem" }}>Warnings:</p>
+                        {importResult.errors.map((e, i) => (
+                          <p key={i} style={{ color: "#f59e0b", fontSize: "0.72rem" }}>{e}</p>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <p style={{ color: "#e63030" }}>
+                    Error: {importResult.error}
+                    {importResult.error?.includes("No Excel") && (
+                      <span style={{ display: "block", fontSize: "0.78rem", opacity: 0.8, marginTop: "0.5rem" }}>
+                        Make sure the Excel file is in the Dropbox /LIFEFM/Schedule folder and Dropbox is connected.
+                      </span>
+                    )}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
