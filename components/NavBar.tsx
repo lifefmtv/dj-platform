@@ -13,6 +13,7 @@ const NAV_LINKS = [
   { href: "/submit", label: "Submit" },
   { href: "/artist-hq", label: "Artist HQ" },
   { href: "/about", label: "About" },
+  { href: "/sponsor", label: "Advertise" },
 ];
 
 export default function NavBar() {

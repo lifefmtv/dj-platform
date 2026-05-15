@@ -15,7 +15,15 @@ export default function LiveStream() {
     : "none";
 
   return (
-    <div className="stream-video-wrap" style={{ boxShadow }}>
+    <div
+      className="stream-video-wrap"
+      style={{
+        boxShadow,
+        padding: "20px",
+        margin: "-20px",
+        overflow: "visible",
+      }}
+    >
       <iframe
         src="https://player.restream.io/?token=aac9fac0a8854d65b094b2d3c6b6d1de&vwrs=1"
         allow="autoplay"
