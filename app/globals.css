@@ -5426,6 +5426,58 @@ img, video, iframe { display: block; max-width: 100%; }
   opacity: 0.8;
 }
 
+/* ── Visualiser source picker ─────────────────────────────── */
+
+.vis-source-picker {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.vis-source-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: #111;
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+  color: #555;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+
+.vis-source-btn:hover {
+  color: #aaa;
+  border-color: #444;
+}
+
+.vis-source-btn--active {
+  color: #e63030;
+  border-color: rgba(230, 48, 48, 0.5);
+  background: rgba(230, 48, 48, 0.08);
+}
+
+.vis-source-btn:disabled { opacity: 0.4; cursor: default; }
+
+.vis-source-label {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.vis-source-error {
+  color: #f59e0b;
+  font-family: var(--font-mono);
+  font-size: 0.63rem;
+  opacity: 0.9;
+  max-width: 260px;
+}
+
 .stream-visualiser-canvas {
   display: block;
   width: 100%;

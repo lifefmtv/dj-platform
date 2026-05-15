@@ -14,14 +14,17 @@ import {
 const FFT_SIZE = 256;
 export const FREQ_BIN_COUNT = FFT_SIZE / 2; // 128
 
+export type AudioSource = "stream" | "mic" | "system";
+
 interface AudioReactiveState {
-  bassLevel: number;           // 0–255 average of low-frequency bins
-  midLevel: number;            // 0–255 average of mid-frequency bins
-  energy: number;              // 0–1 overall signal energy
+  bassLevel: number;
+  midLevel: number;
+  energy: number;
   isActive: boolean;
-  /** Fill `out` with current frequency byte data — call from rAF loops only */
+  activeSource: AudioSource;
+  sourceError: string;
   getFrequencyData: (out: Uint8Array<ArrayBuffer>) => void;
-  startVisualiser: () => Promise<"granted" | "denied">;
+  startVisualiser: (source?: AudioSource) => Promise<"granted" | "denied">;
   stopVisualiser: () => void;
 }
 
@@ -30,6 +33,8 @@ const AudioReactiveContext = createContext<AudioReactiveState>({
   midLevel: 0,
   energy: 0,
   isActive: false,
+  activeSource: "stream",
+  sourceError: "",
   getFrequencyData: () => {},
   startVisualiser: async () => "denied",
   stopVisualiser: () => {},
@@ -41,18 +46,27 @@ export function useAudioReactive() {
 
 export function AudioReactiveProvider({ children }: { children: React.ReactNode }) {
   const [bassLevel, setBassLevel] = useState(0);
-  const [midLevel, setMidLevel] = useState(0);
-  const [energy, setEnergy] = useState(0);
-  const [isActive, setIsActive] = useState(false);
+  const [midLevel,  setMidLevel]  = useState(0);
+  const [energy,    setEnergy]    = useState(0);
+  const [isActive,  setIsActive]  = useState(false);
+  const [activeSource, setActiveSource] = useState<AudioSource>("stream");
+  const [sourceError,  setSourceError]  = useState("");
 
-  const audioCtxRef  = useRef<AudioContext | null>(null);
-  const analyserRef  = useRef<AnalyserNode | null>(null);
-  const streamRef    = useRef<MediaStream | null>(null);
-  const rafRef       = useRef<number>(0);
-  const dataRef      = useRef<Uint8Array<ArrayBuffer>>(new Uint8Array(FREQ_BIN_COUNT) as Uint8Array<ArrayBuffer>);
+  // Audio graph — persists for the provider lifetime; never closed mid-session
+  const audioCtxRef     = useRef<AudioContext | null>(null);
+  const analyserRef     = useRef<AnalyserNode | null>(null);
+  const sourceNodeRef   = useRef<AudioNode | null>(null);
+  const mediaStreamRef  = useRef<MediaStream | null>(null);
 
-  // Stable ref so canvas components can read raw frequency data directly
-  // without subscribing to React state updates
+  // Stream-source helpers — created once, reused across enable/disable cycles
+  const streamAudioElRef = useRef<HTMLAudioElement | null>(null);
+  const mediaElSrcRef    = useRef<MediaElementAudioSourceNode | null>(null);
+
+  const rafRef  = useRef<number>(0);
+  const dataRef = useRef<Uint8Array<ArrayBuffer>>(
+    new Uint8Array(FREQ_BIN_COUNT) as Uint8Array<ArrayBuffer>,
+  );
+
   const getFrequencyData = useCallback((out: Uint8Array<ArrayBuffer>) => {
     if (analyserRef.current) {
       analyserRef.current.getByteFrequencyData(out);
@@ -63,91 +77,240 @@ export function AudioReactiveProvider({ children }: { children: React.ReactNode 
 
   const tick = useCallback(() => {
     const analyser = analyserRef.current;
-    const data = dataRef.current;
+    const data     = dataRef.current;
     if (!analyser) return;
 
     analyser.getByteFrequencyData(data);
 
-    const n = data.length;
-
-    // Bass: first 15 % of bins (≈ 0–500 Hz at 44.1 kHz / fftSize 256)
+    const n       = data.length;
     const bassEnd = Math.max(1, Math.floor(n * 0.15));
+    const midEnd  = Math.floor(n * 0.6);
+
     let bassSum = 0;
-    for (let i = 0; i < bassEnd; i++) bassSum += data[i];
+    for (let i = 0; i < bassEnd; i++)         bassSum += data[i];
+    let midSum  = 0;
+    for (let i = bassEnd; i < midEnd; i++)    midSum  += data[i];
+    let total   = 0;
+    for (let i = 0; i < n; i++)              total   += data[i];
 
-    // Mid: 15–60 % of bins
-    const midEnd = Math.floor(n * 0.6);
-    let midSum = 0;
-    for (let i = bassEnd; i < midEnd; i++) midSum += data[i];
-
-    // Overall energy (normalised 0–1)
-    let total = 0;
-    for (let i = 0; i < n; i++) total += data[i];
-
-    // React 18 batches these three updates into one re-render per frame
     setBassLevel(bassSum / bassEnd);
-    setMidLevel(midSum / (midEnd - bassEnd));
+    setMidLevel(midSum  / (midEnd - bassEnd));
     setEnergy(total / n / 255);
 
     rafRef.current = requestAnimationFrame(tick);
   }, []);
 
-  const startVisualiser = useCallback(async (): Promise<"granted" | "denied"> => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
-        video: false,
-      });
-      streamRef.current = stream;
+  // ── Helpers ────────────────────────────────────────────────
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const AudioCtx = window.AudioContext ?? (window as any).webkitAudioContext;
-      const audioCtx = new AudioCtx();
-      await audioCtx.resume();
-      audioCtxRef.current = audioCtx;
-
-      const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = FFT_SIZE;
-      analyser.smoothingTimeConstant = 0.82;
-      analyserRef.current = analyser;
-      dataRef.current = new Uint8Array(analyser.frequencyBinCount) as Uint8Array<ArrayBuffer>;
-
-      // Source → analyser only — NOT connected to destination (no echo)
-      audioCtx.createMediaStreamSource(stream).connect(analyser);
-
-      setIsActive(true);
-      rafRef.current = requestAnimationFrame(tick);
-      return "granted";
-    } catch {
-      return "denied";
+  function tearDownSource() {
+    cancelAnimationFrame(rafRef.current);
+    try { sourceNodeRef.current?.disconnect(); } catch { /* already disconnected */ }
+    sourceNodeRef.current = null;
+    mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
+    mediaStreamRef.current = null;
+    // Pause our hidden stream element so it stops consuming bandwidth
+    if (streamAudioElRef.current && !streamAudioElRef.current.paused) {
+      streamAudioElRef.current.pause();
     }
+  }
+
+  async function getOrCreateCtx(): Promise<[AudioContext, AnalyserNode]> {
+    if (audioCtxRef.current && analyserRef.current) {
+      await audioCtxRef.current.resume();
+      return [audioCtxRef.current, analyserRef.current];
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const AudioCtx = window.AudioContext ?? (window as any).webkitAudioContext;
+    const ctx      = new AudioCtx() as AudioContext;
+    await ctx.resume();
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize              = FFT_SIZE;
+    analyser.smoothingTimeConstant = 0.82;
+    audioCtxRef.current = ctx;
+    analyserRef.current = analyser;
+    dataRef.current     = new Uint8Array(analyser.frequencyBinCount) as Uint8Array<ArrayBuffer>;
+    return [ctx, analyser];
+  }
+
+  // ── Stream source ──────────────────────────────────────────
+
+  async function connectStream(audioCtx: AudioContext, analyser: AnalyserNode): Promise<void> {
+    const url = process.env.NEXT_PUBLIC_STREAM_AUDIO_URL ?? "";
+
+    // Get or create the hidden audio element
+    if (!streamAudioElRef.current) {
+      if (!url) {
+        // Try any audio element already on the page
+        const el = document.querySelector<HTMLAudioElement>("audio");
+        if (!el) throw new Error("no-stream-url");
+        streamAudioElRef.current = el;
+      } else {
+        const el = new Audio(url);
+        el.crossOrigin = "anonymous";
+        el.preload     = "none";
+        streamAudioElRef.current = el;
+      }
+    }
+
+    const el = streamAudioElRef.current;
+
+    // Create MediaElementAudioSourceNode once per element (Web Audio rule)
+    if (!mediaElSrcRef.current) {
+      mediaElSrcRef.current = audioCtx.createMediaElementSource(el);
+      // If this is a page element that was already playing, keep it audible
+      if (!url && !el.paused) {
+        mediaElSrcRef.current.connect(audioCtx.destination);
+      }
+    }
+
+    // Start playback so audio flows through the graph (our element is silent
+    // — it's not connected to destination, just to the analyser)
+    if (el.paused) await el.play();
+
+    mediaElSrcRef.current.connect(analyser);
+    sourceNodeRef.current = mediaElSrcRef.current;
+  }
+
+  // ── Mic source ─────────────────────────────────────────────
+
+  async function connectMic(audioCtx: AudioContext, analyser: AnalyserNode): Promise<void> {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+      video: false,
+    });
+    mediaStreamRef.current = stream;
+    const node = audioCtx.createMediaStreamSource(stream);
+    node.connect(analyser);
+    sourceNodeRef.current = node;
+  }
+
+  // ── System audio source ────────────────────────────────────
+
+  async function connectSystem(audioCtx: AudioContext, analyser: AnalyserNode): Promise<void> {
+    if (!("getDisplayMedia" in navigator.mediaDevices)) {
+      throw new Error("not-supported");
+    }
+    const stream = await navigator.mediaDevices.getDisplayMedia({
+      audio: true,
+      video: true, // required by some browsers; we stop the video tracks immediately
+    });
+    stream.getVideoTracks().forEach((t) => t.stop());
+    if (stream.getAudioTracks().length === 0) throw new Error("no-audio-track");
+    mediaStreamRef.current = stream;
+    const node = audioCtx.createMediaStreamSource(stream);
+    node.connect(analyser);
+    sourceNodeRef.current = node;
+  }
+
+  // ── Public API ─────────────────────────────────────────────
+
+  const startVisualiser = useCallback(async (
+    source: AudioSource = "mic",
+  ): Promise<"granted" | "denied"> => {
+    tearDownSource();
+
+    const trySource = async (s: AudioSource): Promise<"granted" | "denied"> => {
+      try {
+        const [audioCtx, analyser] = await getOrCreateCtx();
+        if (s === "stream")     await connectStream(audioCtx, analyser);
+        else if (s === "mic")   await connectMic(audioCtx, analyser);
+        else                    await connectSystem(audioCtx, analyser);
+
+        setActiveSource(s);
+        setSourceError("");
+        setIsActive(true);
+        rafRef.current = requestAnimationFrame(tick);
+        return "granted";
+      } catch (e) {
+        const err = e as Error;
+
+        // ── System audio errors ──
+        if (s === "system") {
+          if (err.message === "not-supported") {
+            setSourceError("System audio requires Chrome or Edge");
+          } else if (err.message === "no-audio-track") {
+            setSourceError("No system audio — select \"Share system audio\" in the dialog");
+          } else if (err.name === "NotAllowedError") {
+            setSourceError("Screen share cancelled");
+          } else {
+            setSourceError("System audio capture failed");
+          }
+          return "denied";
+        }
+
+        // ── Mic errors ──
+        if (s === "mic") {
+          if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+            setSourceError("Microphone access denied");
+          } else {
+            setSourceError("Microphone connection failed");
+          }
+          return "denied";
+        }
+
+        // ── Stream errors — fall back to mic ──
+        const isNoUrl  = err.message === "no-stream-url";
+        const isCors   = err.name === "SecurityError" || err.name === "NotSupportedError";
+        const isNet    = err.name === "NetworkError" || err.message?.includes("CORS");
+        const isAutoplay = err.name === "NotAllowedError";
+
+        if (isNoUrl) {
+          setSourceError("No stream URL — add NEXT_PUBLIC_STREAM_AUDIO_URL to .env.local, falling back to mic");
+        } else if (isCors || isNet) {
+          setSourceError("Using mic — stream audio unavailable");
+        } else if (isAutoplay) {
+          setSourceError("Using mic — stream autoplay blocked");
+        } else {
+          setSourceError("Using mic — stream audio unavailable");
+        }
+
+        // Silent mic fallback
+        try {
+          const [audioCtx, analyser] = await getOrCreateCtx();
+          await connectMic(audioCtx, analyser);
+          setActiveSource("mic");
+          setIsActive(true);
+          rafRef.current = requestAnimationFrame(tick);
+          return "granted";
+        } catch {
+          setSourceError("Microphone access denied");
+          return "denied";
+        }
+      }
+    };
+
+    return trySource(source);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tick]);
 
   const stopVisualiser = useCallback(() => {
-    cancelAnimationFrame(rafRef.current);
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    audioCtxRef.current?.close().catch(() => {});
-    audioCtxRef.current = null;
-    analyserRef.current = null;
-    streamRef.current   = null;
-    dataRef.current     = new Uint8Array(FREQ_BIN_COUNT) as Uint8Array<ArrayBuffer>;
+    tearDownSource();
     setIsActive(false);
     setBassLevel(0);
     setMidLevel(0);
     setEnergy(0);
+    setSourceError("");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Close AudioContext on unmount only
   useEffect(() => {
     return () => {
       cancelAnimationFrame(rafRef.current);
-      streamRef.current?.getTracks().forEach((t) => t.stop());
+      mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
+      streamAudioElRef.current?.pause();
       audioCtxRef.current?.close().catch(() => {});
     };
   }, []);
 
   const value = useMemo<AudioReactiveState>(
-    () => ({ bassLevel, midLevel, energy, isActive, getFrequencyData, startVisualiser, stopVisualiser }),
-    [bassLevel, midLevel, energy, isActive, getFrequencyData, startVisualiser, stopVisualiser],
+    () => ({
+      bassLevel, midLevel, energy,
+      isActive, activeSource, sourceError,
+      getFrequencyData, startVisualiser, stopVisualiser,
+    }),
+    [bassLevel, midLevel, energy, isActive, activeSource, sourceError,
+     getFrequencyData, startVisualiser, stopVisualiser],
   );
 
   return (

@@ -1,14 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { FREQ_BIN_COUNT, useAudioReactive } from "@/context/AudioReactiveContext";
+import { FREQ_BIN_COUNT, useAudioReactive, type AudioSource } from "@/context/AudioReactiveContext";
 
 const BAR_COUNT  = 64;
-const SMOOTHING  = 0.75;   // per-bar: prev * 0.75 + raw * 0.25
-const PEAK_HOLD  = 1500;   // ms before peak dot starts falling
-const PEAK_FALL  = 1.2;    // px per frame after hold expires
+const SMOOTHING  = 0.75;
+const PEAK_HOLD  = 1500;  // ms before peak dot falls
+const PEAK_FALL  = 1.2;   // px per frame after hold
 
-// Frequency region colours — bass → high
 function barColor(i: number): string {
   const t = i / BAR_COUNT;
   if (t < 0.15) return "#CC0000";
@@ -18,7 +17,6 @@ function barColor(i: number): string {
   return "#440000";
 }
 
-// Width weight — bass bars wider, high-freq bars narrower
 function barWeight(i: number): number {
   const t = i / BAR_COUNT;
   if (t < 0.15) return 1.5;
@@ -31,30 +29,52 @@ function barWeight(i: number): number {
 const TOTAL_WEIGHT = Array.from({ length: BAR_COUNT }, (_, i) => barWeight(i))
   .reduce((a, b) => a + b, 0);
 
+const SOURCES: { id: AudioSource; icon: string; label: string }[] = [
+  { id: "stream", icon: "🎵", label: "Stream" },
+  { id: "mic",    icon: "🎤", label: "Mic"    },
+  { id: "system", icon: "🖥️", label: "System" },
+];
+
 export default function StreamVisualiser() {
-  const { isActive, getFrequencyData, startVisualiser, stopVisualiser } = useAudioReactive();
+  const {
+    isActive, activeSource, sourceError,
+    getFrequencyData, startVisualiser, stopVisualiser,
+  } = useAudioReactive();
+
   const canvasRef   = useRef<HTMLCanvasElement>(null);
   const rafRef      = useRef<number>(0);
   const smoothed    = useRef(new Float32Array(BAR_COUNT));
   const peakHeights = useRef(new Float32Array(BAR_COUNT));
   const peakTimes   = useRef<number[]>(new Array(BAR_COUNT).fill(0));
   const isActiveRef = useRef(isActive);
-  const [uiState, setUiState] = useState<"idle" | "requesting" | "denied">("idle");
+
+  // Locally selected source (user picks before enabling)
+  const [selectedSource, setSelectedSource] = useState<AudioSource>("stream");
+  const [requesting, setRequesting] = useState(false);
 
   useEffect(() => { isActiveRef.current = isActive; }, [isActive]);
 
   const handleToggle = useCallback(async () => {
     if (isActive) {
       stopVisualiser();
-      setUiState("idle");
       return;
     }
-    setUiState("requesting");
-    const result = await startVisualiser();
-    setUiState(result === "denied" ? "denied" : "idle");
-  }, [isActive, startVisualiser, stopVisualiser]);
+    setRequesting(true);
+    await startVisualiser(selectedSource);
+    setRequesting(false);
+  }, [isActive, selectedSource, startVisualiser, stopVisualiser]);
 
-  // Single persistent draw loop — reads from refs, never restarts
+  const handleSourceChange = useCallback(async (src: AudioSource) => {
+    setSelectedSource(src);
+    if (isActive) {
+      // Switch source on the fly
+      setRequesting(true);
+      await startVisualiser(src);
+      setRequesting(false);
+    }
+  }, [isActive, startVisualiser]);
+
+  // Single persistent draw loop
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -94,7 +114,6 @@ export default function StreamVisualiser() {
       ctx.save();
       ctx.scale(dpr, dpr);
 
-      // Fade out when inactive
       if (!isActiveRef.current) {
         let anyVisible = false;
         for (let i = 0; i < BAR_COUNT; i++) {
@@ -118,11 +137,9 @@ export default function StreamVisualiser() {
         const raw    = data[binIdx] ?? 0;
         const target = (raw / 255) * cssH * 0.92;
 
-        // Per-bar independent smoothing
         bars[i] = bars[i] * SMOOTHING + target * (1 - SMOOTHING);
         const barH = Math.max(1, bars[i]);
 
-        // Peak dot: update or decay
         if (barH > peaks[i]) {
           peaks[i]  = barH;
           ptimes[i] = now;
@@ -134,7 +151,6 @@ export default function StreamVisualiser() {
         ctx.fillStyle = color;
         ctx.fillRect(x, cssH - barH, w - 1, barH);
 
-        // Peak dot (2px tall, slightly brighter)
         if (peaks[i] > 3 && isActiveRef.current) {
           ctx.globalAlpha = 0.85;
           ctx.fillStyle   = color;
@@ -159,23 +175,47 @@ export default function StreamVisualiser() {
       ro.disconnect();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // intentionally empty — loop reads from refs
+  }, []);
+
+  const displaySource = isActive ? activeSource : selectedSource;
 
   return (
     <div className="stream-visualiser-wrap">
       <div className="stream-visualiser-controls">
+
+        {/* Source picker */}
+        <div className="vis-source-picker">
+          {SOURCES.map(({ id, icon, label }) => (
+            <button
+              key={id}
+              className={`vis-source-btn${displaySource === id ? " vis-source-btn--active" : ""}`}
+              onClick={() => handleSourceChange(id)}
+              disabled={requesting}
+              title={label}
+            >
+              <span>{icon}</span>
+              <span className="vis-source-label">{label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Enable / disable toggle */}
         <button
           className={`vis-toggle-btn${isActive ? " vis-toggle-btn--on" : ""}`}
           onClick={handleToggle}
-          disabled={uiState === "requesting"}
+          disabled={requesting}
           aria-label={isActive ? "Disable Visual Mode" : "Enable Visual Mode"}
         >
-          🎵 {uiState === "requesting" ? "Requesting mic…" : isActive ? "Visual Mode ON" : "Visual Mode OFF"}
+          {requesting ? "Connecting…" : isActive ? "Visual Mode ON" : "Visual Mode OFF"}
         </button>
-        {isActive && <span className="vis-active-indicator">● Active</span>}
-        {uiState === "denied" && (
-          <span className="vis-denied-msg">Mic blocked — enable in browser settings</span>
+
+        {isActive && !sourceError && (
+          <span className="vis-active-indicator">● Active</span>
         )}
+        {sourceError && (
+          <span className="vis-source-error">{sourceError}</span>
+        )}
+
       </div>
       <canvas ref={canvasRef} className="stream-visualiser-canvas" aria-hidden />
     </div>
