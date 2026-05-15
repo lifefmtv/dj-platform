@@ -38,17 +38,36 @@ export default function AdminSettingsClient() {
   const [syncLog, setSyncLog]     = useState<SyncLogEntry[]>([]);
   const [syncing, setSyncing]     = useState(false);
   const [syncMsg, setSyncMsg]     = useState("");
+  const [syncMsgOk, setSyncMsgOk] = useState(true);
   const [dbxCounts, setDbxCounts] = useState<Record<string, number>>({});
+
+  const [dbxChecking, setDbxChecking] = useState(true);
+  const [dbxStatus, setDbxStatus] = useState<{
+    connected: boolean;
+    accountName?: string;
+    error?: string;
+  } | null>(null);
+
   const supabase = useMemo(() => createClient(), []);
-  const dropboxConnected = typeof process !== "undefined"
-    ? !!(process.env.NEXT_PUBLIC_DROPBOX_CONNECTED === "true")
-    : false;
 
   useEffect(() => {
     fetchSettings();
     fetchUsers();
     fetchSyncLog();
+    checkDropboxStatus();
   }, []);
+
+  async function checkDropboxStatus() {
+    setDbxChecking(true);
+    try {
+      const res = await fetch("/api/admin/dropbox-status");
+      const json = await res.json();
+      setDbxStatus(json);
+    } catch {
+      setDbxStatus({ connected: false, error: "Could not reach status endpoint" });
+    }
+    setDbxChecking(false);
+  }
 
   async function fetchSettings() {
     const { data } = await supabase.from("settings").select("*").eq("id", 1).single();
@@ -93,12 +112,24 @@ export default function AdminSettingsClient() {
       const res = await fetch("/api/sync/dropbox", { method: "POST" });
       const json = await res.json();
       if (json.ok) {
-        flash(setSyncMsg, `Sync complete — ${json.counts.shows ?? 0} shows, ${json.counts.mixes ?? 0} mixes`);
+        const c = json.counts ?? {};
+        setDbxCounts(c);
+        const parts = [
+          `${c.shows ?? 0} videos`,
+          `${c.mixes ?? 0} mixes`,
+          `${c.flyers ?? 0} flyers`,
+          `${c.photos ?? 0} photos`,
+        ].join(" · ");
+        setSyncMsgOk(true);
+        flash(setSyncMsg, `Sync complete — ${parts}`);
         fetchSyncLog();
       } else {
-        flash(setSyncMsg, "Sync failed — check server logs");
+        const errs = json.errors?.length ? json.errors.join("; ") : "check server logs";
+        setSyncMsgOk(false);
+        flash(setSyncMsg, `Sync failed — ${errs}`);
       }
     } catch {
+      setSyncMsgOk(false);
       flash(setSyncMsg, "Sync request failed");
     }
     setSyncing(false);
@@ -287,10 +318,31 @@ export default function AdminSettingsClient() {
         <div className="admin-card-sub">Syncs video shows, DJ mixes, flyers and photos from Dropbox every morning at 9am.</div>
 
         <div className="dropbox-status">
-          <div className={`dropbox-status-dot ${dropboxConnected ? "dropbox-status-dot--ok" : "dropbox-status-dot--err"}`} />
-          <span className="dropbox-status-label" style={{ color: dropboxConnected ? "#22c55e" : "#e63030" }}>
-            {dropboxConnected ? "Connected" : "Not connected — set DROPBOX_ACCESS_TOKEN in environment"}
-          </span>
+          {dbxChecking ? (
+            <>
+              <div className="dropbox-status-dot dropbox-status-dot--checking" />
+              <span className="dropbox-status-label" style={{ color: "#887f7a" }}>Checking connection…</span>
+            </>
+          ) : dbxStatus?.connected ? (
+            <>
+              <div className="dropbox-status-dot dropbox-status-dot--ok" />
+              <span className="dropbox-status-label" style={{ color: "#22c55e" }}>
+                Connected{dbxStatus.accountName ? ` — ${dbxStatus.accountName}` : ""}
+              </span>
+            </>
+          ) : (
+            <>
+              <div className="dropbox-status-dot dropbox-status-dot--err" />
+              <div>
+                <span className="dropbox-status-label" style={{ color: "#e63030" }}>Not connected — check token</span>
+                {dbxStatus?.error && (
+                  <p style={{ fontSize: "0.72rem", color: "#e63030", opacity: 0.75, margin: "0.25rem 0 0" }}>
+                    {dbxStatus.error}
+                  </p>
+                )}
+              </div>
+            </>
+          )}
         </div>
 
         {syncLog.length > 0 && (
@@ -319,7 +371,11 @@ export default function AdminSettingsClient() {
             </span>
           )}
         </div>
-        {syncMsg && <p style={{ fontSize: "0.78rem", color: "#22c55e", marginBottom: "0.5rem" }}>{syncMsg}</p>}
+        {syncMsg && (
+          <p style={{ fontSize: "0.78rem", color: syncMsgOk ? "#22c55e" : "#e63030", marginBottom: "0.5rem" }}>
+            {syncMsg}
+          </p>
+        )}
 
         {syncLog.length > 0 && (
           <div className="dropbox-sync-log">
