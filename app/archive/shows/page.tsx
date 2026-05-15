@@ -12,6 +12,7 @@ interface ShowRecord {
   temp_link: string | null;
   temp_link_expires_at: string | null;
   genre: string | null;
+  status: string | null;
 }
 
 export default function ShowsArchivePage() {
@@ -26,8 +27,8 @@ export default function ShowsArchivePage() {
     const supabase = createClient();
     supabase
       .from("show_archive")
-      .select("id, title, dj_name, recorded_at, dropbox_path, temp_link, temp_link_expires_at, genre")
-      .eq("status", "approved")
+      .select("id, title, dj_name, recorded_at, dropbox_path, temp_link, temp_link_expires_at, genre, status")
+      .in("status", ["approved", "pending"])
       .order("recorded_at", { ascending: false })
       .then(({ data }) => {
         setShows((data as ShowRecord[]) ?? []);
@@ -76,7 +77,7 @@ export default function ShowsArchivePage() {
       {loading ? (
         <p className="archive-loading">Loading…</p>
       ) : shows.length === 0 ? (
-        <p className="archive-empty">No shows in the archive yet. Check back soon.</p>
+        <p className="archive-empty">Syncing content from Dropbox — check back soon.</p>
       ) : (
         <div className="archive-grid">
           {shows.map((show) => (
@@ -97,6 +98,9 @@ export default function ShowsArchivePage() {
                   <p className="archive-card-dj">{show.dj_name}</p>
                 )}
                 <div className="archive-card-meta">
+                  {show.status === "pending" && (
+                    <span className="archive-card-pending">pending review</span>
+                  )}
                   {show.genre && <span className="archive-card-genre">{show.genre}</span>}
                   {show.recorded_at && (
                     <span className="archive-card-date">

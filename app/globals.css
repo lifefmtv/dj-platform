@@ -7244,6 +7244,19 @@ img, video, iframe { display: block; max-width: 100%; }
   color: var(--text-3);
 }
 
+.archive-card-pending {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: #f59e0b22;
+  color: #f59e0b;
+  border: 1px solid #f59e0b55;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
 /* ── Video modal ── */
 .archive-modal-backdrop {
   position: fixed;

@@ -11,6 +11,7 @@ interface MixRecord {
   dropbox_path: string;
   temp_link: string | null;
   temp_link_expires_at: string | null;
+  status: string | null;
 }
 
 export default function MixesArchivePage() {
@@ -28,8 +29,8 @@ export default function MixesArchivePage() {
     const supabase = createClient();
     supabase
       .from("mixes")
-      .select("id, title, dj_name, recorded_at, dropbox_path, temp_link, temp_link_expires_at")
-      .eq("status", "approved")
+      .select("id, title, dj_name, recorded_at, dropbox_path, temp_link, temp_link_expires_at, status")
+      .in("status", ["approved", "pending"])
       .order("recorded_at", { ascending: false })
       .then(({ data }) => {
         setMixes((data as MixRecord[]) ?? []);
@@ -125,7 +126,7 @@ export default function MixesArchivePage() {
           {loading ? (
             <p className="archive-loading">Loading…</p>
           ) : mixes.length === 0 ? (
-            <p className="archive-empty">No mixes in the archive yet.</p>
+            <p className="archive-empty">Mixes coming soon — syncing from Dropbox.</p>
           ) : (
             mixes.map((mix, idx) => (
               <button
@@ -138,7 +139,12 @@ export default function MixesArchivePage() {
                   {currentIdx === idx && playing ? "▶" : idx + 1}
                 </span>
                 <span className="mix-row-info">
-                  <span className="mix-row-title">{mix.title}</span>
+                  <span className="mix-row-title">
+                    {mix.title}
+                    {mix.status === "pending" && (
+                      <span className="archive-card-pending" style={{ marginLeft: "0.5rem" }}>pending review</span>
+                    )}
+                  </span>
                   {mix.dj_name && (
                     <span className="mix-row-dj">{mix.dj_name}</span>
                   )}

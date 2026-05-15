@@ -13,10 +13,12 @@ const TABS = [
 type Tab = typeof TABS[number]["id"];
 
 interface ImportResult {
-  ok: boolean;
-  file?: string;
+  success?: boolean;
   imported?: number;
-  byMonth?: Record<string, number>;
+  skipped?: number;
+  months?: Record<string, number>;
+  source?: string;
+  note?: string;
   errors?: string[];
   error?: string;
 }
@@ -33,10 +35,10 @@ export default function AdminScheduleClient() {
     setImportResult(null);
     try {
       const res = await fetch("/api/admin/import-schedule", { method: "POST" });
-      const json: ImportResult = await res.json();
+      const json = await res.json() as ImportResult;
       setImportResult(json);
     } catch (e) {
-      setImportResult({ ok: false, error: (e as Error).message });
+      setImportResult({ error: (e as Error).message });
     }
     setImporting(false);
   }
@@ -106,20 +108,28 @@ export default function AdminScheduleClient() {
             )}
 
             {importResult && (
-              <div className={`admin-import-result${importResult.ok ? " admin-import-result--ok" : " admin-import-result--err"}`}>
-                {importResult.ok ? (
+              <div className={`admin-import-result${importResult.success ? " admin-import-result--ok" : " admin-import-result--err"}`}>
+                {importResult.success ? (
                   <>
                     <p className="admin-import-result-headline">
-                      ✓ Imported {importResult.imported?.toLocaleString()} shows across{" "}
-                      {Object.keys(importResult.byMonth ?? {}).length} months
-                      {importResult.file && <span style={{ opacity: 0.6, fontSize: "0.8em" }}> — {importResult.file}</span>}
+                      ✓ Imported {importResult.imported?.toLocaleString()} slots across{" "}
+                      {Object.keys(importResult.months ?? {}).length} months
+                      {importResult.skipped != null && importResult.skipped > 0 && (
+                        <span style={{ opacity: 0.6, fontSize: "0.85em" }}> ({importResult.skipped} skipped)</span>
+                      )}
                     </p>
-                    {importResult.byMonth && (
+                    {importResult.source && (
+                      <p style={{ fontSize: "0.75rem", opacity: 0.55, margin: "0.25rem 0 0" }}>{importResult.source}</p>
+                    )}
+                    {importResult.note && (
+                      <p style={{ fontSize: "0.75rem", color: "#f59e0b", margin: "0.35rem 0 0" }}>{importResult.note}</p>
+                    )}
+                    {importResult.months && (
                       <div className="admin-import-months">
-                        {MONTH_ORDER.filter((m) => importResult.byMonth![m] != null).map((m) => (
+                        {MONTH_ORDER.filter((m) => importResult.months![m] != null).map((m) => (
                           <div key={m} className="admin-import-month-pill">
                             <span className="admin-import-month-name">{m}</span>
-                            <span className="admin-import-month-count">{importResult.byMonth![m]}</span>
+                            <span className="admin-import-month-count">{importResult.months![m]}</span>
                           </div>
                         ))}
                       </div>
@@ -136,7 +146,7 @@ export default function AdminScheduleClient() {
                 ) : (
                   <p style={{ color: "#e63030" }}>
                     Error: {importResult.error}
-                    {importResult.error?.includes("No Excel") && (
+                    {importResult.error?.includes("Excel") && (
                       <span style={{ display: "block", fontSize: "0.78rem", opacity: 0.8, marginTop: "0.5rem" }}>
                         Make sure the Excel file is in the Dropbox /LIFEFM/Schedule folder and Dropbox is connected.
                       </span>

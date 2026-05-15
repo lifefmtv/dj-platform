@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { listFolder, cleanFileName } from "@/lib/dropbox";
+import { listFolder, getTemporaryLink, cleanFileName } from "@/lib/dropbox";
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
 
 const FOLDERS = {
@@ -9,8 +9,9 @@ const FOLDERS = {
   photos: process.env.DROPBOX_PHOTOS_FOLDER ?? "/LIFEFM/Photos",
 };
 
+const LINK_TTL = 4 * 60 * 60 * 1000; // 4 hours in ms
+
 export async function POST(req: NextRequest) {
-  // Auth — either cron header or admin API key
   const authHeader = req.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
   if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
@@ -28,6 +29,18 @@ export async function POST(req: NextRequest) {
     for (const f of files) {
       if (!/\.(mp4|mov|mkv|webm)$/i.test(f.name)) continue;
       const { title, djName, date } = cleanFileName(f.name);
+
+      let tempLink: string | null = null;
+      let tempLinkExpiresAt: string | null = null;
+      try {
+        tempLink = await getTemporaryLink(f.path_lower);
+        tempLinkExpiresAt = new Date(Date.now() + LINK_TTL).toISOString();
+        console.log(`[sync/shows] ${f.name} → temp link OK`);
+      } catch (linkErr) {
+        console.warn(`[sync/shows] ${f.name} → temp link failed: ${(linkErr as Error).message}`);
+      }
+
+      // Step 1: insert metadata only if new (preserves admin-set status)
       await supabase.from("show_archive").upsert(
         {
           dropbox_file_id: f.id,
@@ -39,6 +52,15 @@ export async function POST(req: NextRequest) {
         },
         { onConflict: "dropbox_file_id", ignoreDuplicates: true },
       );
+
+      // Step 2: always refresh temp link (even if row already existed)
+      if (tempLink) {
+        await supabase
+          .from("show_archive")
+          .update({ temp_link: tempLink, temp_link_expires_at: tempLinkExpiresAt })
+          .eq("dropbox_file_id", f.id);
+      }
+
       counts.shows++;
     }
   } catch (e) {
@@ -52,6 +74,18 @@ export async function POST(req: NextRequest) {
     for (const f of files) {
       if (!/\.(mp3|wav|aac|flac|ogg|m4a)$/i.test(f.name)) continue;
       const { title, djName, date } = cleanFileName(f.name);
+
+      let tempLink: string | null = null;
+      let tempLinkExpiresAt: string | null = null;
+      try {
+        tempLink = await getTemporaryLink(f.path_lower);
+        tempLinkExpiresAt = new Date(Date.now() + LINK_TTL).toISOString();
+        console.log(`[sync/mixes] ${f.name} → temp link OK`);
+      } catch (linkErr) {
+        console.warn(`[sync/mixes] ${f.name} → temp link failed: ${(linkErr as Error).message}`);
+      }
+
+      // Step 1: insert metadata only if new (preserves admin-set status)
       await supabase.from("mixes").upsert(
         {
           dropbox_file_id: f.id,
@@ -63,6 +97,15 @@ export async function POST(req: NextRequest) {
         },
         { onConflict: "dropbox_file_id", ignoreDuplicates: true },
       );
+
+      // Step 2: always refresh temp link
+      if (tempLink) {
+        await supabase
+          .from("mixes")
+          .update({ temp_link: tempLink, temp_link_expires_at: tempLinkExpiresAt })
+          .eq("dropbox_file_id", f.id);
+      }
+
       counts.mixes++;
     }
   } catch (e) {
