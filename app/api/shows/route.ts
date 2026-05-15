@@ -36,7 +36,7 @@ async function fetchMixcloudShows(): Promise<Show[]> {
   );
   if (!res.ok) return [];
   const data = await res.json();
-  const shows = (data.data ?? [])
+  return (data.data ?? [])
     .filter((item: any) => item.user?.key === "/LifeFm/")
     .map(
       (item: any): Show => ({
@@ -56,8 +56,6 @@ async function fetchMixcloudShows(): Promise<Show[]> {
         listener_count: item.listener_count,
       }),
     );
-  console.log(`[shows] Mixcloud: ${shows.length} results`);
-  return shows;
 }
 
 async function parseFeed(feedUrl: string): Promise<Show[]> {
@@ -89,9 +87,8 @@ async function parseFeed(feedUrl: string): Promise<Show[]> {
 
 async function fetchYouTubeShows(): Promise<Show[]> {
   const feeds = [
-    { label: "channel/@lifefmtv", url: `https://www.youtube.com/feeds/videos.xml?channel_id=${LIFEFM_CHANNEL_ID}` },
+    { url: `https://www.youtube.com/feeds/videos.xml?channel_id=${LIFEFM_CHANNEL_ID}` },
     ...LIFEFM_YT_USERS.map((u) => ({
-      label: `user=${u}`,
       url: `https://www.youtube.com/feeds/videos.xml?user=${u}`,
     })),
   ];
@@ -101,14 +98,8 @@ async function fetchYouTubeShows(): Promise<Show[]> {
   const seen = new Set<string>();
   const merged: Show[] = [];
 
-  for (let i = 0; i < results.length; i++) {
-    const r = results[i];
-    const label = feeds[i].label;
-    if (r.status !== "fulfilled") {
-      console.log(`[shows] YouTube ${label}: error`);
-      continue;
-    }
-    console.log(`[shows] YouTube ${label}: ${r.value.length} results`);
+  for (const r of results) {
+    if (r.status !== "fulfilled") continue;
     for (const show of r.value) {
       if (show.id && !seen.has(show.id)) {
         seen.add(show.id);
@@ -117,7 +108,6 @@ async function fetchYouTubeShows(): Promise<Show[]> {
     }
   }
 
-  console.log(`[shows] YouTube merged (deduplicated): ${merged.length} results`);
   return merged;
 }
 
@@ -144,8 +134,6 @@ export async function GET() {
       (a, b) =>
         new Date(b.created_time).getTime() - new Date(a.created_time).getTime(),
     );
-
-    console.log(`[shows] Total combined: ${shows.length} (returning up to 20)`);
 
     return NextResponse.json(shows.slice(0, 20), {
       headers: { "Cache-Control": "s-maxage=300, stale-while-revalidate=600" },

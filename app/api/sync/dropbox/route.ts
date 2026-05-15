@@ -35,7 +35,6 @@ export async function POST(req: NextRequest) {
       try {
         tempLink = await getTemporaryLink(f.path_lower);
         tempLinkExpiresAt = new Date(Date.now() + LINK_TTL).toISOString();
-        console.log(`[sync/shows] ${f.name} → temp link OK`);
       } catch (linkErr) {
         console.warn(`[sync/shows] ${f.name} → temp link failed: ${(linkErr as Error).message}`);
       }
@@ -80,7 +79,6 @@ export async function POST(req: NextRequest) {
       try {
         tempLink = await getTemporaryLink(f.path_lower);
         tempLinkExpiresAt = new Date(Date.now() + LINK_TTL).toISOString();
-        console.log(`[sync/mixes] ${f.name} → temp link OK`);
       } catch (linkErr) {
         console.warn(`[sync/mixes] ${f.name} → temp link failed: ${(linkErr as Error).message}`);
       }

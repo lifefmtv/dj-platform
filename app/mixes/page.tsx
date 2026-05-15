@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { format } from "date-fns";
+import { GENRE_COLORS, GENRE_LIST, genreColor } from "@/lib/genreColors";
 
 interface Mix {
   id: string;
@@ -12,17 +13,6 @@ interface Mix {
   created_at: string;
   genre?: string;
 }
-
-const GENRES = [
-  { label: "DNB", color: "#e63030" },
-  { label: "House", color: "#6366f1" },
-  { label: "Techno", color: "#1a1a2e" },
-  { label: "Jungle", color: "#22c55e" },
-  { label: "Dub", color: "#f59e0b" },
-  { label: "Soul & Funk", color: "#ec4899" },
-  { label: "Tech House", color: "#00d4ff" },
-  { label: "Other", color: "#aaa" },
-];
 
 export default function MixesPage() {
   const [mixes, setMixes] = useState<Mix[]>([]);
@@ -59,20 +49,23 @@ export default function MixesPage() {
         >
           All
         </button>
-        {GENRES.map(({ label, color }) => (
-          <button
-            key={label}
-            className={`mixes-filter-btn${activeGenre === label ? " mixes-filter-btn--active" : ""}`}
-            style={
-              activeGenre === label
-                ? { background: color, borderColor: color, color: label === "Techno" ? "#fff" : undefined }
-                : { borderColor: color, color: color }
-            }
-            onClick={() => setActiveGenre(activeGenre === label ? null : label)}
-          >
-            {label}
-          </button>
-        ))}
+        {GENRE_LIST.map((label) => {
+          const color = GENRE_COLORS[label];
+          return (
+            <button
+              key={label}
+              className={`mixes-filter-btn${activeGenre === label ? " mixes-filter-btn--active" : ""}`}
+              style={
+                activeGenre === label
+                  ? { background: color, borderColor: color, color: label === "Techno" ? "#fff" : undefined }
+                  : { borderColor: color, color: color }
+              }
+              onClick={() => setActiveGenre(activeGenre === label ? null : label)}
+            >
+              {label}
+            </button>
+          );
+        })}
       </div>
 
       {loading ? (
@@ -84,13 +77,13 @@ export default function MixesPage() {
       ) : (
         <div className="mixes-grid">
           {filtered.map((mix) => {
-            const genreColor = GENRES.find((g) => g.label === mix.genre)?.color;
+            const color = genreColor(mix.genre);
             return (
               <div key={mix.id} className="mix-card">
-                {genreColor && (
+                {mix.genre && (
                   <div
                     className="mix-genre-bar"
-                    style={{ background: genreColor }}
+                    style={{ background: color }}
                   />
                 )}
                 <p className="mix-title">{mix.title}</p>
@@ -98,7 +91,7 @@ export default function MixesPage() {
                 {mix.genre && (
                   <p
                     className="mix-genre-tag"
-                    style={{ color: genreColor ?? "var(--text-3)" }}
+                    style={{ color }}
                   >
                     {mix.genre}
                   </p>
