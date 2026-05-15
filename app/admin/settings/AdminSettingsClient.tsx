@@ -3,6 +3,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase";
 
+interface SyncLogEntry {
+  id: string;
+  synced_at: string;
+  shows_found: number;
+  mixes_found: number;
+  flyers_found: number;
+  photos_found: number;
+  errors: string | null;
+}
+
 interface UserRow {
   id: string;
   user_id: string;
@@ -25,11 +35,19 @@ export default function AdminSettingsClient() {
   const [metroMsg, setMetroMsg] = useState("");
 
   const [users, setUsers] = useState<UserRow[]>([]);
+  const [syncLog, setSyncLog]     = useState<SyncLogEntry[]>([]);
+  const [syncing, setSyncing]     = useState(false);
+  const [syncMsg, setSyncMsg]     = useState("");
+  const [dbxCounts, setDbxCounts] = useState<Record<string, number>>({});
   const supabase = useMemo(() => createClient(), []);
+  const dropboxConnected = typeof process !== "undefined"
+    ? !!(process.env.NEXT_PUBLIC_DROPBOX_CONNECTED === "true")
+    : false;
 
   useEffect(() => {
     fetchSettings();
     fetchUsers();
+    fetchSyncLog();
   }, []);
 
   async function fetchSettings() {
@@ -45,6 +63,45 @@ export default function AdminSettingsClient() {
   async function fetchUsers() {
     const { data } = await supabase.from("user_roles").select("id, user_id, email, role").order("email");
     if (data) setUsers(data as UserRow[]);
+  }
+
+  async function fetchSyncLog() {
+    const { data } = await supabase
+      .from("sync_log")
+      .select("id, synced_at, shows_found, mixes_found, flyers_found, photos_found, errors")
+      .order("synced_at", { ascending: false })
+      .limit(5);
+    if (data) {
+      setSyncLog(data as SyncLogEntry[]);
+      // Use latest entry for counts
+      const latest = (data as SyncLogEntry[])[0];
+      if (latest) {
+        setDbxCounts({
+          shows:  latest.shows_found,
+          mixes:  latest.mixes_found,
+          flyers: latest.flyers_found,
+          photos: latest.photos_found,
+        });
+      }
+    }
+  }
+
+  async function triggerSync() {
+    setSyncing(true);
+    setSyncMsg("");
+    try {
+      const res = await fetch("/api/sync/dropbox", { method: "POST" });
+      const json = await res.json();
+      if (json.ok) {
+        flash(setSyncMsg, `Sync complete — ${json.counts.shows ?? 0} shows, ${json.counts.mixes ?? 0} mixes`);
+        fetchSyncLog();
+      } else {
+        flash(setSyncMsg, "Sync failed — check server logs");
+      }
+    } catch {
+      flash(setSyncMsg, "Sync request failed");
+    }
+    setSyncing(false);
   }
 
   function flash(setter: (v: string) => void, msg: string) {
@@ -227,10 +284,65 @@ export default function AdminSettingsClient() {
       {/* Dropbox */}
       <div className="admin-card">
         <div className="admin-card-title">Dropbox Integration</div>
-        <div className="admin-card-sub">Sync uploaded content to a Dropbox folder for archiving.</div>
-        <p style={{ fontSize: "0.82rem", color: "#484240" }}>
-          Dropbox integration coming soon. Connect your account to enable automatic sync after uploads.
-        </p>
+        <div className="admin-card-sub">Syncs video shows, DJ mixes, flyers and photos from Dropbox every morning at 9am.</div>
+
+        <div className="dropbox-status">
+          <div className={`dropbox-status-dot ${dropboxConnected ? "dropbox-status-dot--ok" : "dropbox-status-dot--err"}`} />
+          <span className="dropbox-status-label" style={{ color: dropboxConnected ? "#22c55e" : "#e63030" }}>
+            {dropboxConnected ? "Connected" : "Not connected — set DROPBOX_ACCESS_TOKEN in environment"}
+          </span>
+        </div>
+
+        {syncLog.length > 0 && (
+          <div className="dropbox-folder-counts">
+            {[
+              { label: "Shows",  key: "shows" },
+              { label: "Mixes",  key: "mixes" },
+              { label: "Flyers", key: "flyers" },
+              { label: "Photos", key: "photos" },
+            ].map(({ label, key }) => (
+              <div key={key} className="dropbox-folder-count">
+                <span className="dropbox-folder-count-label">{label}</span>
+                <span className="dropbox-folder-count-val">{dbxCounts[key] ?? "—"}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.5rem" }}>
+          <button className="admin-btn" onClick={triggerSync} disabled={syncing}>
+            {syncing ? "Syncing…" : "Sync Now"}
+          </button>
+          {syncLog.length > 0 && (
+            <span style={{ fontSize: "0.75rem", color: "#484240" }}>
+              Last sync: {new Date(syncLog[0].synced_at).toLocaleString("en-GB", { dateStyle: "short", timeStyle: "short" })}
+            </span>
+          )}
+        </div>
+        {syncMsg && <p style={{ fontSize: "0.78rem", color: "#22c55e", marginBottom: "0.5rem" }}>{syncMsg}</p>}
+
+        {syncLog.length > 0 && (
+          <div className="dropbox-sync-log">
+            <p className="dropbox-sync-log-title">Sync Log</p>
+            {syncLog.map((entry) => (
+              <div key={entry.id} className="dropbox-sync-log-entry">
+                <span className="dropbox-sync-log-time">
+                  {new Date(entry.synced_at).toLocaleString("en-GB", { dateStyle: "short", timeStyle: "short" })}
+                </span>
+                <span className="dropbox-sync-log-counts">
+                  {entry.shows_found}v · {entry.mixes_found}m · {entry.flyers_found}f · {entry.photos_found}p
+                </span>
+                {entry.errors && (
+                  <span className="dropbox-sync-log-err">{entry.errors}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {syncLog.length === 0 && (
+          <p style={{ fontSize: "0.78rem", color: "#484240" }}>No syncs yet. Click Sync Now to import files from Dropbox.</p>
+        )}
       </div>
     </div>
   );

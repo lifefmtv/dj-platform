@@ -4,22 +4,21 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 const PRIMARY = [
-  { href: "/",         label: "Home",      icon: "🏠" },
-  { href: "/schedule", label: "Schedule",  icon: "📅" },
-  { href: "/mixes",    label: "Mixes",     icon: "🎵" },
-  { href: "/djs",      label: "Selectors", icon: "🎧" },
+  { href: "/",          label: "Home",      icon: "🏠" },
+  { href: "/schedule",  label: "Schedule",  icon: "📅" },
+  { href: "/djs",       label: "Selectors", icon: "🎧" },
+  { href: "/artist-hq", label: "Artist HQ", icon: "🎵" },
 ];
 
 const ALL_LINKS = [
-  { href: "/shows",      label: "Shows" },
-  { href: "/schedule",   label: "Schedule" },
-  { href: "/djs",        label: "Selectors" },
-  { href: "/mixes",      label: "Mixes" },
-  { href: "/label",      label: "Label" },
-  { href: "/shop",       label: "Shop" },
-  { href: "/submit",     label: "Submit" },
-  { href: "/artist-hq",  label: "Artist HQ" },
-  { href: "/about",      label: "About" },
+  { href: "/",               label: "Home" },
+  { href: "/schedule",       label: "Schedule" },
+  { href: "/djs",            label: "Selectors" },
+  { href: "/archive/shows",  label: "Shows Archive" },
+  { href: "/archive/mixes",  label: "DJ Mixes" },
+  { href: "/label",          label: "Label" },
+  { href: "/artist-hq",      label: "Artist HQ" },
+  { href: "/sponsor",        label: "Advertise" },
 ];
 
 export default function MobileBottomNav() {
@@ -28,7 +27,6 @@ export default function MobileBottomNav() {
 
   return (
     <>
-      {/* Bottom tab bar */}
       <nav className="mob-bottom-nav" aria-label="Mobile navigation">
         {PRIMARY.map(({ href, label, icon }) => (
           <a
@@ -52,7 +50,6 @@ export default function MobileBottomNav() {
         </button>
       </nav>
 
-      {/* Full-screen "More" overlay */}
       {moreOpen && (
         <div
           className="mob-more-overlay"

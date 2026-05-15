@@ -2,14 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { submitShowApplication } from "@/app/actions/chatActions";
 
 // ── Types & constants ──────────────────────────────────────────────────────────
 
-type TabKey = "guide" | "tagging" | "brand" | "create" | "community";
+type TabKey = "submit" | "guide" | "tagging" | "brand" | "create" | "community";
 type StyleKey = "dark" | "neon" | "minimal";
-type SizeKey = "instagram-post" | "instagram-story" | "twitter-banner" | "facebook-cover";
+type SizeKey = "instagram-post" | "instagram-story" | "youtube-banner";
 
 const TABS: { key: TabKey; label: string }[] = [
+  { key: "submit",    label: "Submit Music" },
   { key: "guide",     label: "Guide" },
   { key: "tagging",   label: "Tagging Guide" },
   { key: "brand",     label: "Brand Assets" },
@@ -18,10 +20,9 @@ const TABS: { key: TabKey; label: string }[] = [
 ];
 
 const SIZES: Record<SizeKey, { w: number; h: number; label: string }> = {
-  "instagram-post":   { w: 1080, h: 1080, label: "Instagram Post (1080×1080)" },
-  "instagram-story":  { w: 1080, h: 1920, label: "Instagram Story (1080×1920)" },
-  "twitter-banner":   { w: 1500, h: 500,  label: "Twitter/X Banner (1500×500)" },
-  "facebook-cover":   { w: 820,  h: 312,  label: "Facebook Cover (820×312)" },
+  "instagram-post":  { w: 1080, h: 1080, label: "Instagram Post (1080×1080)" },
+  "instagram-story": { w: 1080, h: 1920, label: "Instagram Story (1080×1920)" },
+  "youtube-banner":  { w: 1920, h: 1080, label: "YouTube Banner (1920×1080)" },
 };
 
 const MESSAGE_PRESETS = [
@@ -30,6 +31,11 @@ const MESSAGE_PRESETS = [
   "Tune In",
   "Special Guest",
   "Every Thursday 8pm",
+];
+
+const GENRES = [
+  "DNB", "House", "Techno", "Jungle", "Dub", "Soul & Funk",
+  "Tech House", "Garage", "Breaks", "Ambient", "Other",
 ];
 
 // ── Canvas renderer ────────────────────────────────────────────────────────────
@@ -56,31 +62,22 @@ function drawCanvas(
   const base = Math.min(w, h);
   const pad  = Math.floor(w * 0.045);
 
-  // Background fill
   ctx.fillStyle = "#0a0a0a";
   ctx.fillRect(0, 0, w, h);
 
-  // Photo — cover-fit crop
   if (opts.photo) {
     const pW = opts.photo.naturalWidth  || opts.photo.width;
     const pH = opts.photo.naturalHeight || opts.photo.height;
     const pAR = pW / pH;
     const cAR = w  / h;
     let sx = 0, sy = 0, sw = pW, sh = pH;
-    if (pAR > cAR) {
-      sw = pH * cAR;
-      sx = (pW - sw) / 2;
-    } else {
-      sh = pW / cAR;
-      sy = (pH - sh) / 2;
-    }
+    if (pAR > cAR) { sw = pH * cAR; sx = (pW - sw) / 2; }
+    else            { sh = pW / cAR; sy = (pH - sh) / 2; }
     ctx.drawImage(opts.photo, sx, sy, sw, sh, 0, 0, w, h);
   }
 
-  // Gradient overlay — stronger on dark/neon, lighter on minimal
   const gradStart = opts.style === "minimal" ? 0.15 : 0.22;
   const gradEnd0  = opts.style === "minimal" ? 0.62 : 0.78;
-  const gradEnd1  = opts.style === "minimal" ? 0.78 : 0.96;
   const grad = ctx.createLinearGradient(0, h * gradStart, 0, h);
   grad.addColorStop(0,        "rgba(0,0,0,0)");
   grad.addColorStop(gradEnd0, opts.style === "minimal" ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.78)");
@@ -88,13 +85,9 @@ function drawCanvas(
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, w, h);
 
-  // Border accent (dark + neon only)
   if (opts.style !== "minimal") {
     const lw = Math.max(3, Math.floor(base * 0.0038));
-    if (opts.style === "neon") {
-      ctx.shadowBlur  = 18;
-      ctx.shadowColor = "#e63030";
-    }
+    if (opts.style === "neon") { ctx.shadowBlur = 18; ctx.shadowColor = "#e63030"; }
     ctx.strokeStyle = "#e63030";
     ctx.lineWidth   = lw;
     ctx.strokeRect(lw / 2, lw / 2, w - lw, h - lw);
@@ -102,7 +95,6 @@ function drawCanvas(
     ctx.shadowColor = "transparent";
   }
 
-  // Logo — top right
   if (opts.logo) {
     const logoH = Math.max(24, Math.floor(base * 0.065));
     const logoW = Math.floor(logoH * ((opts.logo.naturalWidth || opts.logo.width) / (opts.logo.naturalHeight || opts.logo.height)));
@@ -111,48 +103,34 @@ function drawCanvas(
     ctx.drawImage(opts.logo, w - logoW - logoPad, logoY, logoW, logoH);
   }
 
-  // Font sizes — scale from base (shorter dimension) so banner/square both look right
   const nameSize = Math.max(38, Math.floor(base * 0.076));
   const msgSize  = Math.max(24, Math.floor(base * 0.043));
   const timeSize = Math.max(16, Math.floor(base * 0.028));
-
-  // Y positions — anchor from bottom
   const nameY = h - Math.floor(base * 0.185);
   const msgY  = nameY + Math.floor(nameSize * 1.28);
   const timeY = msgY  + Math.floor(msgSize  * 1.32);
 
-  // Neon glow on text
-  if (opts.style === "neon") {
-    ctx.shadowBlur  = 22;
-    ctx.shadowColor = "rgba(230,48,48,0.7)";
-  }
+  if (opts.style === "neon") { ctx.shadowBlur = 22; ctx.shadowColor = "rgba(230,48,48,0.7)"; }
 
-  // DJ name
   ctx.fillStyle = "#ffffff";
   ctx.font      = `bold ${nameSize}px Inter, "Helvetica Neue", Arial, sans-serif`;
   ctx.fillText(opts.djName || "DJ NAME", pad, nameY);
 
-  // Message
   ctx.fillStyle = opts.style === "minimal" ? "rgba(255,255,255,0.82)" : "#e63030";
   ctx.font      = `600 ${msgSize}px Inter, "Helvetica Neue", Arial, sans-serif`;
   ctx.fillText(opts.message || "TUNE IN", pad, msgY);
 
-  // Show time
   ctx.shadowBlur = 0;
   ctx.fillStyle  = "rgba(255,255,255,0.58)";
   ctx.font       = `${timeSize}px Inter, "Helvetica Neue", Arial, sans-serif`;
-  if (opts.showTime) {
-    ctx.fillText(opts.showTime, pad, timeY);
-  }
+  if (opts.showTime) ctx.fillText(opts.showTime, pad, timeY);
 
-  // LIFEFM.TV watermark — bottom right
   const wmSize = Math.max(12, Math.floor(base * 0.017));
   ctx.fillStyle  = "rgba(255,255,255,0.28)";
   ctx.font       = `${wmSize}px Inter, "Helvetica Neue", Arial, sans-serif`;
   ctx.textAlign  = "right";
   ctx.fillText("LIFEFM.TV", w - pad, h - Math.floor(base * 0.028));
   ctx.textAlign  = "left";
-
   ctx.shadowBlur  = 0;
   ctx.shadowColor = "transparent";
 }
@@ -160,7 +138,34 @@ function drawCanvas(
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 export default function ArtistHQPage() {
-  const [tab, setTab] = useState<TabKey>("guide");
+  const [tab, setTab] = useState<TabKey>("submit");
+
+  // Submit tab state
+  const [form, setForm] = useState({
+    full_name: "", dj_name: "", email: "",
+    genre: "", mix_link: "", social_links: "", availability: "", about_show: "",
+  });
+  const [submitStatus, setSubmitStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
+  const [submitError, setSubmitError] = useState("");
+
+  function setField(key: string, value: string) {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.full_name || !form.dj_name || !form.email) return;
+    setSubmitStatus("sending");
+    setSubmitError("");
+    try {
+      await submitShowApplication(form);
+      setSubmitStatus("success");
+      setForm({ full_name: "", dj_name: "", email: "", genre: "", mix_link: "", social_links: "", availability: "", about_show: "" });
+    } catch {
+      setSubmitStatus("error");
+      setSubmitError("Something went wrong. Please try again.");
+    }
+  }
 
   // Create tab state
   const [photo,         setPhoto]         = useState<HTMLImageElement | null>(null);
@@ -173,35 +178,21 @@ export default function ArtistHQPage() {
   const [isDragging,    setIsDragging]    = useState(false);
   const [logoLoaded,    setLogoLoaded]    = useState(false);
 
-  const canvasRef   = useRef<HTMLCanvasElement>(null);
-  const logoRef     = useRef<HTMLImageElement | null>(null);
+  const canvasRef    = useRef<HTMLCanvasElement>(null);
+  const logoRef      = useRef<HTMLImageElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   const effectiveMessage = messagePreset === "Custom" ? customMsg : messagePreset;
 
-  // Load logo once on mount
   useEffect(() => {
     const img = new window.Image();
     img.src = "/logo.webp";
-    img.onload = () => {
-      logoRef.current = img;
-      setLogoLoaded(true);
-    };
+    img.onload = () => { logoRef.current = img; setLogoLoaded(true); };
   }, []);
 
-  // Redraw canvas whenever any input changes
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    drawCanvas(canvas, {
-      photo,
-      logo: logoRef.current,
-      djName,
-      message: effectiveMessage,
-      showTime,
-      style,
-      size,
-    });
+    drawCanvas(canvas, { photo, logo: logoRef.current, djName, message: effectiveMessage, showTime, style, size });
   }, [photo, djName, effectiveMessage, showTime, style, size, logoLoaded]);
 
   function handleFile(file: File) {
@@ -227,21 +218,18 @@ export default function ArtistHQPage() {
   return (
     <main className="ahq-page">
 
-      {/* Top notice */}
       <div className="ahq-notice">
         This area is for LIFEFM.TV artists and DJs.{" "}
         If you want to join the station go to{" "}
         <a href="/submit" className="ahq-notice-link">Submit a Show →</a>
       </div>
 
-      {/* Hero */}
       <header className="ahq-hero">
         <p className="ahq-eyebrow">LIFEFM.TV</p>
         <h1 className="ahq-heading">Artist HQ</h1>
         <p className="ahq-sub">Guides, assets and tools for station artists.</p>
       </header>
 
-      {/* Tab navigation */}
       <nav className="ahq-tabs-nav" aria-label="Artist HQ sections">
         {TABS.map((t) => (
           <button
@@ -255,8 +243,73 @@ export default function ArtistHQPage() {
         ))}
       </nav>
 
-      {/* Tab panels */}
       <div className="ahq-panel">
+
+        {/* ══ TAB 0 — SUBMIT MUSIC ═════════════════════════════════════════════ */}
+        {tab === "submit" && (
+          <div className="ahq-tab-content">
+            <p className="ahq-welcome">
+              Want to broadcast on Life FM? Fill in the form below and we&apos;ll be in touch.
+              We welcome DJs of all experience levels across every genre.
+            </p>
+
+            {submitStatus === "success" ? (
+              <div className="submit-success">
+                <p className="submit-success-heading">Application received</p>
+                <p className="submit-success-body">
+                  Thanks for submitting. We&apos;ll review your application and get back to you at the email you provided.
+                </p>
+                <button className="submit-another-btn" onClick={() => setSubmitStatus("idle")}>
+                  Submit Another
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="submit-form">
+                <div className="submit-grid">
+                  <div className="submit-field">
+                    <label className="submit-label">Full Name *</label>
+                    <input className="submit-input" value={form.full_name} onChange={(e) => setField("full_name", e.target.value)} placeholder="Your legal name" required />
+                  </div>
+                  <div className="submit-field">
+                    <label className="submit-label">DJ Name *</label>
+                    <input className="submit-input" value={form.dj_name} onChange={(e) => setField("dj_name", e.target.value)} placeholder="Your artist / DJ name" required />
+                  </div>
+                  <div className="submit-field">
+                    <label className="submit-label">Email *</label>
+                    <input className="submit-input" type="email" value={form.email} onChange={(e) => setField("email", e.target.value)} placeholder="you@example.com" required />
+                  </div>
+                  <div className="submit-field">
+                    <label className="submit-label">Genre</label>
+                    <select className="submit-input submit-select" value={form.genre} onChange={(e) => setField("genre", e.target.value)}>
+                      <option value="">Select a genre…</option>
+                      {GENRES.map((g) => <option key={g} value={g}>{g}</option>)}
+                    </select>
+                  </div>
+                  <div className="submit-field submit-field--full">
+                    <label className="submit-label">Mix Link</label>
+                    <input className="submit-input" value={form.mix_link} onChange={(e) => setField("mix_link", e.target.value)} placeholder="Mixcloud, SoundCloud, or any link to your mix" />
+                  </div>
+                  <div className="submit-field submit-field--full">
+                    <label className="submit-label">Social Links</label>
+                    <input className="submit-input" value={form.social_links} onChange={(e) => setField("social_links", e.target.value)} placeholder="Instagram, Facebook, etc." />
+                  </div>
+                  <div className="submit-field submit-field--full">
+                    <label className="submit-label">Availability</label>
+                    <input className="submit-input" value={form.availability} onChange={(e) => setField("availability", e.target.value)} placeholder="e.g. Weekends evenings, Friday nights…" />
+                  </div>
+                  <div className="submit-field submit-field--full">
+                    <label className="submit-label">About Your Show</label>
+                    <textarea className="submit-input submit-textarea" value={form.about_show} onChange={(e) => setField("about_show", e.target.value)} placeholder="Tell us about your sound, your influences, and what you'd bring to Life FM…" rows={5} />
+                  </div>
+                </div>
+                {submitStatus === "error" && <p className="submit-error">{submitError}</p>}
+                <button type="submit" className="submit-btn" disabled={submitStatus === "sending"}>
+                  {submitStatus === "sending" ? "Sending…" : "Submit Application"}
+                </button>
+              </form>
+            )}
+          </div>
+        )}
 
         {/* ══ TAB 1 — GUIDE ════════════════════════════════════════════════════ */}
         {tab === "guide" && (
@@ -266,7 +319,6 @@ export default function ArtistHQPage() {
               properly, grow your audience and make the most of your time on the station.
             </p>
 
-            {/* Studio Manners */}
             <section className="ahq-section">
               <h2 className="ahq-section-title">Studio Manners</h2>
               <div className="ahq-card">
@@ -290,59 +342,27 @@ export default function ArtistHQPage() {
               </div>
             </section>
 
-            {/* Technical guide */}
             <section className="ahq-section">
               <h2 className="ahq-section-title">Show Prep — Technical Guide</h2>
               <div className="ahq-card">
                 <ul className="ahq-spec-list">
-                  <li>
-                    <span className="ahq-spec-key">Stream bitrate</span>
-                    <span className="ahq-spec-val">4000–6000 kbps video · 320 kbps audio</span>
-                  </li>
-                  <li>
-                    <span className="ahq-spec-key">Resolution</span>
-                    <span className="ahq-spec-val">1080p preferred · 720p minimum</span>
-                  </li>
-                  <li>
-                    <span className="ahq-spec-key">Audio</span>
-                    <span className="ahq-spec-val">Stereo · 48 kHz sample rate</span>
-                  </li>
-                  <li>
-                    <span className="ahq-spec-key">Software</span>
-                    <span className="ahq-spec-val">OBS Studio (free) · Streamlabs · Restream Studio</span>
-                  </li>
-                  <li>
-                    <span className="ahq-spec-key">Connect via</span>
-                    <span className="ahq-spec-val">Restream — contact the team for your stream key</span>
-                  </li>
-                  <li>
-                    <span className="ahq-spec-key">Before your slot</span>
-                    <span className="ahq-spec-val">Test your stream 30 minutes before using the Restream preview</span>
-                  </li>
+                  <li><span className="ahq-spec-key">Stream bitrate</span><span className="ahq-spec-val">4000–6000 kbps video · 320 kbps audio</span></li>
+                  <li><span className="ahq-spec-key">Resolution</span><span className="ahq-spec-val">1080p preferred · 720p minimum</span></li>
+                  <li><span className="ahq-spec-key">Audio</span><span className="ahq-spec-val">Stereo · 48 kHz sample rate</span></li>
+                  <li><span className="ahq-spec-key">Software</span><span className="ahq-spec-val">OBS Studio (free) · Streamlabs · Restream Studio</span></li>
+                  <li><span className="ahq-spec-key">Connect via</span><span className="ahq-spec-val">Restream — contact the team for your stream key</span></li>
+                  <li><span className="ahq-spec-key">Before your slot</span><span className="ahq-spec-val">Test your stream 30 minutes before using the Restream preview</span></li>
                 </ul>
               </div>
             </section>
 
-            {/* If something goes wrong */}
             <section className="ahq-section">
               <h2 className="ahq-section-title">If Something Goes Wrong</h2>
               <div className="ahq-card">
                 <ul className="ahq-spec-list">
-                  <li>
-                    <span className="ahq-spec-key">Stream drops</span>
-                    <span className="ahq-spec-val">Restart OBS and reconnect — the stream auto-recovers within 30 seconds</span>
-                  </li>
-                  <li>
-                    <span className="ahq-spec-key">Audio issues</span>
-                    <span className="ahq-spec-val">Check your audio interface sample rate matches OBS settings</span>
-                  </li>
-                  <li>
-                    <span className="ahq-spec-key">Contact</span>
-                    <span className="ahq-spec-val">
-                      WhatsApp the team immediately —{" "}
-                      <a href="mailto:lifefmhq@gmail.com" className="ahq-link">lifefmhq@gmail.com</a>
-                    </span>
-                  </li>
+                  <li><span className="ahq-spec-key">Stream drops</span><span className="ahq-spec-val">Restart OBS and reconnect — the stream auto-recovers within 30 seconds</span></li>
+                  <li><span className="ahq-spec-key">Audio issues</span><span className="ahq-spec-val">Check your audio interface sample rate matches OBS settings</span></li>
+                  <li><span className="ahq-spec-key">Contact</span><span className="ahq-spec-val">WhatsApp the team immediately — <a href="mailto:lifefmhq@gmail.com" className="ahq-link">lifefmhq@gmail.com</a></span></li>
                 </ul>
               </div>
             </section>
@@ -356,85 +376,40 @@ export default function ArtistHQPage() {
               How to tag your content so it appears in our shows feed and gets maximum reach.
             </p>
 
-            {/* YouTube */}
             <section className="ahq-section">
               <h2 className="ahq-section-title">YouTube</h2>
               <div className="ahq-card">
                 <ul className="ahq-spec-list">
-                  <li>
-                    <span className="ahq-spec-key">Title format</span>
-                    <span className="ahq-spec-val">DJ NAME — GENRE — LIFEFM.TV — MONTH YEAR</span>
-                  </li>
-                  <li>
-                    <span className="ahq-spec-key">Example</span>
-                    <span className="ahq-spec-val">Aphrodite — Drum and Bass — LIFEFM.TV — May 2026</span>
-                  </li>
-                  <li>
-                    <span className="ahq-spec-key">Required tags</span>
-                    <span className="ahq-spec-val">LIFEFM.TV · LifeFM · Life FM TV · drum and bass radio · live dnb · underground music UK · plus your genre tags</span>
-                  </li>
-                  <li>
-                    <span className="ahq-spec-key">Description</span>
-                    <span className="ahq-spec-val">"Broadcast live on LIFEFM.TV — the underground music station. Watch live at lifefm.tv"</span>
-                  </li>
-                  <li>
-                    <span className="ahq-spec-key">Category</span>
-                    <span className="ahq-spec-val">Music</span>
-                  </li>
-                  <li>
-                    <span className="ahq-spec-key">Thumbnail</span>
-                    <span className="ahq-spec-val">Use the social media asset generator in the Create tab</span>
-                  </li>
+                  <li><span className="ahq-spec-key">Title format</span><span className="ahq-spec-val">DJ NAME — GENRE — LIFEFM.TV — MONTH YEAR</span></li>
+                  <li><span className="ahq-spec-key">Example</span><span className="ahq-spec-val">Aphrodite — Drum and Bass — LIFEFM.TV — May 2026</span></li>
+                  <li><span className="ahq-spec-key">Required tags</span><span className="ahq-spec-val">LIFEFM.TV · LifeFM · Life FM TV · drum and bass radio · live dnb · underground music UK · plus your genre tags</span></li>
+                  <li><span className="ahq-spec-key">Description</span><span className="ahq-spec-val">"Broadcast live on LIFEFM.TV — the underground music station. Watch live at lifefm.tv"</span></li>
+                  <li><span className="ahq-spec-key">Category</span><span className="ahq-spec-val">Music</span></li>
+                  <li><span className="ahq-spec-key">Thumbnail</span><span className="ahq-spec-val">Use the social media asset generator in the Create tab</span></li>
                 </ul>
               </div>
             </section>
 
-            {/* Mixcloud */}
             <section className="ahq-section">
               <h2 className="ahq-section-title">Mixcloud</h2>
               <div className="ahq-card">
                 <ul className="ahq-spec-list">
-                  <li>
-                    <span className="ahq-spec-key">Title format</span>
-                    <span className="ahq-spec-val">DJ NAME — SHOW NAME — LIFEFM.TV — DATE</span>
-                  </li>
-                  <li>
-                    <span className="ahq-spec-key">Tags</span>
-                    <span className="ahq-spec-val">lifefm · lifefmtv · your genre · your DJ name</span>
-                  </li>
-                  <li>
-                    <span className="ahq-spec-key">After uploading</span>
-                    <span className="ahq-spec-val">Add to the LIFEFM playlist on Mixcloud</span>
-                  </li>
+                  <li><span className="ahq-spec-key">Title format</span><span className="ahq-spec-val">DJ NAME — SHOW NAME — LIFEFM.TV — DATE</span></li>
+                  <li><span className="ahq-spec-key">Tags</span><span className="ahq-spec-val">lifefm · lifefmtv · your genre · your DJ name</span></li>
+                  <li><span className="ahq-spec-key">After uploading</span><span className="ahq-spec-val">Add to the LIFEFM playlist on Mixcloud</span></li>
                 </ul>
               </div>
             </section>
 
-            {/* Social media */}
             <section className="ahq-section">
               <h2 className="ahq-section-title">Social Media</h2>
               <div className="ahq-card">
                 <ul className="ahq-spec-list">
-                  <li>
-                    <span className="ahq-spec-key">Instagram & Twitter</span>
-                    <span className="ahq-spec-val">Always tag @lifefmhq when posting about your show</span>
-                  </li>
-                  <li>
-                    <span className="ahq-spec-key">Facebook</span>
-                    <span className="ahq-spec-val">Tag the LIFEFM.TV page</span>
-                  </li>
-                  <li>
-                    <span className="ahq-spec-key">TikTok</span>
-                    <span className="ahq-spec-val">Tag @lifefmtv</span>
-                  </li>
-                  <li>
-                    <span className="ahq-spec-key">Hashtags</span>
-                    <span className="ahq-spec-val">#LIFEFMTV #UndergroundMusic #LiveDNB #LifeForMusic + your genre hashtags</span>
-                  </li>
-                  <li>
-                    <span className="ahq-spec-key">Pre-show</span>
-                    <span className="ahq-spec-val">Post at least one story or post promoting your show in the 24 hours before you go live</span>
-                  </li>
+                  <li><span className="ahq-spec-key">Instagram & Twitter</span><span className="ahq-spec-val">Always tag @lifefmhq when posting about your show</span></li>
+                  <li><span className="ahq-spec-key">Facebook</span><span className="ahq-spec-val">Tag the LIFEFM.TV page</span></li>
+                  <li><span className="ahq-spec-key">TikTok</span><span className="ahq-spec-val">Tag @lifefmtv</span></li>
+                  <li><span className="ahq-spec-key">Hashtags</span><span className="ahq-spec-val">#LIFEFMTV #UndergroundMusic #LiveDNB #LifeForMusic + your genre hashtags</span></li>
+                  <li><span className="ahq-spec-key">Pre-show</span><span className="ahq-spec-val">Post at least one story or post promoting your show in the 24 hours before you go live</span></li>
                 </ul>
               </div>
             </section>
@@ -448,25 +423,18 @@ export default function ArtistHQPage() {
               Official LIFEFM.TV brand assets for your use. Please use these correctly and do not alter the logo.
             </p>
 
-            {/* Colour swatches */}
             <section className="ahq-section">
               <h2 className="ahq-section-title">Brand Colours</h2>
               <div className="ahq-swatches">
                 {[
-                  { name: "Primary Red",  hex: "#E63030" },
-                  { name: "Background",   hex: "#0A0A0A" },
-                  { name: "Dark Grey",    hex: "#1A1A1A" },
-                  { name: "White",        hex: "#FFFFFF" },
-                  { name: "Accent Grey",  hex: "#AAAAAA" },
+                  { name: "Primary Red", hex: "#E63030" },
+                  { name: "Background",  hex: "#0A0A0A" },
+                  { name: "Dark Grey",   hex: "#1A1A1A" },
+                  { name: "White",       hex: "#FFFFFF" },
+                  { name: "Accent Grey", hex: "#AAAAAA" },
                 ].map((c) => (
                   <div key={c.hex} className="ahq-swatch">
-                    <div
-                      className="ahq-swatch-color"
-                      style={{
-                        background: c.hex,
-                        border: c.hex === "#FFFFFF" ? "1px solid #2a2a2a" : undefined,
-                      }}
-                    />
+                    <div className="ahq-swatch-color" style={{ background: c.hex, border: c.hex === "#FFFFFF" ? "1px solid #2a2a2a" : undefined }} />
                     <p className="ahq-swatch-name">{c.name}</p>
                     <p className="ahq-swatch-hex">{c.hex}</p>
                   </div>
@@ -474,60 +442,44 @@ export default function ArtistHQPage() {
               </div>
             </section>
 
-            {/* Fonts */}
             <section className="ahq-section">
               <h2 className="ahq-section-title">Brand Fonts</h2>
               <div className="ahq-card">
                 <ul className="ahq-spec-list">
-                  <li>
-                    <span className="ahq-spec-key">Primary</span>
-                    <span className="ahq-spec-val">Syne</span>
-                  </li>
-                  <li>
-                    <span className="ahq-spec-key">Monospace</span>
-                    <span className="ahq-spec-val">DM Mono</span>
-                  </li>
-                  <li>
-                    <span className="ahq-spec-key">Fallback</span>
-                    <span className="ahq-spec-val">system-ui, sans-serif</span>
-                  </li>
+                  <li><span className="ahq-spec-key">Primary</span><span className="ahq-spec-val">Syne</span></li>
+                  <li><span className="ahq-spec-key">Monospace</span><span className="ahq-spec-val">DM Mono</span></li>
+                  <li><span className="ahq-spec-key">Fallback</span><span className="ahq-spec-val">system-ui, sans-serif</span></li>
                 </ul>
               </div>
             </section>
 
-            {/* Logo downloads */}
             <section className="ahq-section">
               <h2 className="ahq-section-title">Logo Downloads</h2>
-              <div className="ahq-logo-display">
-                <Image
-                  src="/logo.webp"
-                  alt="LIFEFM.TV Logo"
-                  width={280}
-                  height={70}
-                  style={{ display: "block" }}
-                  priority
-                />
+              <div className="ahq-logo-variants">
+                <div className="ahq-logo-variant ahq-logo-variant--dark">
+                  <Image src="/logo.webp" alt="LIFEFM.TV Logo — White on Dark" width={200} height={50} />
+                  <p className="ahq-logo-variant-label">White on Dark</p>
+                  <a href="/logo.webp" download="LIFEFMTV-logo-white-dark.webp" className="ahq-dl-btn">↓ Download</a>
+                </div>
+                <div className="ahq-logo-variant ahq-logo-variant--light">
+                  <Image src="/logo.webp" alt="LIFEFM.TV Logo — White on Light" width={200} height={50} />
+                  <p className="ahq-logo-variant-label">White on Light</p>
+                  <a href="/logo.webp" download="LIFEFMTV-logo-white-light.webp" className="ahq-dl-btn ahq-dl-btn--outline">↓ Download</a>
+                </div>
+                <div className="ahq-logo-variant ahq-logo-variant--red">
+                  <Image src="/logo.webp" alt="LIFEFM.TV Logo — Red Background" width={200} height={50} />
+                  <p className="ahq-logo-variant-label">Red Background</p>
+                  <a href="/logo.webp" download="LIFEFMTV-logo-red-bg.webp" className="ahq-dl-btn ahq-dl-btn--outline">↓ Download</a>
+                </div>
+                <div className="ahq-logo-variant ahq-logo-variant--transparent">
+                  <Image src="/logo.webp" alt="LIFEFM.TV Logo — Transparent" width={200} height={50} />
+                  <p className="ahq-logo-variant-label">Transparent</p>
+                  <a href="/logo.webp" download="LIFEFMTV-logo-transparent.webp" className="ahq-dl-btn ahq-dl-btn--outline">↓ Download</a>
+                </div>
               </div>
-              <div className="ahq-dl-btns">
-                <a
-                  href="/logo.webp"
-                  download="LIFEFMTV-logo-white.webp"
-                  className="ahq-dl-btn"
-                >
-                  ↓ White Version
-                </a>
-                <a
-                  href="/logo.webp"
-                  download="LIFEFMTV-logo-red.webp"
-                  className="ahq-dl-btn ahq-dl-btn--outline"
-                >
-                  ↓ Red Version
-                </a>
-              </div>
-              <p className="ahq-footnote">Additional logo variants will be added here.</p>
+              <p className="ahq-footnote">All variants link to /logo.webp — upload finals to /public/ when ready.</p>
             </section>
 
-            {/* Usage rules */}
             <section className="ahq-section">
               <h2 className="ahq-section-title">Usage Rules</h2>
               <div className="ahq-card">
@@ -559,115 +511,52 @@ export default function ArtistHQPage() {
             </p>
 
             <div className="ahq-create-layout">
-
-              {/* ── Controls column ── */}
               <div className="ahq-create-controls">
 
-                {/* Step 1 — Photo */}
                 <div className="ahq-step">
-                  <p className="ahq-step-label">
-                    <span className="ahq-step-num">1</span>Upload your photo
-                  </p>
+                  <p className="ahq-step-label"><span className="ahq-step-num">1</span>Upload your photo</p>
                   <div
                     className={`ahq-upload-zone${isDragging ? " ahq-upload-zone--drag" : ""}${photo ? " ahq-upload-zone--done" : ""}`}
-                    role="button"
-                    tabIndex={0}
-                    aria-label="Upload photo"
+                    role="button" tabIndex={0} aria-label="Upload photo"
                     onClick={() => fileInputRef.current?.click()}
                     onKeyDown={(e) => e.key === "Enter" && fileInputRef.current?.click()}
                     onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
                     onDragLeave={() => setIsDragging(false)}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      setIsDragging(false);
-                      const file = e.dataTransfer.files[0];
-                      if (file) handleFile(file);
-                    }}
+                    onDrop={(e) => { e.preventDefault(); setIsDragging(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
                   >
-                    {photo ? (
-                      <span className="ahq-upload-done">✓ Photo loaded — click to change</span>
-                    ) : (
-                      <span className="ahq-upload-hint">
-                        Drop photo here or click to browse<br />
-                        <small>JPG · PNG · WEBP</small>
-                      </span>
-                    )}
+                    {photo
+                      ? <span className="ahq-upload-done">✓ Photo loaded — click to change</span>
+                      : <span className="ahq-upload-hint">Drop photo here or click to browse<br /><small>JPG · PNG · WEBP</small></span>}
                   </div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    style={{ display: "none" }}
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleFile(file);
-                      e.target.value = "";
-                    }}
-                  />
+                  <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: "none" }}
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }} />
                 </div>
 
-                {/* Step 2 — Details */}
                 <div className="ahq-step">
-                  <p className="ahq-step-label">
-                    <span className="ahq-step-num">2</span>Your details
-                  </p>
-
+                  <p className="ahq-step-label"><span className="ahq-step-num">2</span>Your details</p>
                   <label className="ahq-field-label">DJ Name</label>
-                  <input
-                    type="text"
-                    className="ahq-input"
-                    placeholder="e.g. DJ Kitch"
-                    value={djName}
-                    onChange={(e) => setDjName(e.target.value)}
-                  />
-
+                  <input type="text" className="ahq-input" placeholder="e.g. DJ Kitch" value={djName} onChange={(e) => setDjName(e.target.value)} />
                   <label className="ahq-field-label">Message</label>
-                  <select
-                    className="ahq-input"
-                    value={messagePreset}
-                    onChange={(e) => setMessagePreset(e.target.value)}
-                  >
-                    {MESSAGE_PRESETS.map((p) => (
-                      <option key={p} value={p}>{p}</option>
-                    ))}
+                  <select className="ahq-input" value={messagePreset} onChange={(e) => setMessagePreset(e.target.value)}>
+                    {MESSAGE_PRESETS.map((p) => <option key={p} value={p}>{p}</option>)}
                     <option value="Custom">Custom…</option>
                   </select>
                   {messagePreset === "Custom" && (
-                    <input
-                      type="text"
-                      className="ahq-input"
-                      placeholder="Type your message"
-                      value={customMsg}
-                      onChange={(e) => setCustomMsg(e.target.value)}
-                    />
+                    <input type="text" className="ahq-input" placeholder="Type your message" value={customMsg} onChange={(e) => setCustomMsg(e.target.value)} />
                   )}
-
                   <label className="ahq-field-label">Show time</label>
-                  <input
-                    type="text"
-                    className="ahq-input"
-                    placeholder="e.g. Every Thursday 8pm"
-                    value={showTime}
-                    onChange={(e) => setShowTime(e.target.value)}
-                  />
+                  <input type="text" className="ahq-input" placeholder="e.g. Every Thursday 8pm" value={showTime} onChange={(e) => setShowTime(e.target.value)} />
                 </div>
 
-                {/* Step 3 — Style */}
                 <div className="ahq-step">
-                  <p className="ahq-step-label">
-                    <span className="ahq-step-num">3</span>Style
-                  </p>
+                  <p className="ahq-step-label"><span className="ahq-step-num">3</span>Style</p>
                   <div className="ahq-style-grid">
                     {(["dark", "neon", "minimal"] as StyleKey[]).map((s) => (
-                      <button
-                        key={s}
-                        className={`ahq-style-btn${style === s ? " ahq-style-btn--active" : ""}`}
-                        onClick={() => setStyle(s)}
-                      >
+                      <button key={s} className={`ahq-style-btn${style === s ? " ahq-style-btn--active" : ""}`} onClick={() => setStyle(s)}>
                         {s.charAt(0).toUpperCase() + s.slice(1)}
                         <span className="ahq-style-desc">
-                          {s === "dark"    && "Black · Red accents"}
-                          {s === "neon"    && "Dark · Glowing red"}
+                          {s === "dark" && "Black · Red accents"}
+                          {s === "neon" && "Dark · Glowing red"}
                           {s === "minimal" && "Clean · White only"}
                         </span>
                       </button>
@@ -675,46 +564,27 @@ export default function ArtistHQPage() {
                   </div>
                 </div>
 
-                {/* Step 4 — Size */}
                 <div className="ahq-step">
-                  <p className="ahq-step-label">
-                    <span className="ahq-step-num">4</span>Size
-                  </p>
+                  <p className="ahq-step-label"><span className="ahq-step-num">4</span>Size</p>
                   <div className="ahq-size-grid">
-                    {(Object.entries(SIZES) as [SizeKey, { w: number; h: number; label: string }][]).map(
-                      ([key, val]) => (
-                        <button
-                          key={key}
-                          className={`ahq-size-btn${size === key ? " ahq-size-btn--active" : ""}`}
-                          onClick={() => setSize(key)}
-                        >
-                          {val.label}
-                        </button>
-                      ),
-                    )}
+                    {(Object.entries(SIZES) as [SizeKey, { w: number; h: number; label: string }][]).map(([key, val]) => (
+                      <button key={key} className={`ahq-size-btn${size === key ? " ahq-size-btn--active" : ""}`} onClick={() => setSize(key)}>
+                        {val.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
-                {/* Download */}
-                <button className="ahq-download-btn" onClick={handleDownload}>
-                  ↓ Download PNG
-                </button>
+                <button className="ahq-download-btn" onClick={handleDownload}>↓ Download PNG</button>
               </div>
 
-              {/* ── Preview column ── */}
               <div className="ahq-create-preview">
                 <p className="ahq-preview-label">Preview</p>
-                <div
-                  className="ahq-canvas-wrap"
-                  style={{ aspectRatio: `${SIZES[size].w} / ${SIZES[size].h}` }}
-                >
+                <div className="ahq-canvas-wrap" style={{ aspectRatio: `${SIZES[size].w} / ${SIZES[size].h}` }}>
                   <canvas ref={canvasRef} />
                 </div>
-                <p className="ahq-preview-note">
-                  {SIZES[size].w} × {SIZES[size].h} px · PNG export is full resolution
-                </p>
+                <p className="ahq-preview-note">{SIZES[size].w} × {SIZES[size].h} px · PNG export is full resolution</p>
               </div>
-
             </div>
           </div>
         )}
@@ -722,52 +592,28 @@ export default function ArtistHQPage() {
         {/* ══ TAB 5 — COMMUNITY ════════════════════════════════════════════════ */}
         {tab === "community" && (
           <div className="ahq-tab-content">
-
-            {/* Get in touch */}
             <section className="ahq-section">
               <h2 className="ahq-section-title">Get in Touch</h2>
               <div className="ahq-card">
                 <ul className="ahq-spec-list">
-                  <li>
-                    <span className="ahq-spec-key">Email</span>
-                    <span className="ahq-spec-val">
-                      <a href="mailto:lifefmhq@gmail.com" className="ahq-link">lifefmhq@gmail.com</a>
-                    </span>
-                  </li>
-                  <li>
-                    <span className="ahq-spec-key">For</span>
-                    <span className="ahq-spec-val">Show bookings · technical issues · demo submissions</span>
-                  </li>
+                  <li><span className="ahq-spec-key">Email</span><span className="ahq-spec-val"><a href="mailto:lifefmhq@gmail.com" className="ahq-link">lifefmhq@gmail.com</a></span></li>
+                  <li><span className="ahq-spec-key">For</span><span className="ahq-spec-val">Show bookings · technical issues · demo submissions</span></li>
                 </ul>
               </div>
             </section>
 
-            {/* Station team */}
             <section className="ahq-section">
               <h2 className="ahq-section-title">Station Team</h2>
               <div className="ahq-card">
                 <ul className="ahq-team-list">
-                  <li>
-                    <span className="ahq-team-name">Paul Roast</span>
-                    <span className="ahq-team-role">Founder</span>
-                  </li>
-                  <li>
-                    <span className="ahq-team-name">Mel Lioness</span>
-                    <span className="ahq-team-role">Co-Founder</span>
-                  </li>
-                  <li>
-                    <span className="ahq-team-name">DJ V</span>
-                    <span className="ahq-team-role">Label</span>
-                  </li>
-                  <li>
-                    <span className="ahq-team-name">DJ Kitch</span>
-                    <span className="ahq-team-role">Label</span>
-                  </li>
+                  <li><span className="ahq-team-name">Paul Roast</span><span className="ahq-team-role">Founder</span></li>
+                  <li><span className="ahq-team-name">Mel Lioness</span><span className="ahq-team-role">Co-Founder</span></li>
+                  <li><span className="ahq-team-name">DJ V</span><span className="ahq-team-role">Label</span></li>
+                  <li><span className="ahq-team-name">DJ Kitch</span><span className="ahq-team-role">Label</span></li>
                 </ul>
               </div>
             </section>
 
-            {/* Upcoming events */}
             <section className="ahq-section">
               <h2 className="ahq-section-title">Upcoming Station Events</h2>
               <div className="ahq-card ahq-card--muted">
@@ -776,23 +622,16 @@ export default function ArtistHQPage() {
               </div>
             </section>
 
-            {/* Useful links */}
             <section className="ahq-section">
               <h2 className="ahq-section-title">Useful Links</h2>
               <div className="ahq-links-grid">
                 {[
-                  { label: "Restream",      url: "https://restream.io",       desc: "Live streaming platform" },
-                  { label: "OBS Studio",    url: "https://obsproject.com",    desc: "Free streaming software" },
-                  { label: "Mixcloud",      url: "https://mixcloud.com",      desc: "Upload your mixes" },
-                  { label: "Submit a Show", url: "/submit",                   desc: "Apply to join the station" },
+                  { label: "Restream",   url: "https://restream.io",    desc: "Live streaming platform" },
+                  { label: "OBS Studio", url: "https://obsproject.com", desc: "Free streaming software" },
+                  { label: "Mixcloud",   url: "https://mixcloud.com",   desc: "Upload your mixes" },
+                  { label: "DJ Mixes",   url: "/archive/mixes",         desc: "Station mix archive" },
                 ].map((link) => (
-                  <a
-                    key={link.url}
-                    href={link.url}
-                    target={link.url.startsWith("http") ? "_blank" : undefined}
-                    rel={link.url.startsWith("http") ? "noopener noreferrer" : undefined}
-                    className="ahq-link-card"
-                  >
+                  <a key={link.url} href={link.url} target={link.url.startsWith("http") ? "_blank" : undefined} rel={link.url.startsWith("http") ? "noopener noreferrer" : undefined} className="ahq-link-card">
                     <span className="ahq-link-label">{link.label}</span>
                     <span className="ahq-link-desc">{link.desc}</span>
                     <span className="ahq-link-arrow">→</span>
@@ -800,7 +639,6 @@ export default function ArtistHQPage() {
                 ))}
               </div>
             </section>
-
           </div>
         )}
 
