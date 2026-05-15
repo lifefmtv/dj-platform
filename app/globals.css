@@ -5238,3 +5238,137 @@ img, video, iframe { display: block; max-width: 100%; }
     background: var(--card-hover);
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Audio Visualiser (floating button + prompt)
+════════════════════════════════════════════════════════════════════ */
+
+.audio-vis-root {
+  position: fixed;
+  bottom: 5.5rem;
+  right: 1.5rem;
+  z-index: 800;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.audio-vis-button {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  position: relative;
+  white-space: nowrap;
+}
+.audio-vis-button:hover {
+  color: var(--text);
+  border-color: var(--text-3);
+}
+.audio-vis-button--active {
+  color: var(--accent);
+  border-color: rgba(230, 48, 48, 0.5);
+  background: rgba(230, 48, 48, 0.06);
+}
+
+.audio-vis-emoji { font-size: 0.8rem; }
+
+.audio-vis-active-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse-red 1.4s ease-in-out infinite;
+}
+
+.audio-vis-tooltip {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  right: 0;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.6rem;
+  color: var(--text-2);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.audio-vis-prompt {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1rem;
+  max-width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.audio-vis-prompt-text {
+  font-size: 0.72rem;
+  color: var(--text-2);
+  line-height: 1.55;
+}
+
+.audio-vis-prompt-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.audio-vis-btn-enable {
+  flex: 1;
+  padding: 0.4rem 0.75rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.audio-vis-btn-enable:hover { opacity: 0.82; }
+
+.audio-vis-btn-later {
+  padding: 0.4rem 0.75rem;
+  background: none;
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.audio-vis-btn-later:hover { color: var(--text); border-color: var(--text-3); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Stream Visualiser canvas
+════════════════════════════════════════════════════════════════════ */
+
+.stream-visualiser-canvas {
+  display: block;
+  width: 100%;
+  height: 64px;
+  background: transparent;
+}

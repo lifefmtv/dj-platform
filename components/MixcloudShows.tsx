@@ -131,8 +131,7 @@ function ShowPlayer({ show, onClose }: { show: Show; onClose: () => void }) {
 
   const src = isYouTube
     ? `https://www.youtube.com/embed/${show.id}?autoplay=1`
-    : show.embed_url ??
-      `https://www.mixcloud.com/widget/iframe/?hide_cover=1&mini=1&autoplay=1&feed=${encodeURIComponent(show.id)}`;
+    : `https://www.mixcloud.com/widget/iframe/?hide_cover=1&mini=1&autoplay=1&feed=${encodeURIComponent(show.id)}`;
 
   return (
     <div className="show-player-wrap" style={{ width: "100%", marginTop: "1.5rem" }}>

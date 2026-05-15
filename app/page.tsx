@@ -12,6 +12,7 @@ import Countdown from "@/components/Countdown";
 import NextUpBanner from "@/components/NextUpBanner";
 import MixcloudShows from "@/components/MixcloudShows";
 import SocialFollow from "@/components/SocialFollow";
+import StreamVisualiser from "@/components/StreamVisualiser";
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
 import { getUKDateTime } from "@/lib/broadcastStatus";
 
@@ -82,6 +83,7 @@ export default async function HomePage() {
         <LiveStream />
         <ChatTabs />
       </div>
+      <StreamVisualiser />
 
       <div className="interaction-strip">
         <VibeMeter />
