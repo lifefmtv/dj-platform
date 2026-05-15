@@ -3,7 +3,8 @@ import { Dropbox } from "dropbox";
 function getClient() {
   const token = process.env.DROPBOX_ACCESS_TOKEN;
   if (!token) throw new Error("DROPBOX_ACCESS_TOKEN not set");
-  return new Dropbox({ accessToken: token });
+  // Pass global fetch explicitly — required for Dropbox SDK v10 in Vercel/Node 18+
+  return new Dropbox({ accessToken: token, fetch: globalThis.fetch });
 }
 
 export interface DropboxFile {
