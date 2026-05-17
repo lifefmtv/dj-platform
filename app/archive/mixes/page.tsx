@@ -9,10 +9,14 @@ interface MixRecord {
   dj_name: string | null;
   artist: string | null;
   recorded_at: string | null;
+  created_at: string | null;
   dropbox_path: string;
-  temp_link: string | null;
-  temp_link_expires_at: string | null;
-  status: string | null;
+}
+
+const STATION_PREFIXES = /^(LIFEFM\.TV|LIFEFM\s*\.TV|IFEFM\.TV|FEFM\.TV|ifefm\.tv)\s*[-–—]?\s*/i;
+
+function cleanTitle(raw: string): string {
+  return raw.replace(STATION_PREFIXES, "").replace(/^[-–—\s]+/, "").trim();
 }
 
 export default function MixesArchivePage() {
@@ -30,10 +34,9 @@ export default function MixesArchivePage() {
     const supabase = createClient();
     supabase
       .from("mixes")
-      .select("id, title, dj_name, artist, recorded_at, dropbox_path, temp_link, temp_link_expires_at, status")
-      .in("status", ["approved", "pending"])
+      .select("id, title, dj_name, artist, recorded_at, created_at, dropbox_path")
       .order("recorded_at", { ascending: false, nullsFirst: false })
-      .order("id", { ascending: false })
+      .order("created_at", { ascending: false })
       .then(({ data }) => {
         setMixes((data as MixRecord[]) ?? []);
         setLoading(false);
@@ -51,14 +54,6 @@ export default function MixesArchivePage() {
     setProgress(0);
     setDuration(0);
 
-    const expires = mix.temp_link_expires_at ? new Date(mix.temp_link_expires_at).getTime() : 0;
-    if (mix.temp_link && expires > Date.now() + 5 * 60 * 1000) {
-      setAudioUrl(mix.temp_link);
-      setLoadingAudio(false);
-      if (autoplay) setPlaying(true);
-      return;
-    }
-
     try {
       const res = await fetch(`/api/sync/temp-link?path=${encodeURIComponent(mix.dropbox_path)}`);
       const { link } = await res.json();
@@ -70,7 +65,6 @@ export default function MixesArchivePage() {
     setLoadingAudio(false);
   }, [mixes]);
 
-  // Auto-advance
   function handleEnded() {
     if (currentIdx !== null && currentIdx < mixes.length - 1) {
       loadMix(currentIdx + 1);
@@ -84,7 +78,7 @@ export default function MixesArchivePage() {
     if (!el || !audioUrl) return;
     el.src = audioUrl;
     if (playing) el.play().catch(() => {});
-  }, [audioUrl, playing]);
+  }, [audioUrl]);
 
   useEffect(() => {
     const el = audioRef.current;
@@ -141,12 +135,7 @@ export default function MixesArchivePage() {
                   {currentIdx === idx && playing ? "▶" : idx + 1}
                 </span>
                 <span className="mix-row-info">
-                  <span className="mix-row-title">
-                    {mix.title}
-                    {mix.status === "pending" && (
-                      <span className="archive-card-pending" style={{ marginLeft: "0.5rem" }}>pending review</span>
-                    )}
-                  </span>
+                  <span className="mix-row-title">{cleanTitle(mix.title)}</span>
                   {(mix.dj_name || mix.artist) && (
                     <span className="mix-row-dj">{mix.dj_name ?? mix.artist}</span>
                   )}
@@ -168,11 +157,11 @@ export default function MixesArchivePage() {
           {currentMix ? (
             <>
               <div className="mixes-player-art" aria-hidden>
-                <span className="mixes-player-art-icon">🎵</span>
+                <span className="mixes-player-art-icon">♪</span>
               </div>
 
               <div className="mixes-player-meta">
-                <p className="mixes-player-title">{currentMix.title}</p>
+                <p className="mixes-player-title">{cleanTitle(currentMix.title)}</p>
                 {(currentMix.dj_name || currentMix.artist) && (
                   <p className="mixes-player-dj">{currentMix.dj_name ?? currentMix.artist}</p>
                 )}
@@ -182,7 +171,6 @@ export default function MixesArchivePage() {
                 <p className="mixes-player-loading">Loading…</p>
               ) : (
                 <>
-                  {/* Progress bar */}
                   <div className="mixes-player-progress">
                     <span className="mixes-player-time">{fmt(duration * progress / 100)}</span>
                     <input
@@ -198,7 +186,6 @@ export default function MixesArchivePage() {
                     <span className="mixes-player-time">{fmt(duration)}</span>
                   </div>
 
-                  {/* Controls */}
                   <div className="mixes-player-controls">
                     <button
                       className="mixes-ctrl-btn"
@@ -229,7 +216,6 @@ export default function MixesArchivePage() {
             </div>
           )}
 
-          {/* Hidden audio element */}
           <audio
             ref={audioRef}
             onEnded={handleEnded}

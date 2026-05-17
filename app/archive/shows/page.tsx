@@ -9,16 +9,38 @@ interface ShowRecord {
   dj_name: string;
   recorded_at: string | null;
   dropbox_path: string;
-  temp_link: string | null;
-  temp_link_expires_at: string | null;
   genre: string | null;
-  status: string | null;
+}
+
+const STATION_PREFIXES = /^(LIFEFM\.TV|LIFEFM\s*\.TV|IFEFM\.TV|FEFM\.TV|ifefm\.tv)\s*[-–—]?\s*/i;
+
+function cleanTitle(raw: string): string {
+  return raw.replace(STATION_PREFIXES, "").replace(/^[-–—\s]+/, "").trim();
+}
+
+function ShowThumb({ title, index }: { title: string; index: number }) {
+  const clean = cleanTitle(title);
+  return (
+    <div className="archive-thumb-branded" aria-hidden>
+      <div className="archive-thumb-bar" />
+      <div className="archive-thumb-content">
+        <span className="archive-thumb-station">LIFEFM.TV</span>
+        <span className="archive-thumb-show-title">{clean || `Show ${index + 1}`}</span>
+      </div>
+      <div className="archive-thumb-play-btn">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="28" height="28">
+          <polygon points="5,3 19,12 5,21" />
+        </svg>
+      </div>
+    </div>
+  );
 }
 
 export default function ShowsArchivePage() {
   const [shows, setShows]     = useState<ShowRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<ShowRecord | null>(null);
+  const [selectedIdx, setSelectedIdx] = useState<number>(0);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [loadingVideo, setLoadingVideo] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -27,27 +49,20 @@ export default function ShowsArchivePage() {
     const supabase = createClient();
     supabase
       .from("show_archive")
-      .select("id, title, dj_name, recorded_at, dropbox_path, temp_link, temp_link_expires_at, genre, status")
-      .in("status", ["approved", "pending"])
-      .order("recorded_at", { ascending: false })
+      .select("id, title, dj_name, recorded_at, dropbox_path, genre")
+      .order("recorded_at", { ascending: false, nullsFirst: false })
+      .order("id", { ascending: false })
       .then(({ data }) => {
         setShows((data as ShowRecord[]) ?? []);
         setLoading(false);
       });
   }, []);
 
-  async function openShow(show: ShowRecord) {
+  async function openShow(show: ShowRecord, idx: number) {
     setSelected(show);
+    setSelectedIdx(idx);
     setVideoUrl(null);
     setLoadingVideo(true);
-
-    // Use cached link if still valid (>5 min remaining)
-    const expires = show.temp_link_expires_at ? new Date(show.temp_link_expires_at).getTime() : 0;
-    if (show.temp_link && expires > Date.now() + 5 * 60 * 1000) {
-      setVideoUrl(show.temp_link);
-      setLoadingVideo(false);
-      return;
-    }
 
     try {
       const res = await fetch(`/api/sync/temp-link?path=${encodeURIComponent(show.dropbox_path)}`);
@@ -80,27 +95,22 @@ export default function ShowsArchivePage() {
         <p className="archive-empty">Syncing content from Dropbox — check back soon.</p>
       ) : (
         <div className="archive-grid">
-          {shows.map((show) => (
+          {shows.map((show, idx) => (
             <button
               key={show.id}
               className="archive-card"
-              onClick={() => openShow(show)}
+              onClick={() => openShow(show, idx)}
               aria-label={`Watch ${show.title}`}
             >
               <div className="archive-thumb">
-                <div className="archive-thumb-placeholder" aria-hidden>
-                  <span className="archive-thumb-play">▶</span>
-                </div>
+                <ShowThumb title={show.title} index={idx} />
               </div>
               <div className="archive-card-info">
-                <p className="archive-card-title">{show.title}</p>
+                <p className="archive-card-title">{cleanTitle(show.title)}</p>
                 {show.dj_name && (
                   <p className="archive-card-dj">{show.dj_name}</p>
                 )}
                 <div className="archive-card-meta">
-                  {show.status === "pending" && (
-                    <span className="archive-card-pending">pending review</span>
-                  )}
                   {show.genre && <span className="archive-card-genre">{show.genre}</span>}
                   {show.recorded_at && (
                     <span className="archive-card-date">
@@ -116,7 +126,7 @@ export default function ShowsArchivePage() {
         </div>
       )}
 
-      {/* Modal */}
+      {/* Video modal */}
       {selected && (
         <div
           className="archive-modal-backdrop"
@@ -127,7 +137,7 @@ export default function ShowsArchivePage() {
         >
           <div className="archive-modal">
             <button className="archive-modal-close" onClick={closeModal} aria-label="Close">✕</button>
-            <h2 className="archive-modal-title">{selected.title}</h2>
+            <h2 className="archive-modal-title">{cleanTitle(selected.title)}</h2>
             {selected.dj_name && (
               <p className="archive-modal-dj">{selected.dj_name}</p>
             )}
