@@ -14,11 +14,11 @@ type Tab = typeof TABS[number]["id"];
 
 interface ImportResult {
   success?: boolean;
-  imported?: number;
+  fromExcel?: Record<string, number>;
+  fromTemplates?: Record<string, number>;
+  total?: number;
   skipped?: number;
-  months?: Record<string, number>;
   source?: string;
-  note?: string;
   errors?: string[];
   error?: string;
 }
@@ -112,8 +112,7 @@ export default function AdminScheduleClient() {
                 {importResult.success ? (
                   <>
                     <p className="admin-import-result-headline">
-                      ✓ Imported {importResult.imported?.toLocaleString()} slots across{" "}
-                      {Object.keys(importResult.months ?? {}).length} months
+                      ✓ {importResult.total?.toLocaleString()} slots imported
                       {importResult.skipped != null && importResult.skipped > 0 && (
                         <span style={{ opacity: 0.6, fontSize: "0.85em" }}> ({importResult.skipped} skipped)</span>
                       )}
@@ -121,19 +120,41 @@ export default function AdminScheduleClient() {
                     {importResult.source && (
                       <p style={{ fontSize: "0.75rem", opacity: 0.55, margin: "0.25rem 0 0" }}>{importResult.source}</p>
                     )}
-                    {importResult.note && (
-                      <p style={{ fontSize: "0.75rem", color: "#f59e0b", margin: "0.35rem 0 0" }}>{importResult.note}</p>
+
+                    {/* Excel months */}
+                    {importResult.fromExcel && Object.keys(importResult.fromExcel).length > 0 && (
+                      <>
+                        <p style={{ fontSize: "0.72rem", color: "#22c55e", margin: "0.75rem 0 0.35rem", fontWeight: 600 }}>
+                          From Excel ({Object.values(importResult.fromExcel).reduce((s, n) => s + n, 0)} slots)
+                        </p>
+                        <div className="admin-import-months">
+                          {MONTH_ORDER.filter((m) => importResult.fromExcel![m] != null).map((m) => (
+                            <div key={m} className="admin-import-month-pill admin-import-month-pill--excel">
+                              <span className="admin-import-month-name">{m}</span>
+                              <span className="admin-import-month-count">{importResult.fromExcel![m]}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </>
                     )}
-                    {importResult.months && (
-                      <div className="admin-import-months">
-                        {MONTH_ORDER.filter((m) => importResult.months![m] != null).map((m) => (
-                          <div key={m} className="admin-import-month-pill">
-                            <span className="admin-import-month-name">{m}</span>
-                            <span className="admin-import-month-count">{importResult.months![m]}</span>
-                          </div>
-                        ))}
-                      </div>
+
+                    {/* Template-generated months */}
+                    {importResult.fromTemplates && Object.keys(importResult.fromTemplates).length > 0 && (
+                      <>
+                        <p style={{ fontSize: "0.72rem", color: "#887f7a", margin: "0.75rem 0 0.35rem", fontWeight: 600 }}>
+                          Auto-generated from templates ({Object.values(importResult.fromTemplates).reduce((s, n) => s + n, 0)} slots)
+                        </p>
+                        <div className="admin-import-months">
+                          {MONTH_ORDER.filter((m) => importResult.fromTemplates![m] != null).map((m) => (
+                            <div key={m} className="admin-import-month-pill admin-import-month-pill--tpl">
+                              <span className="admin-import-month-name">{m}</span>
+                              <span className="admin-import-month-count">{importResult.fromTemplates![m]}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </>
                     )}
+
                     {importResult.errors && importResult.errors.length > 0 && (
                       <div className="admin-import-errors">
                         <p style={{ color: "#f59e0b", fontSize: "0.78rem", marginBottom: "0.25rem" }}>Warnings:</p>
@@ -144,14 +165,7 @@ export default function AdminScheduleClient() {
                     )}
                   </>
                 ) : (
-                  <p style={{ color: "#e63030" }}>
-                    Error: {importResult.error}
-                    {importResult.error?.includes("Excel") && (
-                      <span style={{ display: "block", fontSize: "0.78rem", opacity: 0.8, marginTop: "0.5rem" }}>
-                        Make sure the Excel file is in the Dropbox /LIFEFM/Schedule folder and Dropbox is connected.
-                      </span>
-                    )}
-                  </p>
+                  <p style={{ color: "#e63030" }}>Error: {importResult.error}</p>
                 )}
               </div>
             )}
