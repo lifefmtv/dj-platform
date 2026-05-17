@@ -134,6 +134,12 @@ export async function POST(req: NextRequest) {
   let totalSkipped = 0;
 
   // ── Phase 1: Import Excel sheets ──────────────────────────────────────────
+  type RawRow = {
+    date: string; day_name: string | null; start_time: string; end_time: string;
+    dj_name: string; genre: string | null; notes: string | null;
+    status: string; month: string; year: number;
+  };
+
   for (const sheetName of workbook.SheetNames) {
     const monthKey = MONTH_NAMES.find((m) =>
       sheetName.trim().toLowerCase().startsWith(m.toLowerCase()),
@@ -142,10 +148,10 @@ export async function POST(req: NextRequest) {
 
     const sheet = workbook.Sheets[sheetName];
     const rows  = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, defval: null });
-    console.log(`[import-schedule] ${sheetName}: ${rows.length} rows`);
+    console.log(`[import-schedule] ${sheetName}: ${rows.length} raw rows in sheet`);
 
     let currentDate: string | null = null;
-    const batch: object[] = [];
+    const raw: RawRow[] = [];
 
     for (let i = 3; i < rows.length; i++) {
       const row = rows[i] as unknown[];
@@ -153,7 +159,7 @@ export async function POST(req: NextRequest) {
 
       const rawDate   = row[0];
       const dayName   = row[1] != null ? String(row[1]).trim() : null;
-      const slotNum   = row[2] != null ? Number(row[2])        : null;
+      // col 2 is slot# from Excel — we reassign below, so we only use it for logging
       const startRaw  = row[3];
       const endRaw    = row[4];
       const djNameRaw = row[5] != null ? String(row[5]).trim() : null;
@@ -164,7 +170,7 @@ export async function POST(req: NextRequest) {
       const parsedDate = parseExcelDate(rawDate);
       if (parsedDate) currentDate = parsedDate;
       if (!currentDate) continue;
-      if (!djNameRaw || !slotNum) continue;
+      if (!djNameRaw) continue;
       if (djNameRaw.toLowerCase().includes("guest show") && !statusRaw) { totalSkipped++; continue; }
       if (/^(dj.?name|name|slot|start|end|date|day)$/i.test(djNameRaw)) continue;
 
@@ -172,23 +178,48 @@ export async function POST(req: NextRequest) {
       const endTime   = excelTimeToString(endRaw);
       if (!startTime || !endTime) continue;
 
-      batch.push({
-        date:        currentDate,
-        day_name:    dayName,
-        slot_number: slotNum,
-        start_time:  startTime,
-        end_time:    endTime,
-        dj_name:     djNameRaw,
+      raw.push({
+        date:       currentDate,
+        day_name:   dayName,
+        start_time: startTime,
+        end_time:   endTime,
+        dj_name:    djNameRaw,
         genre,
         notes,
-        status:      statusRaw ? (STATUS_MAP[statusRaw] ?? "resident") : "resident",
-        month:       monthKey,
-        year:        parseInt(currentDate.slice(0, 4), 10),
+        status:     statusRaw ? (STATUS_MAP[statusRaw] ?? "resident") : "resident",
+        month:      monthKey,
+        year:       parseInt(currentDate.slice(0, 4), 10),
       });
     }
 
-    console.log(`[import-schedule] ${sheetName}: ${batch.length} rows to upsert`);
-    if (batch.length === 0) continue;
+    console.log(`[import-schedule] ${sheetName}: ${raw.length} records parsed, ${totalSkipped} placeholder slots skipped`);
+    if (raw.length === 0) continue;
+
+    // ── Assign slot_number by date: sort by start_time → 1, 2, 3… ────────────
+    const byDate = new Map<string, RawRow[]>();
+    for (const r of raw) {
+      if (!byDate.has(r.date)) byDate.set(r.date, []);
+      byDate.get(r.date)!.push(r);
+    }
+
+    const withSlots: (RawRow & { slot_number: number })[] = [];
+    Array.from(byDate.values()).forEach((dayRows: RawRow[]) => {
+      dayRows.sort((a: RawRow, b: RawRow) => a.start_time.localeCompare(b.start_time));
+      dayRows.forEach((r: RawRow, idx: number) => withSlots.push({ ...r, slot_number: idx + 1 }));
+    });
+
+    // ── Deduplicate by date+slot_number keeping last occurrence ───────────────
+    const seen = new Map<string, typeof withSlots[0]>();
+    for (const r of withSlots) {
+      seen.set(`${r.date}_${r.slot_number}`, r);
+    }
+    const batch = Array.from(seen.values());
+    const dupCount = withSlots.length - batch.length;
+
+    console.log(
+      `[import-schedule] ${sheetName}: ${withSlots.length} after slot assignment,`,
+      `${batch.length} after dedup (${dupCount} dupes removed)`,
+    );
 
     for (let i = 0; i < batch.length; i += 500) {
       const chunk = batch.slice(i, i + 500);
