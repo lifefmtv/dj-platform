@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { listFolder, listFolderRaw, getTemporaryLink, cleanFileName } from "@/lib/dropbox";
+import { listFolder, cleanFileName } from "@/lib/dropbox";
 
 const FOLDERS = {
   shows:  process.env.DROPBOX_VIDEO_FOLDER  ?? "/LIFEFM/Video Shows",
@@ -9,9 +9,6 @@ const FOLDERS = {
   photos: process.env.DROPBOX_PHOTOS_FOLDER ?? "/LIFEFM/Photos",
 };
 
-const LINK_TTL = 4 * 60 * 60 * 1000; // 4 hours in ms
-
-// Use the plain service-role client — no cookie/session machinery needed for background syncs.
 function getSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -26,198 +23,136 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // ── Env audit ────────────────────────────────────────────────────────────────
-  console.log("[sync] Folder paths:", JSON.stringify(FOLDERS));
-  console.log("[sync] Env check — DROPBOX_ACCESS_TOKEN:", !!process.env.DROPBOX_ACCESS_TOKEN,
-    "| SUPABASE_URL:", !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-    "| SERVICE_ROLE_KEY:", !!process.env.SUPABASE_SERVICE_ROLE_KEY);
+  console.log("[sync] Starting — folders:", JSON.stringify(FOLDERS));
 
   let supabase;
   try {
     supabase = getSupabase();
-    console.log("[sync] Supabase client created OK");
   } catch (e) {
     console.error("[sync] Supabase init failed:", (e as Error).message);
     return NextResponse.json({ ok: false, error: (e as Error).message });
   }
 
-  // ── Root folder audit ────────────────────────────────────────────────────────
-  try {
-    const rootEntries = await listFolderRaw("");
-    console.log("[sync] Root Dropbox entries:", rootEntries.map((e) => `${e.tag}:${e.name}`).join(", ") || "(none)");
-  } catch (e) {
-    console.error("[sync] Root list failed:", (e as Error).message);
-  }
-
-  const counts: Record<string, number> = {};
+  const counts: Record<string, number> = { shows: 0, mixes: 0, flyers: 0, photos: 0 };
   const errors: string[] = [];
 
-  // ── Video shows ──────────────────────────────────────────────────────────────
+  // ── Helper: bulk upsert with a single call ───────────────────────────────────
+  async function bulkUpsert(table: string, rows: object[], conflict: string): Promise<void> {
+    if (rows.length === 0) return;
+    const { error } = await supabase!.from(table).upsert(rows as any[], {
+      onConflict: conflict,
+      ignoreDuplicates: true,
+    });
+    if (error) {
+      const msg = `${table} upsert: [${error.code}] ${error.message}`;
+      console.error(`[sync/${table}] Upsert FAILED:`, error.code, error.message, error.details ?? "");
+      errors.push(msg);
+    } else {
+      console.log(`[sync/${table}] Upserted ${rows.length} rows OK`);
+    }
+  }
+
+  // ── Video shows — metadata only, no temp links ────────────────────────────────
   try {
     console.log(`[sync/shows] Listing: "${FOLDERS.shows}"`);
     const files = await listFolder(FOLDERS.shows);
-    console.log(`[sync/shows] Found ${files.length} total entries: [${files.map((f) => f.name).join(", ")}]`);
-    counts.shows = 0;
+    console.log(`[sync/shows] Found ${files.length} entries`);
 
-    for (const f of files) {
-      if (!/\.(mp4|mov|mkv|webm)$/i.test(f.name)) {
-        console.log(`[sync/shows] Skip (ext): ${f.name}`);
-        continue;
-      }
-      const { title, djName, date } = cleanFileName(f.name);
-      const row = { dropbox_file_id: f.id, dropbox_path: f.path_lower, title, dj_name: djName ?? "", recorded_at: date ?? null, status: "pending" };
-      console.log(`[sync/shows] Upserting: ${f.name} →`, JSON.stringify(row));
+    const rows = files
+      .filter((f) => /\.(mp4|mov|mkv|webm)$/i.test(f.name))
+      .map((f) => {
+        const { title, djName, date } = cleanFileName(f.name);
+        return { dropbox_file_id: f.id, dropbox_path: f.path_lower, title, dj_name: djName ?? "", recorded_at: date ?? null, status: "pending" };
+      });
 
-      const { error: upsertErr } = await supabase
-        .from("show_archive")
-        .upsert(row, { onConflict: "dropbox_file_id", ignoreDuplicates: true });
-      if (upsertErr) {
-        console.error(`[sync/shows] Upsert FAILED for ${f.name}:`, upsertErr.code, upsertErr.message, upsertErr.details);
-        errors.push(`show_archive upsert ${f.name}: ${upsertErr.message}`);
-        continue;
-      }
-      console.log(`[sync/shows] Upsert OK: ${f.name}`);
-
-      let tempLink: string | null = null;
-      let tempLinkExpiresAt: string | null = null;
-      try {
-        tempLink = await getTemporaryLink(f.path_lower);
-        tempLinkExpiresAt = new Date(Date.now() + LINK_TTL).toISOString();
-      } catch (linkErr) {
-        console.warn(`[sync/shows] Temp link failed for ${f.name}: ${(linkErr as Error).message}`);
-      }
-
-      if (tempLink) {
-        const { error: linkErr } = await supabase
-          .from("show_archive")
-          .update({ temp_link: tempLink, temp_link_expires_at: tempLinkExpiresAt })
-          .eq("dropbox_file_id", f.id);
-        if (linkErr) console.error(`[sync/shows] Link update FAILED for ${f.name}:`, linkErr.message);
-        else console.log(`[sync/shows] Link updated OK: ${f.name}`);
-      }
-      counts.shows++;
-    }
+    console.log(`[sync/shows] ${rows.length} video files after extension filter`);
+    await bulkUpsert("show_archive", rows, "dropbox_file_id");
+    counts.shows = rows.length;
   } catch (e) {
-    console.error("[sync/shows] Outer error:", (e as Error).message);
-    errors.push(`shows: ${(e as Error).message}`);
+    const msg = (e as Error).message;
+    console.error("[sync/shows] Error:", msg);
+    if (msg.includes("401") || msg.toLowerCase().includes("token")) {
+      errors.push("shows: Dropbox token expired or invalid — regenerate access token");
+    } else {
+      errors.push(`shows: ${msg}`);
+    }
   }
 
-  // ── DJ mixes ─────────────────────────────────────────────────────────────────
+  // ── DJ mixes — metadata only, no temp links ───────────────────────────────────
   try {
     console.log(`[sync/mixes] Listing: "${FOLDERS.mixes}"`);
     const files = await listFolder(FOLDERS.mixes);
-    console.log(`[sync/mixes] Found ${files.length} total entries: [${files.map((f) => f.name).join(", ")}]`);
-    counts.mixes = 0;
+    console.log(`[sync/mixes] Found ${files.length} entries`);
 
-    for (const f of files) {
-      if (!/\.(mp3|wav|aac|flac|ogg|m4a)$/i.test(f.name)) {
-        console.log(`[sync/mixes] Skip (ext): ${f.name}`);
-        continue;
-      }
-      const { title, djName, date } = cleanFileName(f.name);
-      const row = { dropbox_file_id: f.id, dropbox_path: f.path_lower, title, dj_name: djName ?? "", recorded_at: date ?? null, status: "pending" };
-      console.log(`[sync/mixes] Upserting: ${f.name}`);
+    const rows = files
+      .filter((f) => /\.(mp3|wav|aac|flac|ogg|m4a)$/i.test(f.name))
+      .map((f) => {
+        const { title, djName, date } = cleanFileName(f.name);
+        return { dropbox_file_id: f.id, dropbox_path: f.path_lower, title, dj_name: djName ?? "", recorded_at: date ?? null, status: "pending" };
+      });
 
-      const { error: upsertErr } = await supabase
-        .from("mixes")
-        .upsert(row, { onConflict: "dropbox_file_id", ignoreDuplicates: true });
-      if (upsertErr) {
-        console.error(`[sync/mixes] Upsert FAILED for ${f.name}:`, upsertErr.code, upsertErr.message, upsertErr.details);
-        errors.push(`mixes upsert ${f.name}: ${upsertErr.message}`);
-        continue;
-      }
-      console.log(`[sync/mixes] Upsert OK: ${f.name}`);
-
-      let tempLink: string | null = null;
-      let tempLinkExpiresAt: string | null = null;
-      try {
-        tempLink = await getTemporaryLink(f.path_lower);
-        tempLinkExpiresAt = new Date(Date.now() + LINK_TTL).toISOString();
-      } catch (linkErr) {
-        console.warn(`[sync/mixes] Temp link failed for ${f.name}: ${(linkErr as Error).message}`);
-      }
-
-      if (tempLink) {
-        const { error: linkErr } = await supabase
-          .from("mixes")
-          .update({ temp_link: tempLink, temp_link_expires_at: tempLinkExpiresAt })
-          .eq("dropbox_file_id", f.id);
-        if (linkErr) console.error(`[sync/mixes] Link update FAILED for ${f.name}:`, linkErr.message);
-        else console.log(`[sync/mixes] Link updated OK: ${f.name}`);
-      }
-      counts.mixes++;
-    }
+    console.log(`[sync/mixes] ${rows.length} audio files after extension filter`);
+    await bulkUpsert("mixes", rows, "dropbox_file_id");
+    counts.mixes = rows.length;
   } catch (e) {
-    console.error("[sync/mixes] Outer error:", (e as Error).message);
-    errors.push(`mixes: ${(e as Error).message}`);
+    const msg = (e as Error).message;
+    console.error("[sync/mixes] Error:", msg);
+    if (msg.includes("401") || msg.toLowerCase().includes("token")) {
+      errors.push("mixes: Dropbox token expired or invalid — regenerate access token");
+    } else {
+      errors.push(`mixes: ${msg}`);
+    }
   }
 
-  // ── Flyers ───────────────────────────────────────────────────────────────────
+  // ── Flyers ────────────────────────────────────────────────────────────────────
   try {
     console.log(`[sync/flyers] Listing: "${FOLDERS.flyers}"`);
     const files = await listFolder(FOLDERS.flyers);
     console.log(`[sync/flyers] Found ${files.length} entries`);
-    counts.flyers = 0;
 
-    for (const f of files) {
-      if (!/\.(jpg|jpeg|png|webp|gif)$/i.test(f.name)) continue;
-      const { error } = await supabase
-        .from("flyers")
-        .upsert({ dropbox_file_id: f.id, dropbox_path: f.path_lower, title: cleanFileName(f.name).title },
-          { onConflict: "dropbox_file_id", ignoreDuplicates: true });
-      if (error) {
-        console.error(`[sync/flyers] Upsert FAILED for ${f.name}:`, error.code, error.message);
-        errors.push(`flyers upsert ${f.name}: ${error.message}`);
-      } else {
-        counts.flyers++;
-      }
-    }
-    console.log(`[sync/flyers] Wrote ${counts.flyers} flyers`);
+    const rows = files
+      .filter((f) => /\.(jpg|jpeg|png|webp|gif)$/i.test(f.name))
+      .map((f) => ({ dropbox_file_id: f.id, dropbox_path: f.path_lower, title: cleanFileName(f.name).title }));
+
+    await bulkUpsert("flyers", rows, "dropbox_file_id");
+    counts.flyers = rows.length;
   } catch (e) {
-    console.error("[sync/flyers] Outer error:", (e as Error).message);
-    errors.push(`flyers: ${(e as Error).message}`);
+    const msg = (e as Error).message;
+    console.error("[sync/flyers] Error:", msg);
+    errors.push(`flyers: ${msg}`);
   }
 
-  // ── Photos ───────────────────────────────────────────────────────────────────
+  // ── Photos ────────────────────────────────────────────────────────────────────
   try {
     console.log(`[sync/photos] Listing: "${FOLDERS.photos}"`);
     const files = await listFolder(FOLDERS.photos);
     console.log(`[sync/photos] Found ${files.length} entries`);
-    counts.photos = 0;
 
-    for (const f of files) {
-      if (!/\.(jpg|jpeg|png|webp)$/i.test(f.name)) continue;
-      const { error } = await supabase
-        .from("photos")
-        .upsert({ dropbox_file_id: f.id, dropbox_path: f.path_lower, title: cleanFileName(f.name).title },
-          { onConflict: "dropbox_file_id", ignoreDuplicates: true });
-      if (error) {
-        console.error(`[sync/photos] Upsert FAILED for ${f.name}:`, error.code, error.message);
-        errors.push(`photos upsert ${f.name}: ${error.message}`);
-      } else {
-        counts.photos++;
-      }
-    }
-    console.log(`[sync/photos] Wrote ${counts.photos} photos`);
+    const rows = files
+      .filter((f) => /\.(jpg|jpeg|png|webp)$/i.test(f.name))
+      .map((f) => ({ dropbox_file_id: f.id, dropbox_path: f.path_lower, title: cleanFileName(f.name).title }));
+
+    await bulkUpsert("photos", rows, "dropbox_file_id");
+    counts.photos = rows.length;
   } catch (e) {
-    console.error("[sync/photos] Outer error:", (e as Error).message);
-    errors.push(`photos: ${(e as Error).message}`);
+    const msg = (e as Error).message;
+    console.error("[sync/photos] Error:", msg);
+    errors.push(`photos: ${msg}`);
   }
 
-  // ── Sync log ─────────────────────────────────────────────────────────────────
+  // ── Sync log ──────────────────────────────────────────────────────────────────
   console.log("[sync] Final counts:", JSON.stringify(counts), "| Errors:", errors.length);
   const logRow = {
     synced_at:    new Date().toISOString(),
-    shows_found:  counts.shows  ?? 0,
-    mixes_found:  counts.mixes  ?? 0,
-    flyers_found: counts.flyers ?? 0,
-    photos_found: counts.photos ?? 0,
+    shows_found:  counts.shows,
+    mixes_found:  counts.mixes,
+    flyers_found: counts.flyers,
+    photos_found: counts.photos,
     errors:       errors.length ? errors.join("; ") : null,
   };
-  console.log("[sync] Writing sync_log:", JSON.stringify(logRow));
   const { error: logErr } = await supabase.from("sync_log").insert(logRow);
-  if (logErr) console.error("[sync] sync_log write FAILED:", logErr.code, logErr.message, logErr.details);
-  else console.log("[sync] sync_log write OK");
+  if (logErr) console.error("[sync] sync_log FAILED:", logErr.code, logErr.message);
+  else console.log("[sync] sync_log OK");
 
   return NextResponse.json({ ok: true, counts, errors });
 }
