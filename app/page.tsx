@@ -55,14 +55,24 @@ export default async function HomePage() {
     .neq("status", "cancelled")
     .order("start_time");
 
+  console.log("[homepage] ukDate:", ukDate, "ukHHMM:", ukHHMM);
+  console.log("[homepage] todayShows count:", todayShows?.length ?? 0,
+    todayShows?.map((s) => `${s.dj_name} ${s.start_time}-${s.end_time}`));
+
+  // Postgres TIME columns return "HH:MM:SS" — slice to "HH:MM" before comparing.
+  // Midnight crossover: end_time "00:00" means the show runs to midnight, treat as "24:00".
   const currentDJ = todayShows?.find((s) => {
-    const end = s.end_time === "00:00" ? "24:00" : s.end_time;
-    return s.start_time <= ukHHMM && end > ukHHMM;
+    const startHHMM = s.start_time.slice(0, 5);
+    const endHHMM   = s.end_time.slice(0, 5);
+    const end = endHHMM === "00:00" ? "24:00" : endHHMM;
+    return startHHMM <= ukHHMM && end > ukHHMM;
   }) ?? null;
 
+  console.log("[homepage] currentDJ:", currentDJ?.dj_name ?? "null");
+
   // Up Next: first show starting after current ends (or after now), then tomorrow
-  const nextThreshold = currentDJ ? currentDJ.end_time : ukHHMM;
-  const todayNext = todayShows?.find((s) => s.start_time > nextThreshold) ?? null;
+  const nextThreshold = currentDJ ? currentDJ.end_time.slice(0, 5) : ukHHMM;
+  const todayNext = todayShows?.find((s) => s.start_time.slice(0, 5) > nextThreshold) ?? null;
 
   const { data: futureNext } = !todayNext
     ? await supabase

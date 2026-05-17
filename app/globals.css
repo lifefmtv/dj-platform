@@ -403,6 +403,11 @@ img, video, iframe { display: block; max-width: 100%; }
   font-weight: 600;
   color: rgba(255, 255, 255, 0.55);
 }
+.next-up-dj--guest-tbc {
+  color: rgba(255, 255, 255, 0.4);
+  font-style: italic;
+  font-weight: 600;
+}
 
 /* Genre pill — colour applied via inline style from genreColor() */
 .next-up-genre {

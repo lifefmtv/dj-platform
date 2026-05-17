@@ -90,19 +90,29 @@ export default function NextUpBanner({ currentShow, nextShow }: Props) {
           </span>
         </div>
 
-        {currentShow && (
+        {(currentShow || onAir) && (
           <>
             <span className="next-up-divider" aria-hidden />
             <div className="next-up-now-playing">
               <span className="next-up-now-label">Now Playing</span>
-              <span className="next-up-dj">{currentShow.dj_name}</span>
-              {currentShow.genre && (
-                <span
-                  className="next-up-genre"
-                  style={genrePillStyle(currentShow.genre)}
-                >
-                  {currentShow.genre}
-                </span>
+              {currentShow ? (
+                <>
+                  <span
+                    className={`next-up-dj${/guest\s*tbc/i.test(currentShow.dj_name) ? " next-up-dj--guest-tbc" : ""}`}
+                  >
+                    {/guest\s*tbc/i.test(currentShow.dj_name) ? "Guest TBC" : currentShow.dj_name}
+                  </span>
+                  {currentShow.genre && !/guest\s*tbc/i.test(currentShow.dj_name) && (
+                    <span
+                      className="next-up-genre"
+                      style={genrePillStyle(currentShow.genre)}
+                    >
+                      {currentShow.genre}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span className="next-up-dj">LIFEFM.TV LIVE</span>
               )}
             </div>
           </>
@@ -116,8 +126,12 @@ export default function NextUpBanner({ currentShow, nextShow }: Props) {
 
           <div className="next-up-upnext-info">
             <span className="next-up-label">Up Next</span>
-            <span className="next-up-dj next-up-dj--dim">{nextShow.dj_name}</span>
-            {nextShow.genre && (
+            <span
+              className={`next-up-dj next-up-dj--dim${/guest\s*tbc/i.test(nextShow.dj_name) ? " next-up-dj--guest-tbc" : ""}`}
+            >
+              {/guest\s*tbc/i.test(nextShow.dj_name) ? "Guest TBC" : nextShow.dj_name}
+            </span>
+            {nextShow.genre && !/guest\s*tbc/i.test(nextShow.dj_name) && (
               <span
                 className="next-up-genre next-up-genre--dim"
                 style={genrePillStyle(nextShow.genre, true)}
