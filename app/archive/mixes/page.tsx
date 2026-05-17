@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createClient } from "@/lib/supabase";
 
 interface MixRecord {
   id: string;
@@ -9,7 +8,6 @@ interface MixRecord {
   dj_name: string | null;
   artist: string | null;
   recorded_at: string | null;
-  created_at: string | null;
   dropbox_path: string;
 }
 
@@ -22,25 +20,32 @@ function cleanTitle(raw: string): string {
 export default function MixesArchivePage() {
   const [mixes, setMixes]           = useState<MixRecord[]>([]);
   const [loading, setLoading]       = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [currentIdx, setCurrentIdx] = useState<number | null>(null);
   const [audioUrl, setAudioUrl]     = useState<string | null>(null);
   const [loadingAudio, setLoadingAudio] = useState(false);
+  const [audioError, setAudioError] = useState<string | null>(null);
   const [playing, setPlaying]       = useState(false);
   const [progress, setProgress]     = useState(0);
   const [duration, setDuration]     = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase
-      .from("mixes")
-      .select("id, title, dj_name, artist, recorded_at, created_at, dropbox_path")
-      .order("recorded_at", { ascending: false, nullsFirst: false })
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
-        setMixes((data as MixRecord[]) ?? []);
-        setLoading(false);
-      });
+    fetch("/api/mixes")
+      .then((r) => r.json())
+      .then(({ mixes: rows, error }) => {
+        if (error) {
+          console.error("Mixes fetch error:", error);
+          setFetchError(error);
+        } else {
+          setMixes(rows ?? []);
+        }
+      })
+      .catch((e) => {
+        console.error("Mixes fetch failed:", e);
+        setFetchError(e.message);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const loadMix = useCallback(async (idx: number, autoplay = true) => {
@@ -49,6 +54,7 @@ export default function MixesArchivePage() {
 
     setCurrentIdx(idx);
     setAudioUrl(null);
+    setAudioError(null);
     setLoadingAudio(true);
     setPlaying(false);
     setProgress(0);
@@ -56,11 +62,17 @@ export default function MixesArchivePage() {
 
     try {
       const res = await fetch(`/api/sync/temp-link?path=${encodeURIComponent(mix.dropbox_path)}`);
-      const { link } = await res.json();
-      setAudioUrl(link);
-      if (autoplay) setPlaying(true);
-    } catch {
-      setAudioUrl(null);
+      const json = await res.json();
+      if (!res.ok || json.error) {
+        console.error("Temp link error:", json.error);
+        setAudioError(json.error ?? "Could not load audio");
+      } else {
+        setAudioUrl(json.link);
+        if (autoplay) setPlaying(true);
+      }
+    } catch (e) {
+      console.error("Temp link fetch failed:", e);
+      setAudioError("Could not load audio");
     }
     setLoadingAudio(false);
   }, [mixes]);
@@ -121,6 +133,8 @@ export default function MixesArchivePage() {
         <div className="mixes-list">
           {loading ? (
             <p className="archive-loading">Loading…</p>
+          ) : fetchError ? (
+            <p className="archive-empty" style={{ color: "#e63030" }}>Error loading mixes: {fetchError}</p>
           ) : mixes.length === 0 ? (
             <p className="archive-empty">Mixes coming soon — syncing from Dropbox.</p>
           ) : (
@@ -169,6 +183,8 @@ export default function MixesArchivePage() {
 
               {loadingAudio ? (
                 <p className="mixes-player-loading">Loading…</p>
+              ) : audioError ? (
+                <p className="mixes-player-loading" style={{ color: "#e63030" }}>{audioError}</p>
               ) : (
                 <>
                   <div className="mixes-player-progress">

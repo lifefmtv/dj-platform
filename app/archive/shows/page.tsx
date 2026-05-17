@@ -40,8 +40,8 @@ export default function ShowsArchivePage() {
   const [shows, setShows]     = useState<ShowRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<ShowRecord | null>(null);
-  const [selectedIdx, setSelectedIdx] = useState<number>(0);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [videoError, setVideoError] = useState<string | null>(null);
   const [loadingVideo, setLoadingVideo] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -58,18 +58,24 @@ export default function ShowsArchivePage() {
       });
   }, []);
 
-  async function openShow(show: ShowRecord, idx: number) {
+  async function openShow(show: ShowRecord) {
     setSelected(show);
-    setSelectedIdx(idx);
     setVideoUrl(null);
+    setVideoError(null);
     setLoadingVideo(true);
 
     try {
       const res = await fetch(`/api/sync/temp-link?path=${encodeURIComponent(show.dropbox_path)}`);
-      const { link } = await res.json();
-      setVideoUrl(link);
-    } catch {
-      setVideoUrl(null);
+      const json = await res.json();
+      if (!res.ok || json.error) {
+        console.error("Temp link error:", json.error, "path:", show.dropbox_path);
+        setVideoError(json.error ?? "Could not load video");
+      } else {
+        setVideoUrl(json.link);
+      }
+    } catch (e) {
+      console.error("Temp link fetch failed:", e);
+      setVideoError("Could not reach server");
     }
     setLoadingVideo(false);
   }
@@ -77,6 +83,7 @@ export default function ShowsArchivePage() {
   function closeModal() {
     setSelected(null);
     setVideoUrl(null);
+    setVideoError(null);
     if (videoRef.current) {
       videoRef.current.pause();
       videoRef.current.src = "";
@@ -99,7 +106,7 @@ export default function ShowsArchivePage() {
             <button
               key={show.id}
               className="archive-card"
-              onClick={() => openShow(show, idx)}
+              onClick={() => openShow(show)}
               aria-label={`Watch ${show.title}`}
             >
               <div className="archive-thumb">
@@ -145,6 +152,12 @@ export default function ShowsArchivePage() {
             <div className="archive-modal-video-wrap">
               {loadingVideo ? (
                 <div className="archive-modal-loading">Loading video…</div>
+              ) : videoError ? (
+                <div className="archive-modal-error" style={{ color: "#e63030" }}>
+                  <strong>Could not load video</strong>
+                  <br />
+                  <span style={{ fontSize: "0.78rem", opacity: 0.8 }}>{videoError}</span>
+                </div>
               ) : videoUrl ? (
                 <video
                   ref={videoRef}
@@ -157,7 +170,7 @@ export default function ShowsArchivePage() {
                   autoPlay
                 />
               ) : (
-                <div className="archive-modal-error">Could not load video. Please try again.</div>
+                <div className="archive-modal-loading">Preparing video…</div>
               )}
             </div>
           </div>
