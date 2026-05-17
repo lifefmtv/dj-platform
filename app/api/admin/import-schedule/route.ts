@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import * as XLSX from "xlsx";
 import { createClient } from "@supabase/supabase-js";
+import { listFolder, getTemporaryLink } from "@/lib/dropbox";
 
-const SCHEDULE_URL =
-  "https://www.dropbox.com/scl/fi/4pk2xozc1k1oza2bpi95p/lifefm_schedule_2026.xlsx?rlkey=k8ur2ywktm3nalx182j11wygs&st=wccjc5hi&dl=1";
+const SCHEDULE_FOLDER = process.env.DROPBOX_SCHEDULE_FOLDER ?? "/LIFEFM/Schedule";
 
 const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const YEAR = 2026;
@@ -111,13 +111,28 @@ export async function POST(req: NextRequest) {
 }
 
 async function runImport(): Promise<Response> {
-  // ── Download Excel ────────────────────────────────────────────────────────
+  // ── Download Excel via Dropbox API ───────────────────────────────────────
   let buffer: Buffer;
   try {
-    const res = await fetch(SCHEDULE_URL, { redirect: "follow" });
-    if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+    console.log("[import-schedule] Listing folder:", SCHEDULE_FOLDER);
+    const files = await listFolder(SCHEDULE_FOLDER);
+    console.log("[import-schedule] Files found:", files.map((f) => f.name).join(", ") || "(none)");
+
+    const xlsxFile = files.find((f) => /\.xlsx?$/i.test(f.name));
+    if (!xlsxFile) {
+      return NextResponse.json(
+        { success: false, error: `No Excel file found in Dropbox folder: ${SCHEDULE_FOLDER}` },
+        { status: 404 },
+      );
+    }
+
+    console.log("[import-schedule] Fetching temp link for:", xlsxFile.path_lower);
+    const tempLink = await getTemporaryLink(xlsxFile.path_lower);
+
+    const res = await fetch(tempLink);
+    if (!res.ok) throw new Error(`Binary download failed: HTTP ${res.status}`);
     buffer = Buffer.from(await res.arrayBuffer());
-    console.log("[import-schedule] Downloaded", buffer.byteLength, "bytes");
+    console.log("[import-schedule] Downloaded", buffer.byteLength, "bytes from", xlsxFile.name);
   } catch (e) {
     console.error("[import-schedule] Download failed:", (e as Error).message);
     return NextResponse.json(
@@ -348,7 +363,7 @@ async function runImport(): Promise<Response> {
     fromTemplates,
     total:         totalFromExcel + totalFromTemplates,
     skipped:       totalSkipped,
-    source:        "lifefm_schedule_2026.xlsx (Dropbox public link)",
+    source:        `${SCHEDULE_FOLDER} (Dropbox API)`,
     errors,
   });
 }
