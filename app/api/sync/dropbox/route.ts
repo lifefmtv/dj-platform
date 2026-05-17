@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     const rows = files
       .filter((f) => /\.(mp4|mov|mkv|webm)$/i.test(f.name))
       .map((f) => {
-        const { title, djName, date } = cleanFileName(f.name);
+        const { title, djName, date } = cleanFileName(f.name, f.client_modified);
         return { dropbox_file_id: f.id, dropbox_path: f.path_lower, title, dj_name: djName ?? "", recorded_at: date ?? null, status: "pending" };
       });
 
@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
     const rows = files
       .filter((f) => /\.(mp3|wav|aac|flac|ogg|m4a)$/i.test(f.name))
       .map((f) => {
-        const { title, djName, date } = cleanFileName(f.name);
+        const { title, djName, date } = cleanFileName(f.name, f.client_modified);
         // Write to both dj_name (new) and artist (legacy) so all code paths can read it
         return { dropbox_file_id: f.id, dropbox_path: f.path_lower, title, dj_name: djName ?? "", artist: djName ?? "", recorded_at: date ?? null, status: "pending" };
       });
