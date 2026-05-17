@@ -7991,12 +7991,107 @@ img, video, iframe { display: block; max-width: 100%; }
 }
 
 /* ── Weekly 7-column grid ── */
+.sched-week-scroll-outer {
+  position: relative;
+}
+/* Scroll-hint fade: shown only at tablet via @media below */
+.sched-week-scroll-outer::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; bottom: 0;
+  width: 48px;
+  background: linear-gradient(to right, transparent, var(--bg));
+  pointer-events: none;
+  display: none;
+}
+
+.sched-week-scroll-wrapper {
+  /* overflow-x applied at tablet breakpoint only */
+}
+
 .sched-week-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 2px;
-  overflow-x: auto;
   min-width: 0;
+}
+
+/* Mobile collapsible week view — hidden above 767px */
+.sched-week-mobile {
+  display: none;
+}
+
+.sched-mobile-day {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.sched-mobile-day--today {
+  border-color: var(--accent);
+}
+.sched-mobile-day-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  gap: 0.5rem;
+  background: #111;
+}
+.sched-mobile-day-summary::-webkit-details-marker { display: none; }
+.sched-mobile-day--today .sched-mobile-day-summary {
+  background: rgba(230,48,48,0.1);
+}
+.sched-mobile-day-header-left {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+.sched-mobile-day-name {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text);
+}
+.sched-mobile-day-date {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-3);
+}
+.sched-mobile-day-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.sched-mobile-day-count {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-3);
+  background: var(--card-hover);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0 0.4rem;
+  line-height: 1.6;
+}
+.sched-mobile-chevron {
+  font-size: 1rem;
+  color: var(--text-3);
+  transition: transform 0.2s;
+  display: inline-block;
+}
+details[open] .sched-mobile-chevron {
+  transform: rotate(90deg);
+}
+.sched-mobile-day-shows {
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-top: 1px solid var(--border);
 }
 
 .sched-day-col {
@@ -8394,25 +8489,62 @@ img, video, iframe { display: block; max-width: 100%; }
 .admin-import-month-pill--tpl .admin-import-month-name { color: var(--text-3); }
 .admin-import-month-pill--tpl .admin-import-month-count { color: var(--text-3); }
 
-/* Responsive schedule */
-@media (max-width: 900px) {
+/* ── Responsive schedule ── */
+
+/* Tablet: 768px–1199px — horizontal scroll on the week grid */
+@media (max-width: 1199px) {
+  .sched-week-scroll-outer::after {
+    display: block;
+  }
+  .sched-week-scroll-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
   .sched-week-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(7, minmax(140px, 1fr));
   }
-  .sched-day-col:nth-child(n+5) {
-    display: none;
-  }
-  .sched-controls { flex-direction: column; align-items: flex-start; }
-  .sched-nav-label { min-width: 0; }
 }
 
-@media (max-width: 600px) {
-  .sched-week-grid {
-    grid-template-columns: repeat(2, 1fr);
+/* Mobile: below 768px — switch to collapsible day sections */
+@media (max-width: 767px) {
+  .sched-page {
+    overflow-x: hidden;
   }
-  .sched-day-col:nth-child(n+3) {
+
+  /* Hide the grid, show the mobile list */
+  .sched-week-scroll-outer {
     display: none;
   }
+  .sched-week-mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  /* Controls: stack nav + right group, each full-width */
+  .sched-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  .sched-nav {
+    justify-content: space-between;
+  }
+  .sched-nav-label {
+    min-width: 0;
+    font-size: 0.72rem;
+  }
+  .sched-ctrl-right {
+    justify-content: space-between;
+  }
+
+  /* Genre filter already has flex-wrap — reduce pill size slightly */
+  .sched-genre-btn {
+    font-size: 0.66rem;
+    padding: 0.25rem 0.55rem;
+  }
+
+  /* Month view adjustments */
   .sched-month-grid {
     font-size: 0.65rem;
   }

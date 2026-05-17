@@ -203,28 +203,69 @@ export default function ScheduleClient() {
         <div className="sched-loading">{emptyMsg}</div>
       ) : viewMode === "week" ? (
 
-        /* ── Weekly 7-column grid ── */
-        <div className="sched-week-grid">
-          {weekDays.map((day) => {
-            const ds     = format(day, "yyyy-MM-dd");
-            const dShows = byDate[ds] ?? [];
-            return (
-              <div key={ds} className={`sched-day-col${isToday(day) ? " sched-day-col--today" : ""}`}>
-                <div className="sched-day-header">
-                  <span className="sched-day-name">{format(day, "EEE").toUpperCase()}</span>
-                  <span className="sched-day-date">{format(day, "d MMM")}</span>
-                  {isToday(day) && <span className="sched-today-pill">TODAY</span>}
-                </div>
-                <div className="sched-day-shows">
-                  {dShows.length === 0
-                    ? <div className="sched-day-empty">–</div>
-                    : dShows.map((s) => <ShowCard key={s.id} show={s} />)
-                  }
-                </div>
+        /* ── Weekly grid (desktop/tablet scroll + mobile collapsible) ── */
+        <>
+          <div className="sched-week-scroll-outer">
+            <div className="sched-week-scroll-wrapper">
+              <div className="sched-week-grid">
+                {weekDays.map((day) => {
+                  const ds     = format(day, "yyyy-MM-dd");
+                  const dShows = byDate[ds] ?? [];
+                  return (
+                    <div key={ds} className={`sched-day-col${isToday(day) ? " sched-day-col--today" : ""}`}>
+                      <div className="sched-day-header">
+                        <span className="sched-day-name">{format(day, "EEE").toUpperCase()}</span>
+                        <span className="sched-day-date">{format(day, "d MMM")}</span>
+                        {isToday(day) && <span className="sched-today-pill">TODAY</span>}
+                      </div>
+                      <div className="sched-day-shows">
+                        {dShows.length === 0
+                          ? <div className="sched-day-empty">–</div>
+                          : dShows.map((s) => <ShowCard key={s.id} show={s} />)
+                        }
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          </div>
+
+          {/* Mobile: collapsible day sections */}
+          <div className="sched-week-mobile">
+            {weekDays.map((day) => {
+              const ds     = format(day, "yyyy-MM-dd");
+              const dShows = byDate[ds] ?? [];
+              return (
+                <details
+                  key={ds}
+                  open={isToday(day)}
+                  className={`sched-mobile-day${isToday(day) ? " sched-mobile-day--today" : ""}`}
+                >
+                  <summary className="sched-mobile-day-summary">
+                    <div className="sched-mobile-day-header-left">
+                      <span className="sched-mobile-day-name">{format(day, "EEE").toUpperCase()}</span>
+                      <span className="sched-mobile-day-date">{format(day, "d MMM")}</span>
+                    </div>
+                    <div className="sched-mobile-day-meta">
+                      {isToday(day) && <span className="sched-today-pill">TODAY</span>}
+                      {dShows.length > 0 && (
+                        <span className="sched-mobile-day-count">{dShows.length}</span>
+                      )}
+                      <span className="sched-mobile-chevron" aria-hidden>›</span>
+                    </div>
+                  </summary>
+                  <div className="sched-mobile-day-shows">
+                    {dShows.length === 0
+                      ? <div className="sched-day-empty">No shows scheduled</div>
+                      : dShows.map((s) => <ShowCard key={s.id} show={s} />)
+                    }
+                  </div>
+                </details>
+              );
+            })}
+          </div>
+        </>
 
       ) : (
 
