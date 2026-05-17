@@ -6,7 +6,8 @@ import { createClient } from "@/lib/supabase";
 interface MixRecord {
   id: string;
   title: string;
-  dj_name: string;
+  dj_name: string | null;
+  artist: string | null;
   recorded_at: string | null;
   dropbox_path: string;
   temp_link: string | null;
@@ -29,9 +30,10 @@ export default function MixesArchivePage() {
     const supabase = createClient();
     supabase
       .from("mixes")
-      .select("id, title, dj_name, recorded_at, dropbox_path, temp_link, temp_link_expires_at, status")
+      .select("id, title, dj_name, artist, recorded_at, dropbox_path, temp_link, temp_link_expires_at, status")
       .in("status", ["approved", "pending"])
-      .order("recorded_at", { ascending: false })
+      .order("recorded_at", { ascending: false, nullsFirst: false })
+      .order("id", { ascending: false })
       .then(({ data }) => {
         setMixes((data as MixRecord[]) ?? []);
         setLoading(false);
@@ -145,8 +147,8 @@ export default function MixesArchivePage() {
                       <span className="archive-card-pending" style={{ marginLeft: "0.5rem" }}>pending review</span>
                     )}
                   </span>
-                  {mix.dj_name && (
-                    <span className="mix-row-dj">{mix.dj_name}</span>
+                  {(mix.dj_name || mix.artist) && (
+                    <span className="mix-row-dj">{mix.dj_name ?? mix.artist}</span>
                   )}
                 </span>
                 {mix.recorded_at && (
@@ -171,8 +173,8 @@ export default function MixesArchivePage() {
 
               <div className="mixes-player-meta">
                 <p className="mixes-player-title">{currentMix.title}</p>
-                {currentMix.dj_name && (
-                  <p className="mixes-player-dj">{currentMix.dj_name}</p>
+                {(currentMix.dj_name || currentMix.artist) && (
+                  <p className="mixes-player-dj">{currentMix.dj_name ?? currentMix.artist}</p>
                 )}
               </div>
 

@@ -88,7 +88,8 @@ export async function POST(req: NextRequest) {
       .filter((f) => /\.(mp3|wav|aac|flac|ogg|m4a)$/i.test(f.name))
       .map((f) => {
         const { title, djName, date } = cleanFileName(f.name);
-        return { dropbox_file_id: f.id, dropbox_path: f.path_lower, title, dj_name: djName ?? "", recorded_at: date ?? null, status: "pending" };
+        // Write to both dj_name (new) and artist (legacy) so all code paths can read it
+        return { dropbox_file_id: f.id, dropbox_path: f.path_lower, title, dj_name: djName ?? "", artist: djName ?? "", recorded_at: date ?? null, status: "pending" };
       });
 
     console.log(`[sync/mixes] ${rows.length} audio files after extension filter`);
