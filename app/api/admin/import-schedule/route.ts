@@ -102,6 +102,15 @@ export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  try {
+    return await runImport();
+  } catch (err) {
+    console.error("[import-schedule] Unhandled error:", err);
+    return NextResponse.json({ success: false, error: String(err) }, { status: 500 });
+  }
+}
+
+async function runImport(): Promise<Response> {
   // ── Download Excel ────────────────────────────────────────────────────────
   let buffer: Buffer;
   try {
@@ -112,7 +121,7 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     console.error("[import-schedule] Download failed:", (e as Error).message);
     return NextResponse.json(
-      { error: `Could not download schedule file: ${(e as Error).message}` },
+      { success: false, error: `Could not download schedule file: ${(e as Error).message}` },
       { status: 502 },
     );
   }
@@ -121,12 +130,7 @@ export async function POST(req: NextRequest) {
   const workbook = XLSX.read(buffer, { type: "buffer", cellDates: false });
   console.log("[import-schedule] Sheets:", workbook.SheetNames.join(", "));
 
-  let supabase;
-  try {
-    supabase = getSupabase();
-  } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
-  }
+  const supabase = getSupabase();
 
   const fromExcel: Record<string, number> = {};
   const fromTemplates: Record<string, number> = {};
@@ -134,6 +138,13 @@ export async function POST(req: NextRequest) {
   let totalSkipped = 0;
 
   // ── Phase 1: Import Excel sheets ──────────────────────────────────────────
+  // New file format:
+  //   Row 0: title ("LIFEFM.TV — DJ SCHEDULE — Month 2026")
+  //   Row 1: column headers
+  //   Row 2+: data
+  // Columns: 0=Date(YYYY-MM-DD) 1=Day 2=Slot# 3=Start(HH:MM) 4=End(HH:MM)
+  //          5=DJ Name 6=Genre 7=Notes 8=Status 9=Month 10=Year
+
   type RawRow = {
     date: string; day_name: string | null; start_time: string; end_time: string;
     dj_name: string; genre: string | null; notes: string | null;
@@ -153,27 +164,31 @@ export async function POST(req: NextRequest) {
     let currentDate: string | null = null;
     const raw: RawRow[] = [];
 
-    for (let i = 3; i < rows.length; i++) {
+    // Start at index 2 — skip title row (0) and header row (1)
+    for (let i = 2; i < rows.length; i++) {
       const row = rows[i] as unknown[];
       if (!row || row.length < 4) continue;
 
       const rawDate   = row[0];
       const dayName   = row[1] != null ? String(row[1]).trim() : null;
-      // col 2 is slot# from Excel — we reassign below, so we only use it for logging
+      // col 2: slot# from Excel (we reassign from start_time below)
       const startRaw  = row[3];
       const endRaw    = row[4];
       const djNameRaw = row[5] != null ? String(row[5]).trim() : null;
       const genre     = row[6] != null ? String(row[6]).trim() || null : null;
       const notes     = row[7] != null ? String(row[7]).trim() || null : null;
+      // Status: normalise to uppercase so STATUS_MAP works for both "resident" and "RESIDENT"
       const statusRaw = row[8] != null ? String(row[8]).trim().toUpperCase() : "";
 
+      // Date: handles YYYY-MM-DD string, Excel serial, or "01 Jun 2026"
       const parsedDate = parseExcelDate(rawDate);
       if (parsedDate) currentDate = parsedDate;
       if (!currentDate) continue;
       if (!djNameRaw) continue;
       if (djNameRaw.toLowerCase().includes("guest show") && !statusRaw) { totalSkipped++; continue; }
-      if (/^(dj.?name|name|slot|start|end|date|day)$/i.test(djNameRaw)) continue;
+      if (/^(dj.?name|name|slot|start|end|date|day|month|year)$/i.test(djNameRaw)) continue;
 
+      // Times: handles "HH:MM" string or Excel time fraction
       const startTime = excelTimeToString(startRaw);
       const endTime   = excelTimeToString(endRaw);
       if (!startTime || !endTime) continue;
