@@ -51,6 +51,25 @@ export async function listFolder(folderPath: string): Promise<DropboxFile[]> {
   return results;
 }
 
+// Lists all entries (files AND folders) at a path — used for diagnostics.
+// Pass "" for the Dropbox root.
+export async function listFolderRaw(folderPath: string): Promise<{ name: string; tag: string }[]> {
+  const dbx = getClient();
+  const results: { name: string; tag: string }[] = [];
+
+  let res = await dbx.filesListFolder({ path: folderPath, recursive: false });
+  for (const entry of res.result.entries) {
+    results.push({ name: entry.name, tag: entry[".tag"] });
+  }
+  while (res.result.has_more) {
+    res = await dbx.filesListFolderContinue({ cursor: res.result.cursor });
+    for (const entry of res.result.entries) {
+      results.push({ name: entry.name, tag: entry[".tag"] });
+    }
+  }
+  return results;
+}
+
 export async function getTemporaryLink(path: string): Promise<string> {
   const dbx = getClient();
   const res = await dbx.filesGetTemporaryLink({ path });
