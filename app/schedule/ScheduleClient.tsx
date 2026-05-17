@@ -1,12 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   format, addWeeks, subWeeks, addMonths, subMonths,
   startOfWeek, endOfWeek, startOfMonth, endOfMonth,
   eachDayOfInterval, isSameMonth, isToday, addDays,
 } from "date-fns";
+import { genreColor } from "@/lib/genreColors";
 
 interface Show {
   id: string;
@@ -23,20 +23,6 @@ interface Show {
 
 const GENRES = ["DNB", "Dub", "House", "Jungle", "Soul & Funk", "Tech House", "Techno"];
 
-const GENRE_COLORS: Record<string, string> = {
-  DNB:           "#CC0000",
-  Jungle:        "#CC5500",
-  Dub:           "#1a5c1a",
-  House:         "#1a1a5c",
-  "Tech House":  "#3d1a5c",
-  "Soul & Funk": "#5c4a00",
-  Techno:        "#2a2a2a",
-};
-
-function genreColor(genre: string | null): string {
-  return genre ? (GENRE_COLORS[genre] ?? "#333") : "#333";
-}
-
 function StatusDot({ status }: { status: string | null }) {
   if (status === "confirmed") return <span className="sched-dot sched-dot--confirmed" aria-hidden />;
   if (status === "resident")  return <span className="sched-dot sched-dot--resident"  aria-hidden />;
@@ -44,24 +30,26 @@ function StatusDot({ status }: { status: string | null }) {
 }
 
 function ShowCard({ show }: { show: Show }) {
-  const isTBC    = show.status === "needs_booking";
-  const color    = genreColor(show.genre);
-  const effectiveStatus = show.status ?? "confirmed";
+  const isTBC      = show.status === "needs_booking";
+  const isGuestTBC = !isTBC && /guest\s*tbc/i.test(show.dj_name);
+  const color      = genreColor(show.genre);
 
   return (
     <div
-      className={`sched-show${isTBC ? " sched-show--tbc" : ""}`}
-      style={{ borderLeftColor: isTBC ? "#333" : color }}
+      className={`sched-show${isTBC ? " sched-show--tbc" : ""}${isGuestTBC ? " sched-show--guest-tbc" : ""}`}
+      style={{ borderLeftColor: isTBC || isGuestTBC ? "#333" : color }}
     >
       <span className="sched-show-time">
         {show.start_time.slice(0, 5)}–{show.end_time.slice(0, 5)}
       </span>
       <div className="sched-show-body">
         <div className="sched-show-top">
-          <StatusDot status={effectiveStatus} />
-          <span className="sched-show-dj">{isTBC ? "TBC" : show.dj_name}</span>
+          {!isTBC && !isGuestTBC && <StatusDot status={show.status} />}
+          <span className="sched-show-dj">
+            {isTBC ? "TBC" : show.dj_name}
+          </span>
         </div>
-        {show.genre && !isTBC && (
+        {show.genre && !isTBC && !isGuestTBC && (
           <span
             className="sched-show-genre"
             style={{ color, background: color + "22", borderColor: color + "55" }}
@@ -80,60 +68,87 @@ export default function ScheduleClient() {
   const [genre,    setGenre]    = useState<string | null>(null);
   const [shows,    setShows]    = useState<Show[]>([]);
   const [loading,  setLoading]  = useState(true);
+  const [emptyMsg, setEmptyMsg] = useState<string | null>(null);
+  const didJump = useRef(false);
 
-  const fetchShows = useCallback(async () => {
+  const fetchShows = useCallback(async (anchorDate: Date, nearestFallback = true) => {
     setLoading(true);
-    const wStart  = startOfWeek(anchor, { weekStartsOn: 1 });
-    const wEnd    = endOfWeek(anchor, { weekStartsOn: 1 });
-    const mStart  = startOfMonth(anchor);
-    const mEnd    = endOfMonth(anchor);
-    const calFrom = viewMode === "week"
+    setEmptyMsg(null);
+
+    const wStart = startOfWeek(anchorDate, { weekStartsOn: 1 });
+    const wEnd   = endOfWeek(anchorDate,   { weekStartsOn: 1 });
+    const mStart = startOfMonth(anchorDate);
+    const mEnd   = endOfMonth(anchorDate);
+    const from = viewMode === "week"
       ? format(wStart, "yyyy-MM-dd")
       : format(startOfWeek(mStart, { weekStartsOn: 1 }), "yyyy-MM-dd");
-    const calTo = viewMode === "week"
+    const to = viewMode === "week"
       ? format(wEnd, "yyyy-MM-dd")
       : format(endOfWeek(mEnd, { weekStartsOn: 1 }), "yyyy-MM-dd");
 
-    const supabase = createClient();
-    let query = supabase
-      .from("schedule")
-      .select("id, date, day_name, slot_number, start_time, end_time, dj_name, genre, notes, status")
-      .gte("date", calFrom)
-      .lte("date", calTo)
-      .neq("status", "cancelled")
-      .order("date")
-      .order("start_time");
+    const params = new URLSearchParams({ from, to });
+    if (genre) params.set("genre", genre);
 
-    if (genre) query = query.eq("genre", genre);
+    const res  = await fetch(`/api/schedule?${params}`);
+    const json = await res.json();
+    const rows: Show[] = json.shows ?? [];
+    setShows(rows);
 
-    const { data } = await query;
-    setShows((data as Show[]) ?? []);
+    // If empty and no genre filter, try to find the nearest week that has data
+    if (rows.length === 0 && !genre && nearestFallback && !didJump.current) {
+      didJump.current = true;
+      const today = format(new Date(), "yyyy-MM-dd");
+      // Look forward first, then backward
+      const fwd = await fetch(`/api/schedule?nearest=asc&from=${today}`).then((r) => r.json());
+      if (fwd.date) {
+        const jumped = new Date(fwd.date + "T12:00:00");
+        setAnchor(jumped);
+        setLoading(false);
+        return; // fetchShows will re-run via the useEffect
+      }
+      const bwd = await fetch(`/api/schedule?nearest=desc&from=${today}`).then((r) => r.json());
+      if (bwd.date) {
+        const jumped = new Date(bwd.date + "T12:00:00");
+        setAnchor(jumped);
+        setLoading(false);
+        return;
+      }
+      setEmptyMsg("No schedule data found yet — check back soon.");
+    }
+
     setLoading(false);
-  }, [anchor, viewMode, genre]);
+  }, [viewMode, genre]);
 
-  useEffect(() => { fetchShows(); }, [fetchShows]);
+  useEffect(() => {
+    didJump.current = false;
+    fetchShows(anchor);
+  }, [anchor, fetchShows]);
 
   function prev() {
+    didJump.current = false;
     setAnchor((a) => viewMode === "week" ? subWeeks(a, 1) : subMonths(a, 1));
   }
   function next() {
+    didJump.current = false;
     setAnchor((a) => viewMode === "week" ? addWeeks(a, 1) : addMonths(a, 1));
+  }
+  function today() {
+    didJump.current = false;
+    setAnchor(new Date());
   }
 
   const weekStart = startOfWeek(anchor, { weekStartsOn: 1 });
-  const weekEnd   = endOfWeek(anchor, { weekStartsOn: 1 });
+  const weekEnd   = endOfWeek(anchor,   { weekStartsOn: 1 });
   const weekDays  = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
   const monthStart = startOfMonth(anchor);
   const monthEnd   = endOfMonth(anchor);
   const calStart   = startOfWeek(monthStart, { weekStartsOn: 1 });
-  const calEnd     = endOfWeek(monthEnd, { weekStartsOn: 1 });
+  const calEnd     = endOfWeek(monthEnd,     { weekStartsOn: 1 });
   const calDays    = eachDayOfInterval({ start: calStart, end: calEnd });
 
-  // Group shows by ISO date string
   const byDate = shows.reduce<Record<string, Show[]>>((acc, s) => {
-    if (!acc[s.date]) acc[s.date] = [];
-    acc[s.date].push(s);
+    (acc[s.date] ??= []).push(s);
     return acc;
   }, {});
 
@@ -144,7 +159,7 @@ export default function ScheduleClient() {
   return (
     <div className="sched-page">
 
-      {/* ── Top controls ── */}
+      {/* ── Controls ── */}
       <div className="sched-controls">
         <div className="sched-nav">
           <button className="sched-nav-btn" onClick={prev} aria-label="Previous">‹</button>
@@ -152,7 +167,7 @@ export default function ScheduleClient() {
           <button className="sched-nav-btn" onClick={next} aria-label="Next">›</button>
         </div>
         <div className="sched-ctrl-right">
-          <button className="sched-today-btn" onClick={() => setAnchor(new Date())}>Today</button>
+          <button className="sched-today-btn" onClick={today}>Today</button>
           <div className="sched-view-toggle">
             <button
               className={`sched-view-btn${viewMode === "week"  ? " sched-view-btn--active" : ""}`}
@@ -184,6 +199,8 @@ export default function ScheduleClient() {
 
       {loading ? (
         <div className="sched-loading">Loading schedule…</div>
+      ) : emptyMsg ? (
+        <div className="sched-loading">{emptyMsg}</div>
       ) : viewMode === "week" ? (
 
         /* ── Weekly 7-column grid ── */
@@ -250,7 +267,6 @@ export default function ScheduleClient() {
             })}
           </div>
 
-          {/* Legend */}
           <div className="sched-legend">
             {GENRES.map((g) => (
               <div key={g} className="sched-legend-item">
@@ -262,17 +278,10 @@ export default function ScheduleClient() {
         </div>
       )}
 
-      {/* Status legend */}
       <div className="sched-status-legend">
-        <div className="sched-status-item">
-          <span className="sched-dot sched-dot--confirmed" />Confirmed
-        </div>
-        <div className="sched-status-item">
-          <span className="sched-dot sched-dot--resident" />Resident
-        </div>
-        <div className="sched-status-item">
-          <span className="sched-dot sched-dot--tbc" />Needs booking
-        </div>
+        <div className="sched-status-item"><span className="sched-dot sched-dot--confirmed" />Confirmed</div>
+        <div className="sched-status-item"><span className="sched-dot sched-dot--resident"  />Resident</div>
+        <div className="sched-status-item"><span className="sched-dot sched-dot--tbc"       />Needs booking</div>
       </div>
     </div>
   );

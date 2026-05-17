@@ -8072,6 +8072,10 @@ img, video, iframe { display: block; max-width: 100%; }
 .sched-show--tbc {
   opacity: 0.45;
 }
+.sched-show--guest-tbc {
+  opacity: 0.55;
+  font-style: italic;
+}
 
 .sched-show-time {
   font-family: var(--font-mono);

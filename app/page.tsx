@@ -43,26 +43,40 @@ const jsonLd = {
 export default async function HomePage() {
   const supabase = await createServerSupabaseClient();
   const { date: ukDate, time: ukTime } = getUKDateTime();
+  const ukHHMM = ukTime.slice(0, 5); // "HH:MM" — matches stored time format
 
-  // Show currently on air — date matches today UK, time falls between start and end
-  const { data: currentDJ } = await supabase
+  // Fetch all of today's non-cancelled shows then filter in JS.
+  // Needed to handle midnight crossover: shows ending at "00:00" would fail
+  // a simple .gt("end_time", ukTime) string comparison.
+  const { data: todayShows } = await supabase
     .from("schedule")
-    .select("*")
+    .select("dj_name, date, start_time, end_time, genre, status")
     .eq("date", ukDate)
-    .lte("start_time", ukTime)
-    .gt("end_time", ukTime)
-    .maybeSingle();
+    .neq("status", "cancelled")
+    .order("start_time");
 
-  // Next upcoming show — first show starting after the current one (or after now if nothing current)
-  const nextThreshold = currentDJ ? currentDJ.end_time : ukTime;
-  const { data: nextDJ } = await supabase
-    .from("schedule")
-    .select("*")
-    .or(`date.gt.${ukDate},and(date.eq.${ukDate},start_time.gte.${nextThreshold})`)
-    .order("date", { ascending: true })
-    .order("start_time", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+  const currentDJ = todayShows?.find((s) => {
+    const end = s.end_time === "00:00" ? "24:00" : s.end_time;
+    return s.start_time <= ukHHMM && end > ukHHMM;
+  }) ?? null;
+
+  // Up Next: first show starting after current ends (or after now), then tomorrow
+  const nextThreshold = currentDJ ? currentDJ.end_time : ukHHMM;
+  const todayNext = todayShows?.find((s) => s.start_time > nextThreshold) ?? null;
+
+  const { data: futureNext } = !todayNext
+    ? await supabase
+        .from("schedule")
+        .select("dj_name, date, start_time, end_time, genre, status")
+        .gt("date", ukDate)
+        .neq("status", "cancelled")
+        .order("date", { ascending: true })
+        .order("start_time", { ascending: true })
+        .limit(1)
+        .maybeSingle()
+    : { data: null };
+
+  const nextDJ = todayNext ?? futureNext ?? null;
 
   return (
     <main>
