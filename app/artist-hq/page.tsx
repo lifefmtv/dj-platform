@@ -9,6 +9,9 @@ import { submitShowApplication } from "@/app/actions/chatActions";
 type TabKey = "submit" | "guide" | "tagging" | "brand" | "create" | "community";
 type StyleKey = "dark" | "neon" | "minimal";
 type SizeKey = "instagram-post" | "instagram-story" | "youtube-banner";
+type MusicStyleKey =
+  | "Drum & Bass" | "Jungle" | "Dub & Reggae" | "Tech House"
+  | "Techno" | "Soul & Funk" | "House" | "Garage" | "Mixed" | null;
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: "submit",    label: "Submit Music" },
@@ -38,6 +41,18 @@ const GENRES = [
   "Tech House", "Garage", "Breaks", "Ambient", "Other",
 ];
 
+const MUSIC_STYLES: { key: Exclude<MusicStyleKey, null>; color: string }[] = [
+  { key: "Drum & Bass",  color: "#CC0000" },
+  { key: "Jungle",       color: "#CC5500" },
+  { key: "Dub & Reggae", color: "#1a5c1a" },
+  { key: "Tech House",   color: "#3d1a5c" },
+  { key: "Techno",       color: "#2a2a2a" },
+  { key: "Soul & Funk",  color: "#5c4a00" },
+  { key: "House",        color: "#1a1a5c" },
+  { key: "Garage",       color: "#1a4a4a" },
+  { key: "Mixed",        color: "#333333" },
+];
+
 // ── Canvas renderer ────────────────────────────────────────────────────────────
 
 function drawCanvas(
@@ -50,6 +65,7 @@ function drawCanvas(
     showTime: string;
     style: StyleKey;
     size: SizeKey;
+    musicStyle: MusicStyleKey;
   },
 ) {
   const ctx = canvas.getContext("2d");
@@ -133,6 +149,36 @@ function drawCanvas(
   ctx.textAlign  = "left";
   ctx.shadowBlur  = 0;
   ctx.shadowColor = "transparent";
+
+  // Genre badge — bottom left corner
+  if (opts.musicStyle) {
+    const styleEntry = MUSIC_STYLES.find((s) => s.key === opts.musicStyle);
+    const badgeColor = styleEntry?.color ?? "#333333";
+    const badgeFontSz = 12;
+    ctx.font = `bold ${badgeFontSz}px Inter, "Helvetica Neue", Arial, sans-serif`;
+    const textW = ctx.measureText(opts.musicStyle).width;
+    const badgeW = textW + 28;
+    const badgeH = 28;
+    const badgeX = 16;
+    const badgeY = h - 16 - badgeH;
+    const r = badgeH / 2;
+    ctx.beginPath();
+    ctx.moveTo(badgeX + r, badgeY);
+    ctx.lineTo(badgeX + badgeW - r, badgeY);
+    ctx.arcTo(badgeX + badgeW, badgeY, badgeX + badgeW, badgeY + r, r);
+    ctx.lineTo(badgeX + badgeW, badgeY + badgeH - r);
+    ctx.arcTo(badgeX + badgeW, badgeY + badgeH, badgeX + badgeW - r, badgeY + badgeH, r);
+    ctx.lineTo(badgeX + r, badgeY + badgeH);
+    ctx.arcTo(badgeX, badgeY + badgeH, badgeX, badgeY + badgeH - r, r);
+    ctx.lineTo(badgeX, badgeY + r);
+    ctx.arcTo(badgeX, badgeY, badgeX + r, badgeY, r);
+    ctx.closePath();
+    ctx.fillStyle = badgeColor;
+    ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.font = `bold ${badgeFontSz}px Inter, "Helvetica Neue", Arial, sans-serif`;
+    ctx.fillText(opts.musicStyle, badgeX + 14, badgeY + badgeH * 0.7);
+  }
 }
 
 // ── Page ───────────────────────────────────────────────────────────────────────
@@ -175,6 +221,7 @@ export default function ArtistHQPage() {
   const [showTime,      setShowTime]      = useState("");
   const [style,         setStyle]         = useState<StyleKey>("dark");
   const [size,          setSize]          = useState<SizeKey>("instagram-post");
+  const [musicStyle,    setMusicStyle]    = useState<MusicStyleKey>(null);
   const [isDragging,    setIsDragging]    = useState(false);
   const [logoLoaded,    setLogoLoaded]    = useState(false);
 
@@ -192,8 +239,8 @@ export default function ArtistHQPage() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    drawCanvas(canvas, { photo, logo: logoRef.current, djName, message: effectiveMessage, showTime, style, size });
-  }, [photo, djName, effectiveMessage, showTime, style, size, logoLoaded]);
+    drawCanvas(canvas, { photo, logo: logoRef.current, djName, message: effectiveMessage, showTime, style, size, musicStyle });
+  }, [photo, djName, effectiveMessage, showTime, style, size, musicStyle, logoLoaded]);
 
   function handleFile(file: File) {
     if (!file.type.startsWith("image/")) return;
@@ -533,7 +580,25 @@ export default function ArtistHQPage() {
                 </div>
 
                 <div className="ahq-step">
-                  <p className="ahq-step-label"><span className="ahq-step-num">2</span>Your details</p>
+                  <p className="ahq-step-label"><span className="ahq-step-num">2</span>Music style</p>
+                  <div className="ahq-style-pills">
+                    <button
+                      className={`ahq-style-pill${musicStyle === null ? " ahq-style-pill--active" : ""}`}
+                      onClick={() => setMusicStyle(null)}
+                    >None</button>
+                    {MUSIC_STYLES.map(({ key, color }) => (
+                      <button
+                        key={key}
+                        className={`ahq-style-pill${musicStyle === key ? " ahq-style-pill--active" : ""}`}
+                        style={musicStyle === key ? { background: color, borderColor: color } : undefined}
+                        onClick={() => setMusicStyle(musicStyle === key ? null : key)}
+                      >{key}</button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="ahq-step">
+                  <p className="ahq-step-label"><span className="ahq-step-num">3</span>Your details</p>
                   <label className="ahq-field-label">DJ Name</label>
                   <input type="text" className="ahq-input" placeholder="e.g. DJ Kitch" value={djName} onChange={(e) => setDjName(e.target.value)} />
                   <label className="ahq-field-label">Message</label>
@@ -549,7 +614,7 @@ export default function ArtistHQPage() {
                 </div>
 
                 <div className="ahq-step">
-                  <p className="ahq-step-label"><span className="ahq-step-num">3</span>Style</p>
+                  <p className="ahq-step-label"><span className="ahq-step-num">4</span>Style</p>
                   <div className="ahq-style-grid">
                     {(["dark", "neon", "minimal"] as StyleKey[]).map((s) => (
                       <button key={s} className={`ahq-style-btn${style === s ? " ahq-style-btn--active" : ""}`} onClick={() => setStyle(s)}>
@@ -565,7 +630,7 @@ export default function ArtistHQPage() {
                 </div>
 
                 <div className="ahq-step">
-                  <p className="ahq-step-label"><span className="ahq-step-num">4</span>Size</p>
+                  <p className="ahq-step-label"><span className="ahq-step-num">5</span>Size</p>
                   <div className="ahq-size-grid">
                     {(Object.entries(SIZES) as [SizeKey, { w: number; h: number; label: string }][]).map(([key, val]) => (
                       <button key={key} className={`ahq-size-btn${size === key ? " ahq-size-btn--active" : ""}`} onClick={() => setSize(key)}>

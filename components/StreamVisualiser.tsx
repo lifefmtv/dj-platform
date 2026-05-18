@@ -32,7 +32,6 @@ const TOTAL_WEIGHT = Array.from({ length: BAR_COUNT }, (_, i) => barWeight(i))
 const SOURCES: { id: AudioSource; icon: string; label: string }[] = [
   { id: "stream", icon: "🎵", label: "Stream" },
   { id: "mic",    icon: "🎤", label: "Mic"    },
-  { id: "system", icon: "🖥️", label: "System" },
 ];
 
 export default function StreamVisualiser() {
@@ -209,8 +208,10 @@ export default function StreamVisualiser() {
           {requesting ? "Connecting…" : isActive ? "Visual Mode ON" : "Visual Mode OFF"}
         </button>
 
-        {isActive && !sourceError && (
-          <span className="vis-active-indicator">● Active</span>
+        {isActive && (
+          <span className="vis-active-label">
+            {activeSource === "stream" ? "Stream" : "Mic (fallback)"}
+          </span>
         )}
         {sourceError && (
           <span className="vis-source-error">{sourceError}</span>

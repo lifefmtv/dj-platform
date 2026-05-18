@@ -14,7 +14,7 @@ import {
 const FFT_SIZE = 256;
 export const FREQ_BIN_COUNT = FFT_SIZE / 2; // 128
 
-export type AudioSource = "stream" | "mic" | "system";
+export type AudioSource = "stream" | "mic";
 
 interface AudioReactiveState {
   bassLevel: number;
@@ -133,39 +133,26 @@ export function AudioReactiveProvider({ children }: { children: React.ReactNode 
   }
 
   // ── Stream source ──────────────────────────────────────────
+  // Connects to the audio/video element already on the page (the live stream player).
+  // Falls through to mic silently on CORS or any other error.
 
   async function connectStream(audioCtx: AudioContext, analyser: AnalyserNode): Promise<void> {
-    const url = process.env.NEXT_PUBLIC_STREAM_AUDIO_URL ?? "";
-
-    // Get or create the hidden audio element
     if (!streamAudioElRef.current) {
-      if (!url) {
-        // Try any audio element already on the page
-        const el = document.querySelector<HTMLAudioElement>("audio");
-        if (!el) throw new Error("no-stream-url");
-        streamAudioElRef.current = el;
-      } else {
-        const el = new Audio(url);
-        el.crossOrigin = "anonymous";
-        el.preload     = "none";
-        streamAudioElRef.current = el;
-      }
+      const el =
+        document.querySelector<HTMLAudioElement>("audio") ??
+        document.querySelector<HTMLVideoElement>("video") as unknown as HTMLAudioElement | null;
+      if (!el) throw new Error("no-page-audio");
+      streamAudioElRef.current = el;
     }
 
     const el = streamAudioElRef.current;
 
-    // Create MediaElementAudioSourceNode once per element (Web Audio rule)
+    // Create MediaElementAudioSourceNode once per element (Web Audio requires this)
     if (!mediaElSrcRef.current) {
       mediaElSrcRef.current = audioCtx.createMediaElementSource(el);
-      // If this is a page element that was already playing, keep it audible
-      if (!url && !el.paused) {
-        mediaElSrcRef.current.connect(audioCtx.destination);
-      }
+      // Keep the element audible — connect to destination as well as analyser
+      mediaElSrcRef.current.connect(audioCtx.destination);
     }
-
-    // Start playback so audio flows through the graph (our element is silent
-    // — it's not connected to destination, just to the analyser)
-    if (el.paused) await el.play();
 
     mediaElSrcRef.current.connect(analyser);
     sourceNodeRef.current = mediaElSrcRef.current;
@@ -184,24 +171,6 @@ export function AudioReactiveProvider({ children }: { children: React.ReactNode 
     sourceNodeRef.current = node;
   }
 
-  // ── System audio source ────────────────────────────────────
-
-  async function connectSystem(audioCtx: AudioContext, analyser: AnalyserNode): Promise<void> {
-    if (!("getDisplayMedia" in navigator.mediaDevices)) {
-      throw new Error("not-supported");
-    }
-    const stream = await navigator.mediaDevices.getDisplayMedia({
-      audio: true,
-      video: true, // required by some browsers; we stop the video tracks immediately
-    });
-    stream.getVideoTracks().forEach((t) => t.stop());
-    if (stream.getAudioTracks().length === 0) throw new Error("no-audio-track");
-    mediaStreamRef.current = stream;
-    const node = audioCtx.createMediaStreamSource(stream);
-    node.connect(analyser);
-    sourceNodeRef.current = node;
-  }
-
   // ── Public API ─────────────────────────────────────────────
 
   const startVisualiser = useCallback(async (
@@ -212,9 +181,8 @@ export function AudioReactiveProvider({ children }: { children: React.ReactNode 
     const trySource = async (s: AudioSource): Promise<"granted" | "denied"> => {
       try {
         const [audioCtx, analyser] = await getOrCreateCtx();
-        if (s === "stream")     await connectStream(audioCtx, analyser);
-        else if (s === "mic")   await connectMic(audioCtx, analyser);
-        else                    await connectSystem(audioCtx, analyser);
+        if (s === "stream") await connectStream(audioCtx, analyser);
+        else                await connectMic(audioCtx, analyser);
 
         setActiveSource(s);
         setSourceError("");
@@ -223,20 +191,6 @@ export function AudioReactiveProvider({ children }: { children: React.ReactNode 
         return "granted";
       } catch (e) {
         const err = e as Error;
-
-        // ── System audio errors ──
-        if (s === "system") {
-          if (err.message === "not-supported") {
-            setSourceError("System audio requires Chrome or Edge");
-          } else if (err.message === "no-audio-track") {
-            setSourceError("No system audio — select \"Share system audio\" in the dialog");
-          } else if (err.name === "NotAllowedError") {
-            setSourceError("Screen share cancelled");
-          } else {
-            setSourceError("System audio capture failed");
-          }
-          return "denied";
-        }
 
         // ── Mic errors ──
         if (s === "mic") {
@@ -248,21 +202,8 @@ export function AudioReactiveProvider({ children }: { children: React.ReactNode 
           return "denied";
         }
 
-        // ── Stream errors — fall back to mic ──
-        const isNoUrl  = err.message === "no-stream-url";
-        const isCors   = err.name === "SecurityError" || err.name === "NotSupportedError";
-        const isNet    = err.name === "NetworkError" || err.message?.includes("CORS");
-        const isAutoplay = err.name === "NotAllowedError";
-
-        if (isNoUrl) {
-          setSourceError("No stream URL — add NEXT_PUBLIC_STREAM_AUDIO_URL to .env.local, falling back to mic");
-        } else if (isCors || isNet) {
-          setSourceError("Using mic — stream audio unavailable");
-        } else if (isAutoplay) {
-          setSourceError("Using mic — stream autoplay blocked");
-        } else {
-          setSourceError("Using mic — stream audio unavailable");
-        }
+        // ── Stream errors — fall back to mic silently ──
+        // CORS, no page audio element, or any other stream failure
 
         // Silent mic fallback
         try {

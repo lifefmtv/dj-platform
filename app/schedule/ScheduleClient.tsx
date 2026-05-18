@@ -7,6 +7,7 @@ import {
   eachDayOfInterval, isSameMonth, isToday, addDays,
 } from "date-fns";
 import { genreColor } from "@/lib/genreColors";
+import ScheduleShareModal from "@/components/ScheduleShareModal";
 
 interface Show {
   id: string;
@@ -69,6 +70,7 @@ export default function ScheduleClient() {
   const [shows,    setShows]    = useState<Show[]>([]);
   const [loading,  setLoading]  = useState(true);
   const [emptyMsg, setEmptyMsg] = useState<string | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
   const didJump = useRef(false);
 
   const fetchShows = useCallback(async (anchorDate: Date, nearestFallback = true) => {
@@ -135,6 +137,7 @@ export default function ScheduleClient() {
   function today() {
     didJump.current = false;
     setAnchor(new Date());
+    setViewMode("week");
   }
 
   const weekStart = startOfWeek(anchor, { weekStartsOn: 1 });
@@ -167,6 +170,9 @@ export default function ScheduleClient() {
           <button className="sched-nav-btn" onClick={next} aria-label="Next">›</button>
         </div>
         <div className="sched-ctrl-right">
+          <button className="sched-share-btn" onClick={() => setShareOpen(true)} title="Share today's schedule">
+            📲 Share
+          </button>
           <button className="sched-today-btn" onClick={today}>Today</button>
           <div className="sched-view-toggle">
             <button
@@ -271,6 +277,7 @@ export default function ScheduleClient() {
 
         /* ── Month calendar ── */
         <div className="sched-month-view">
+          {/* Desktop/tablet: 7-column grid */}
           <div className="sched-month-grid">
             {["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map((d) => (
               <div key={d} className="sched-month-dow">{d}</div>
@@ -308,6 +315,50 @@ export default function ScheduleClient() {
             })}
           </div>
 
+          {/* Mobile: vertical list — only days with shows, in chronological order */}
+          <div className="sched-month-mobile">
+            {calDays
+              .filter((day) => isSameMonth(day, anchor))
+              .map((day) => {
+                const ds     = format(day, "yyyy-MM-dd");
+                const dShows = byDate[ds] ?? [];
+                if (dShows.length === 0) return null;
+                return (
+                  <div
+                    key={ds}
+                    className={`sched-month-mobile-day${isToday(day) ? " sched-month-mobile-day--today" : ""}`}
+                  >
+                    <div className="sched-month-mobile-date">
+                      {format(day, "EEEE d MMMM")}
+                      {isToday(day) && <span className="sched-today-pill">TODAY</span>}
+                    </div>
+                    <div className="sched-month-mobile-shows">
+                      {dShows.map((s) => (
+                        <div key={s.id} className="sched-month-mobile-show">
+                          <span className="sched-month-mobile-time">{s.start_time.slice(0, 5)}</span>
+                          <span className="sched-month-mobile-dj">
+                            {s.status === "needs_booking" ? "TBC" : s.dj_name}
+                          </span>
+                          {s.genre && s.status !== "needs_booking" && (
+                            <span
+                              className="sched-month-mobile-genre"
+                              style={{
+                                background: genreColor(s.genre) + "33",
+                                color: genreColor(s.genre),
+                                border: `1px solid ${genreColor(s.genre)}55`,
+                              }}
+                            >
+                              {s.genre}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+
           <div className="sched-legend">
             {GENRES.map((g) => (
               <div key={g} className="sched-legend-item">
@@ -324,6 +375,14 @@ export default function ScheduleClient() {
         <div className="sched-status-item"><span className="sched-dot sched-dot--resident"  />Resident</div>
         <div className="sched-status-item"><span className="sched-dot sched-dot--tbc"       />Needs booking</div>
       </div>
+
+      {shareOpen && (
+        <ScheduleShareModal
+          shows={byDate[format(new Date(), "yyyy-MM-dd")] ?? []}
+          date={format(new Date(), "yyyy-MM-dd")}
+          onClose={() => setShareOpen(false)}
+        />
+      )}
     </div>
   );
 }

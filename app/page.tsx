@@ -13,6 +13,7 @@ import NextUpBanner from "@/components/NextUpBanner";
 import MixcloudShows from "@/components/MixcloudShows";
 import SocialFollow from "@/components/SocialFollow";
 import StreamVisualiser from "@/components/StreamVisualiser";
+import ScrollToTop from "@/components/ScrollToTop";
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
 import { getUKDateTime } from "@/lib/broadcastStatus";
 
@@ -88,8 +89,17 @@ export default async function HomePage() {
 
   const nextDJ = todayNext ?? futureNext ?? null;
 
+  // Map schedule genre names to video border colours
+  const STREAM_GENRE_COLORS: Record<string, string> = {
+    DNB: "#CC0000", Jungle: "#CC5500", Dub: "#1a5c1a",
+    "Tech House": "#3d1a5c", Techno: "#444444",
+    "Soul & Funk": "#5c4a00", House: "#1a1a5c",
+  };
+  const initialGenreColor = STREAM_GENRE_COLORS[currentDJ?.genre ?? ""] ?? "#333333";
+
   return (
     <main>
+      <ScrollToTop />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -104,7 +114,7 @@ export default async function HomePage() {
 
       {/* Hero: stream + chat */}
       <div className="stream-chat-grid">
-        <LiveStream />
+        <LiveStream genreColor={initialGenreColor} />
         <ChatTabs />
       </div>
       <StreamVisualiser />
