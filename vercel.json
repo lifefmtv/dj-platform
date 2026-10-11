@@ -1,8 +1,5 @@
 {
-  "crons": [
-    {
-      "path": "/api/sync/dropbox",
-      "schedule": "0 9 * * *"
-    }
+  "redirects": [
+    { "source": "/(.*)", "destination": "https://lifefm.tv/", "permanent": true }
   ]
 }
